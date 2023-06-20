@@ -13,7 +13,7 @@ You will probably need to install  `torch-harmonics` from source. After activati
 `pip install -e .`
 
 # Downloading and Processing Observation Data
-This code assimilates radiosonde observations from the [Integrated global radiosonde Archive (IGRA)](https://www.ncei.noaa.gov/products/weather-balloon/integrated-global-radiosonde-archive).
+This code assimilates radiosonde observations from the [Integrated Global Radiosonde Archive (IGRA) Version 2.2](https://www.ncei.noaa.gov/products/weather-balloon/integrated-global-radiosonde-archive).
 This data may be downloaded from this [link](https://www.ncei.noaa.gov/data/integrated-global-radiosonde-archive/archive/IGRA_v2.2_data-por_s19050404_e20230619_c20230619.tar).
 The data is contained in a .tar file, which contains a number of other .zip files with the radiosonde data from each station.
 We first process this data into an .hdf5 file by running `process-obs/expand_data.py` to unzip the data files, then 
