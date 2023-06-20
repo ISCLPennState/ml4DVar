@@ -136,7 +136,7 @@ class FourDVar():
         self.save_hyperparamters()
         #self.board = d2l.ProgressBoard(xlabel = '4D Var loss', ylabel = 'Cycle Iteration',
         #                               xlim = [0, obs_dataloader.num_cycles])
-        self.sht = th.RealSHT(background.shape[1], background.shape[2], grid="equiangular").to('cpu').float()
+        self.sht = th.RealSHT(background.shape[2], background.shape[3], grid="equiangular").to('cpu').float()
 
     def loss(self):
         return fourDresidual(self.x[0],
