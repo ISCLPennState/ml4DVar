@@ -3,9 +3,13 @@ Repository for 4D Var data assimilation with ClimaX
 
 # Installation
 Install the environment:
+
 `conda create -f environment.yml`
+
 You will probably need to install  `torch-harmonics` from source. After activating the `climaX_4dvar` environment, run:
+
 `cd torch-harmonics`
+
 `pip install -e .`
 
 # Downloading and Processing Observation Data
