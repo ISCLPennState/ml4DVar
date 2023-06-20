@@ -23,6 +23,7 @@ We first process this data into an .hdf5 file by running `process-obs/expand_dat
 
 We then run `process-data/add_sh.py` to extract only the data at the pressure levels our model predicts, convert the data
 from the observed format to our model format, and compute specific humidity from dewpoint depression, pressure,
-and temperature. Finally, we run `process-data/compute_H_obs.py` to compute the observation operator model indices and
-interpolation weights and combine this into a final .hdf5 data file. If you don't want any of the intermediate .hdf5 files,
+and temperature. Finally, we run `process-data/compute_H_obs.py` to standardize the observations based on the ClimaX climatology,
+compute the observation operator model indices and
+interpolation weights, and combine this into a final .hdf5 data file. If you don't want any of the intermediate .hdf5 files,
 they may be deleted at this point.
