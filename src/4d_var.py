@@ -48,9 +48,7 @@ def fourDresidual(x, *args):
     #total_obs = torch.sum(num_obs)
 
     # Compute background error with identity background error covariance
-    x_coeffs          = sht(x)
-    background_coeffs = sht(background)
-    coeff_diff = x_coeffs - background_coeffs
+    coeff_diff = sht(x - background)
     se_background = torch.sum(torch.abs(coeff_diff * torch.conj(coeff_diff))) / background_err
 
     #Compute error in observations at first time step for all variables
@@ -152,6 +150,7 @@ class FourDVar():
 
     def configure_optimizer(self):
         return torch.optim.LBFGS([self.x], lr = self.lr, max_iter = self.max_lbfgs_iter)
+
     def cycle(self):
         def closure():
             self.optim.zero_grad()
