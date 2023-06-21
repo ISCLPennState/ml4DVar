@@ -86,6 +86,7 @@ def residual(x, *args):
         obs_error - scalar
         nn_model - ClimaX model
         sht - RealSHT object for computing spherical harmonics
+        sht_scaler - tensor for scaling m > 0 SHT coefficients
     )
     :return:
     '''
@@ -98,6 +99,7 @@ def residual(x, *args):
     obs_err = args[6]
     nn_model = args[7]
     sht = args[8]
+    sht_scaler = args[9]
 
     num_vars = x.shape[0]
     time_steps = obs.shape[0]
@@ -105,7 +107,7 @@ def residual(x, *args):
 
     # Compute background error with identity background error covariance
     coeff_diff = sht(x - background)
-    se_background = torch.sum(torch.abs(coeff_diff * torch.conj(coeff_diff))) / background_err
+    se_background = torch.sum(torch.abs(coeff_diff * torch.conj(coeff_diff)) * sht_scaler.reshape(1, -1)) / background_err
 
     #Compute error in observations at first time step for all variables
     se_obs = 0
@@ -136,7 +138,7 @@ def residual(x, *args):
 
 
 
-nlat = 4; nlon = 8
+nlat = 4; nlon = 12
 device = torch.device('cpu')
 # Define SHT Object
 sht = th.RealSHT(nlat, nlon, grid = "equiangular").to(device).float()

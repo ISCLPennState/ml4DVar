@@ -30,6 +30,7 @@ def fourDresidual(x, *args):
         obs_error - scalar
         nn_model - ClimaX model
         sht - RealSHT object for computing spherical harmonics
+        sht_scaler - tensor for scaling m > 0 SHT coefficients
     )
     :return:
     '''
@@ -42,6 +43,7 @@ def fourDresidual(x, *args):
     obs_err = args[6]
     nn_model = args[7]
     sht = args[8]
+    sht_scaler = args[9]
 
     num_vars = x.shape[0]
     time_steps = obs.shape[0]
@@ -49,7 +51,7 @@ def fourDresidual(x, *args):
 
     # Compute background error with identity background error covariance
     coeff_diff = sht(x - background)
-    se_background = torch.sum(torch.abs(coeff_diff * torch.conj(coeff_diff))) / background_err
+    se_background = torch.sum(torch.abs(coeff_diff * torch.conj(coeff_diff))  * sht_scaler.reshape(1, -1)) / background_err
 
     #Compute error in observations at first time step for all variables
     se_obs = 0
@@ -135,6 +137,7 @@ class FourDVar():
         #self.board = d2l.ProgressBoard(xlabel = '4D Var loss', ylabel = 'Cycle Iteration',
         #                               xlim = [0, obs_dataloader.num_cycles])
         self.sht = th.RealSHT(background.shape[2], background.shape[3], grid="equiangular").to('cpu').float()
+        self.sht_scaler = torch.from_numpy(np.append(1., np.ones(self.sht.mmax - 1)*2))
 
     def loss(self):
         return fourDresidual(self.x[0],
@@ -146,7 +149,8 @@ class FourDVar():
                              self.n_obs[0],
                              self.obs_err,
                              self.nn_model,
-                             self.sht)
+                             self.sht,
+                             self.sht_scaler)
 
     def configure_optimizer(self):
         return torch.optim.LBFGS([self.x], lr = self.lr, max_iter = self.max_lbfgs_iter)
