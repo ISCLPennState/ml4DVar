@@ -51,15 +51,17 @@ class LinearObservation(Function):
 def find_index_delta(x, y):
     xi = np.searchsorted(lat, x, side='left') - 1
     delta_x = x - lat[xi]
-    if np.any(xi == -1):
+    x_remove = xi == -1
+    if np.any(x_remove):
         delta_x[xi == -1] = 180 + x[xi == -1] - lat[-1]
         xi[xi == -1] = len(lat) - 1
     yi = np.searchsorted(long, y, side='left') - 1
     delta_y = y - long[yi]
-    if np.any(yi == -1):
+    y_remove = yi == -1
+    if np.any(y_remove):
         delta_y[yi == -1] = 360 + y[yi == -1] - long[-1]
         yi[yi == -1] = len(long) - 1
-    return xi, yi, delta_x, delta_y
+    return xi, yi, delta_x, delta_y, x_remove, y_remove
 
 lat = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lat.npy')
 long = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
@@ -68,29 +70,81 @@ stds = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_
 
 dir = '/eagle/MDClimSim/awikner'
 full_obs_file = 'irga_1415_proc.hdf5'
+full_surface_obs_file = 'irga_1415_surface_proc.hdf5'
 obs_file = 'irga_1415_test1_obs.hdf5'
 if os.path.exists(os.path.join(dir, obs_file)):
     os.remove(os.path.join(dir, obs_file))
 f = h5py.File(os.path.join(dir, full_obs_file), 'r')
 f_obs = h5py.File(os.path.join(dir, obs_file), 'a')
+f_surface = h5py.File(os.path.join(dir, full_surface_obs_file), 'r')
 
-modeled_vars = ['gph', 'q', 'temp', 'uwind', 'vwind']
-mean_std_names = ['geopotential', 'specific_humidity', 'temperature', 'u_component_of_wind', 'v_component_of_wind']
+modeled_vars = ['gph', 'uwind', 'vwind', 'temp', 'q']
+mean_std_names = ['geopotential', 'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity']
+
+surface_modeled_vars = ['temp', 'uwind', 'vwind']
+surface_mean_std_names = ['2m_temperature', '10m_u_component_of_wind', '10m_v_component_of_wind']
 vars_dict = dict(zip(modeled_vars, mean_std_names))
+surface_vars_dict = dict(zip(surface_modeled_vars, surface_mean_std_names))
 gph_pred_plevels = np.array([500, 700, 850, 925], dtype='f8')*100
 pred_plevels     = np.array([250, 500, 700, 850, 925], dtype='f8')*100
 
-
-
-for year in list(f.keys()):
+for year in list(f_surface.keys()):
     yr_grp = f_obs.create_group(year)
-    for month in list(f[year].keys()):
+    for month in list(f_surface[year].keys()):
         mth_grp = f_obs[year].create_group(month)
-        for day in list(f[year + '/' + month].keys()):
+        for day in list(f_surface[year + '/' + month].keys()):
             day_grp = f_obs[year + '/' + month].create_group(day)
-            for hour in list(f[year + '/' + month + '/' + day].keys()):
+            for hour in list(f_surface[year + '/' + month + '/' + day].keys()):
                 print(year + '/' + month + '/' + day + '/' + hour)
                 hr_group = f_obs[year + '/' + month + '/' + day].create_group(hour)
+                for var in list(f_surface[year + '/' + month + '/' + day + '/' + hour].keys()):
+                    if var in surface_modeled_vars:
+                        obs_data = f_surface[year + '/' + month + '/' + day + '/' + hour + '/' + var][:]
+                        var_mean = means['%s' % (surface_vars_dict[var])][0]
+                        var_std = stds['%s' % (surface_vars_dict[var])][0]
+                        plevel_data = obs_data
+                        plevel_data = plevel_data[np.lexsort((plevel_data[:, 1], plevel_data[:, 0]))]
+                        lat_obs = plevel_data[:, 0]
+                        long_obs = plevel_data[:, 1]
+                        xi, yi, delta_x, delta_y, x_remove, y_remove = find_index_delta(lat_obs, long_obs + 180)
+                        red_idxs = (np.logical_not(x_remove)) & (np.logical_not(y_remove)) & \
+                                   (xi != len(lat) - 1) & (yi != len(long) - 1)
+                        plevel_data = plevel_data[red_idxs]
+                        delta_x = delta_x[red_idxs]
+                        delta_y = delta_y[red_idxs]
+                        xi_red = xi[red_idxs]
+                        yi_red = yi[red_idxs]
+                        plevel_dataset = f_obs[year + '/' + month + '/' + day + '/' + hour].create_dataset(
+                            '%s' % (surface_vars_dict[var]), (plevel_data.shape[0], 3), dtype = 'f8'
+                        )
+                        plevel_dataset[:, :2] = plevel_data[:, :2]
+                        if var == 'gph':
+                            plevel_dataset[:, 2] = (plevel_data[:, 3]*9.8 - var_mean)/var_std
+                        if var == 'temp':
+                            plevel_dataset[:, 2] = (plevel_data[:, 3] + 273.15 - var_mean) / var_std
+                        else:
+                            plevel_dataset[:, 2] = (plevel_data[:, 3] - var_mean) / var_std
+                        plevel_dataset.attrs['mean'] = var_mean
+                        plevel_dataset.attrs['std'] = var_std
+                        H = compute_H(xi_red, yi_red, delta_x, delta_y, lat, long)
+                        H_var_data = f_obs[year + '/' + month + '/' + day + '/' + hour].create_dataset(
+                            '%s_H' % (surface_vars_dict[var]), H.shape, dtype = 'f8'
+                        )
+                        H_var_data[:] = H
+
+for year in list(f.keys()):
+    if year not in f_obs.keys():
+        yr_grp = f_obs.create_group(year)
+    for month in list(f[year].keys()):
+        if month not in f_obs[year].keys():
+            mth_grp = f_obs[year].create_group(month)
+        for day in list(f[year + '/' + month].keys()):
+            if day not in f_obs[year + '/' + month].keys():
+                day_grp = f_obs[year + '/' + month].create_group(day)
+            for hour in list(f[year + '/' + month + '/' + day].keys()):
+                print(year + '/' + month + '/' + day + '/' + hour)
+                if hour not in f_obs[year + '/' + month + '/' + day].keys():
+                    hr_group = f_obs[year + '/' + month + '/' + day].create_group(hour)
                 for var in list(f[year + '/' + month + '/' + day + '/' + hour].keys()):
                     if var in modeled_vars:
                         obs_data = f[year + '/' + month + '/' + day + '/' + hour + '/' + var][:]
@@ -103,6 +157,16 @@ for year in list(f.keys()):
                             var_std = stds['%s_%d' % (vars_dict[var], int(plevel)/100)][0]
                             plevel_data = obs_data[obs_data[:, 2] == plevel]
                             plevel_data = plevel_data[np.lexsort((plevel_data[:, 1], plevel_data[:, 0]))]
+                            lat_obs = plevel_data[:, 0]
+                            long_obs = plevel_data[:, 1]
+                            xi, yi, delta_x, delta_y, x_remove, y_remove = find_index_delta(lat_obs, long_obs + 180)
+                            red_idxs = (np.logical_not(x_remove)) & (np.logical_not(y_remove)) & \
+                                       (xi != len(lat) - 1) & (yi != len(long) - 1)
+                            plevel_data = plevel_data[red_idxs]
+                            delta_x = delta_x[red_idxs]
+                            delta_y = delta_y[red_idxs]
+                            xi_red = xi[red_idxs]
+                            yi_red = yi[red_idxs]
                             plevel_dataset = f_obs[year + '/' + month + '/' + day + '/' + hour].create_dataset(
                                 '%s_%d' % (vars_dict[var], int(plevel)/100), (plevel_data.shape[0], 3), dtype = 'f8'
                             )
@@ -113,14 +177,6 @@ for year in list(f.keys()):
                                 plevel_dataset[:, 2] = (plevel_data[:, 3] - var_mean) / var_std
                             plevel_dataset.attrs['mean'] = var_mean
                             plevel_dataset.attrs['std'] = var_std
-                            lat_obs = plevel_data[:, 0]
-                            long_obs = plevel_data[:, 1]
-                            xi, yi, delta_x, delta_y = find_index_delta(lat_obs, long_obs + 180)
-                            red_idxs = (xi != len(lat) - 1) & (yi != len(long) - 1)
-                            delta_x = delta_x[red_idxs]
-                            delta_y = delta_y[red_idxs]
-                            xi_red = xi[red_idxs]
-                            yi_red = yi[red_idxs]
                             H = compute_H(xi_red, yi_red, delta_x, delta_y, lat, long)
                             H_var_data = f_obs[year + '/' + month + '/' + day + '/' + hour].create_dataset(
                                 '%s_%d_H' % (vars_dict[var], int(plevel)/100), H.shape, dtype = 'f8'
@@ -129,3 +185,4 @@ for year in list(f.keys()):
 
 f.close()
 f_obs.close()
+f_surface.close()

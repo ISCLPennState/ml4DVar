@@ -14,10 +14,10 @@ var_dict = {'press' : 'Pa',
             'uwind' : 'meters per second to tenths',
             'vwind' : 'meters per second to tenths'}
 
-full_h5_file = 'irga_y2d_all.hdf5'
+full_h5_file = 'irga_1415_surface_all.hdf5'
 if os.path.exists(os.path.join(dir, full_h5_file)):
     os.remove(os.path.join(dir, full_h5_file))
-h5_files = [file for file in os.listdir(dir) if '.hdf5' in file]
+h5_files = [file for file in os.listdir(dir) if '.hdf5' in file and 'surface' in file]
 f_full = h5py.File(os.path.join(dir, full_h5_file), 'a')
 for i, file in enumerate(h5_files):
     print()

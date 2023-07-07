@@ -33,10 +33,10 @@ def get_dpdp_temp_overlap(dpdp_data, temp_data):
 
 #dir = "/eagle/MDClimSim/awikner"
 dir = os.path.join("D:\\argonne_data", "IGRA_v2.2_data-por_s19050404_e20230606_c20230606")
-h5_file = 'irga_y2d_all.hdf5'
-proc_h5_file = 'irga_y2d_proc.hdf5'
-print('Sleeping...')
-time.sleep(2000)
+h5_file = 'irga_1415_surface_all.hdf5'
+proc_h5_file = 'irga_1415_surface_proc.hdf5'
+#print('Sleeping...')
+#time.sleep(2000)
 f = h5py.File(os.path.join(dir, h5_file), 'r')
 if os.path.exists(os.path.join(dir, proc_h5_file)):
     os.remove(os.path.join(dir, proc_h5_file))
@@ -45,7 +45,7 @@ hour_count = np.zeros((24, 6), dtype='i8')
 hour_strs = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13',
              '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
 hour_idxs = np.arange(24)
-var_strs = ['dpdp','gph','rh', 'temp', 'uwind', 'vwind']
+var_strs = ['dpdp', 'rh', 'temp', 'uwind', 'vwind']
 var_idxs = np.arange(6)
 hour_dict = dict(zip(hour_strs, hour_idxs))
 var_dict = dict(zip(var_strs, var_idxs))
@@ -74,11 +74,11 @@ for year in list(f.keys()):
                 hr_group = f_pred[year + '/' + month + '/' + day].create_group(hour)
                 for var in list(f[year + '/' + month + '/' + day + '/' + hour].keys()):
                     data = f[year + '/' + month + '/' + day + '/' + hour + '/' + var][:]
-                    if var == 'gph':
-                        pred_plevel_idxs = [idx for idx in range(data.shape[0]) if data[idx, 2] in gph_pred_plevels]
-                    else:
-                        pred_plevel_idxs = [idx for idx in range(data.shape[0]) if data[idx, 2] in pred_plevels]
-                    pred_plevel_data = data[pred_plevel_idxs]
+                    #if var == 'gph':
+                    #    pred_plevel_idxs = [idx for idx in range(data.shape[0]) if data[idx, 2] in gph_pred_plevels]
+                    #else:
+                    #    pred_plevel_idxs = [idx for idx in range(data.shape[0]) if data[idx, 2] in pred_plevels]
+                    pred_plevel_data = data
                     real_data = f_pred[year + '/' + month + '/' + day + '/' + hour].create_dataset(
                         var, pred_plevel_data.shape, maxshape=(None, 4), dtype = 'f8'
                     )
