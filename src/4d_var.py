@@ -219,16 +219,17 @@ class FourDVar():
 
 
 if __name__ == '__main__':
-    #filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5"
-    #means = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_mean.npz')
-    #stds = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_std.npz')
-    #dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
-    #background_err_file = '/eagle/MDClimSim/awikner/background_err_sh_coeffs_std.npy'
-    filepath = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\irga_1415_test1_obs.hdf5'
-    means = np.load('C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\normalize_mean.npz')
-    stds = np.load('C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\normalize_std.npz')
-    dv_param_file = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\dv_params_128_256.hdf5'
-    background_err_file = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\background_err_sh_coeffs_std.npy'
+    filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5"
+    means = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_mean.npz')
+    stds = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_std.npz')
+    dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
+    background_err_file = '/eagle/MDClimSim/awikner/background_err_sh_coeffs_std.npy'
+    background_file = '/eagle/MDClimSim/troyarcomano/ClimaX/predictions_test/forecasts.hdf5'
+    #filepath = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\irga_1415_test1_obs.hdf5'
+    #means = np.load('C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\normalize_mean.npz')
+    #stds = np.load('C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\normalize_std.npz')
+    #dv_param_file = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\dv_params_128_256.hdf5'
+    #background_err_file = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\background_err_sh_coeffs_std.npy'
 
 
     vars = ['2m_temperature',
@@ -260,7 +261,7 @@ if __name__ == '__main__':
             'specific_humidity_925']
 
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind']
-    var_obs_err = [15., 0.5, 0.05, 0.5, 0.5]
+    var_obs_err = [15., 1.0, 0.05, 1.0, 1.0]
     obs_perc_err = [False, False, True, False, False]
     obs_err = ObsError(vars, var_types, var_obs_err, obs_perc_err, stds)
     dv_layer = DivergenceVorticity(vars, means, stds, dv_param_file)
@@ -279,7 +280,10 @@ if __name__ == '__main__':
     loader = DataLoader(obs_dataset, batch_size = 1, num_workers=0)
 
     nn_model = torch.nn.Identity()
-    background = torch.randn(1, len(vars), 128, 256)
+    #background = torch.randn(1, len(vars), 128, 256)
+    background_f =h5py.File(background_file, 'r')
+    background = torch.from_numpy(background_f['truth_12hr'][0])
+    background_f.close()
     fourd_da = FourDVar(nn_model, loader, background, background_err, obs_err, dv_layer)
     fourd_da.fourDvar()
     """
