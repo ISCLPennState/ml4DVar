@@ -19,13 +19,13 @@ class ERA5Data:
                  stds = None, lat = None, lon = None):
         self.save_hyperparameters()
         if lat is not None:
-            nlat = lat.size
+            self.nlat = lat.size
         else:
-            nlat = 128
+            self.nlat = 128
         if lon is not None:
-            nlon = lon.size
+            self.nlon = lon.size
         else:
-            nlon = 256
+            self.nlon = 256
         if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
@@ -106,13 +106,13 @@ class AnalysisData:
                  stds = None, lat = None, lon = None, runstr = None, end_date = None):
         self.save_hyperparameters()
         if lat is not None:
-            nlat = lat.size
+            self.nlat = lat.size
         else:
-            nlat = 128
+            self.nlat = 128
         if lon is not None:
-            nlon = lon.size
+            self.nlon = lon.size
         else:
-            nlon = 256
+            self.nlon = 256
         if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
@@ -282,13 +282,13 @@ class ForecastData():
                  stds = None, lat = None, lon = None, runstr = None, end_date = None):
         self.save_hyperparameters()
         if lat is not None:
-            nlat = lat.size
+            self.nlat = lat.size
         else:
-            nlat = 128
+            self.nlat = 128
         if lon is not None:
-            nlon = lon.size
+            self.nlon = lon.size
         else:
-            nlon = 256
+            self.nlon = 256
         if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
