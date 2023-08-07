@@ -18,25 +18,25 @@ class ERA5Data:
     def __init__(self, start_date, end_date, time_step, vars, dir = None, shards = 40, means = None,
                  stds = None, lat = None, lon = None):
         self.save_hyperparameters()
-        if lat:
+        if lat is not None:
             nlat = lat.size
         else:
             nlat = 128
-        if lon:
+        if lon is not None:
             nlon = lon.size
         else:
             nlon = 256
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
             self.stds = stds_array
-        if not self.dir:
+        if self.dir is None:
             self.dir = '/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/train'
         self.data = self.load_era5(shards = shards)
         self.varmax = np.max(self.data, axis = (0, 2, 3))
@@ -75,16 +75,16 @@ class ERA5Data:
         return data
 
     def standardize(self, means = None, stds = None):
-        if not means and not self.means:
+        if means is None and self.means is None:
             raise ValueError('Means is not defined and has not been input.')
-        if not stds and not self.stds:
+        if stds is None and self.stds is None:
             raise ValueError('Stds is not defined and has not been input.')
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
@@ -105,20 +105,20 @@ class AnalysisData:
     def __init__(self, start_date, time_step, vars, dir = None, means = None,
                  stds = None, lat = None, lon = None, runstr = None, end_date = None):
         self.save_hyperparameters()
-        if lat:
+        if lat is not None:
             nlat = lat.size
         else:
             nlat = 128
-        if lon:
+        if lon is not None:
             nlon = lon.size
         else:
             nlon = 256
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
@@ -161,16 +161,16 @@ class AnalysisData:
         return analysis, background
 
     def unstandardize(self, means = None, stds = None):
-        if not means and not self.means:
+        if means is None and self.means is None:
             raise ValueError('Means is not defined and has not been input.')
-        if not stds and not self.stds:
+        if stds is None and self.stds is None:
             raise ValueError('Stds is not defined and has not been input.')
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
@@ -249,16 +249,16 @@ class ObsData():
         return output
 
     def unstandardize(self, obs, means=None, stds=None):
-        if not means and not self.means:
+        if means is None and self.means is None:
             raise ValueError('Means is not defined and has not been input.')
-        if not stds and not self.stds:
+        if stds is None and self.stds is None:
             raise ValueError('Stds is not defined and has not been input.')
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
@@ -281,20 +281,20 @@ class ForecastData():
                  forecast_step = 1, dir = None, means = None,
                  stds = None, lat = None, lon = None, runstr = None, end_date = None):
         self.save_hyperparameters()
-        if lat:
+        if lat is not None:
             nlat = lat.size
         else:
             nlat = 128
-        if lon:
+        if lon is not None:
             nlon = lon.size
         else:
             nlon = 256
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
@@ -327,16 +327,16 @@ class ForecastData():
         return forecasts
 
     def unstandardize(self, means=None, stds=None):
-        if not means and not self.means:
+        if means is None and self.means is None:
             raise ValueError('Means is not defined and has not been input.')
-        if not stds and not self.stds:
+        if stds is None and self.stds is None:
             raise ValueError('Stds is not defined and has not been input.')
-        if means:
+        if means is not None:
             means_array = np.zeros(len(self.vars))
             for i, var in enumerate(self.vars):
                 means_array[i] = means[var][0]
             self.means = means_array
-        if stds:
+        if stds is not None:
             stds_array = np.zeros(len(self.vars))
             for i, var in enumerate(self.vars):
                 stds_array[i] = stds[var][0]
@@ -360,6 +360,9 @@ class ForecastData():
 def plot_analysis(era5, analysis, obs, show = True, save = False, figsize = (15, 7),
                   var_lim = None, err_var_lim = None, var_idxs = None, save_dir = None,
                   itr_idxs = None, zero_center_error = True, return_error = False):
+    if not save and not show and not return_error:
+        print('Function does not return anything, aborting...')
+        return
     if save and not save_dir:
         save_dir = os.path.join(os.getcwd(), 'plots')
         if not os.path.exists(save_dir):
@@ -397,7 +400,7 @@ def plot_analysis(era5, analysis, obs, show = True, save = False, figsize = (15,
             obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
             obs_lat_plot = obs_latlon[:, 0] + 90
             obs_lon_plot = (obs_latlon[:, 1] + 360) % 360
-            fig, axs = plt.subplots(2, 3, sharex = True, sharey = True)
+            fig, axs = plt.subplots(2, 3, sharex = True, sharey = True, figsize = figsize)
 
             pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5.data[itr, var_idx], vmin = var_lim[var_idx][0],
                                            vmax = var_lim[var_idx][1], cmap = 'viridis')
