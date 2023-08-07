@@ -44,11 +44,11 @@ class ERA5Data:
 
     def load_era5(self, shards = 40):
         hours_per_shard = 365 * 24 // shards
-        start_date_year = datetime(self.start_date.year, 0, 0)
+        start_date_year = datetime(self.start_date.year, 1, 1, hour = 0)
         start_shard = ((self.start_date - start_date_year).total_seconds() // 3600) // hours_per_shard
         start_hour = (self.start_date -
                       (start_date_year + timedelta(hours = hours_per_shard * start_shard))).total_seconds() // 3600
-        end_date_year = datetime(self.end_date.year, 0, 0)
+        end_date_year = datetime(self.end_date.year, 1, 1, hour = 0)
         end_shard = ((self.end_date - end_date_year).total_seconds() // 3600) // hours_per_shard
         years = np.arange(self.start_date.year, self.end_date.year+1, dtype = int)
         if np.any([calendar.isleap(year) for year in years]):
