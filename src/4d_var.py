@@ -281,8 +281,8 @@ if __name__ == '__main__':
 
     nn_model = torch.nn.Identity()
     #background = torch.randn(1, len(vars), 128, 256)
-    background_f =h5py.File(background_file, 'r')
-    background = torch.unqueeze(torch.from_numpy(background_f['truth_12hr'][0]), 0)
+    background_f = h5py.File(background_file, 'r')
+    background = torch.unsqueeze(torch.from_numpy(background_f['truth_12hr'][0]), 0)
     background_f.close()
     fourd_da = FourDVar(nn_model, loader, background, background_err, obs_err, dv_layer)
     fourd_da.fourDvar()
