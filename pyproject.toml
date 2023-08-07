@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml4dvar"
+version = "0.1.1"
+authors =[
+    {name="Alex Wikner", email="awikner@anl.gov"},
+    {name="Troy Arcomano", email="tarcomano@anl.gov"}
+]
+description = ""
+requires-python = ">=3.8"
+dependencies = [
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/AIEADA/ml4dvar/"
+
+[tool.setuptools.packages.find]
+where = ["src"]

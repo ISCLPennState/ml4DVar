@@ -106,7 +106,7 @@ for year in list(f_surface.keys()):
                         plevel_data = plevel_data[np.lexsort((plevel_data[:, 1], plevel_data[:, 0]))]
                         lat_obs = plevel_data[:, 0]
                         long_obs = plevel_data[:, 1]
-                        xi, yi, delta_x, delta_y, x_remove, y_remove = find_index_delta(lat_obs, long_obs + 180)
+                        xi, yi, delta_x, delta_y, x_remove, y_remove = find_index_delta(lat_obs, (long_obs + 360) % 360)
                         red_idxs = (np.logical_not(x_remove)) & (np.logical_not(y_remove)) & \
                                    (xi != len(lat) - 1) & (yi != len(long) - 1)
                         plevel_data = plevel_data[red_idxs]
@@ -120,8 +120,10 @@ for year in list(f_surface.keys()):
                         plevel_dataset[:, :2] = plevel_data[:, :2]
                         if var == 'gph':
                             plevel_dataset[:, 2] = (plevel_data[:, 3]*9.8 - var_mean)/var_std
-                        if var == 'temp':
+                        elif var == 'temp':
                             plevel_dataset[:, 2] = (plevel_data[:, 3] + 273.15 - var_mean) / var_std
+                        elif 'wind' in var:
+                            plevel_dataset[:, 2] = (-plevel_data[:, 3] - var_mean) / var_std
                         else:
                             plevel_dataset[:, 2] = (plevel_data[:, 3] - var_mean) / var_std
                         plevel_dataset.attrs['mean'] = var_mean
@@ -159,7 +161,7 @@ for year in list(f.keys()):
                             plevel_data = plevel_data[np.lexsort((plevel_data[:, 1], plevel_data[:, 0]))]
                             lat_obs = plevel_data[:, 0]
                             long_obs = plevel_data[:, 1]
-                            xi, yi, delta_x, delta_y, x_remove, y_remove = find_index_delta(lat_obs, long_obs + 180)
+                            xi, yi, delta_x, delta_y, x_remove, y_remove = find_index_delta(lat_obs, (long_obs + 360) % 360)
                             red_idxs = (np.logical_not(x_remove)) & (np.logical_not(y_remove)) & \
                                        (xi != len(lat) - 1) & (yi != len(long) - 1)
                             plevel_data = plevel_data[red_idxs]
@@ -172,7 +174,17 @@ for year in list(f.keys()):
                             )
                             plevel_dataset[:, :2] = plevel_data[:, :2]
                             if var == 'gph':
+                                #print(year + '/' + month + '/' + day + '/' + hour + '/' + var)
+                                #print(plevel_data[:, 3].shape)
+                                #print(var_mean)
+                                #print(np.mean(plevel_data[:, 3]*9.8))
+                                #print(var_std)
+                                #print(np.std(plevel_data[:, 3]*9.8))
                                 plevel_dataset[:, 2] = (plevel_data[:, 3]*9.8 - var_mean)/var_std
+                            elif var == 'temp':
+                                plevel_dataset[:, 2] = (plevel_data[:, 3] + 273.15 - var_mean) / var_std
+                            elif 'wind' in var:
+                                plevel_dataset[:, 2] = (-plevel_data[:, 3] - var_mean) / var_std
                             else:
                                 plevel_dataset[:, 2] = (plevel_data[:, 3] - var_mean) / var_std
                             plevel_dataset.attrs['mean'] = var_mean

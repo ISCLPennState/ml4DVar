@@ -11,8 +11,9 @@ from itertools import product
 import torch_harmonics as th
 from src.dv import *
 import time
+from scipy.interpolate import interpn
 
-from climax.global_forecast_4dvar.train import main
+#from climax.global_forecast_4dvar.train import main
 
 import matplotlib.pyplot as plt
 
@@ -36,11 +37,13 @@ class ObsError(torch.nn.Module):
             mult_vars[var_idxs] = obs_perc_err
         self.mult_vars = torch.from_numpy(mult_vars).to(device)
         self.obs_err = torch.from_numpy(obs_err).to(device)
-
     def forward(self, obs, x_obs, var):
         if self.mult_vars[var]:
             return torch.sum((x_obs - obs)**2.0 / (self.obs_err[var] * torch.abs(obs)) ** 2.0)
         else:
+            #if var > 2 and var < 7:
+                #print(var)
+                #print((x_obs - obs)**2.0)
             return torch.sum((x_obs - obs)**2.0) / self.obs_err[var]
 
 def observe_linear(x, H_idxs, H_vals):
@@ -190,7 +193,6 @@ def threeDresidual(x, *args):
     else:
         return se_background + se_background_hf + se_obs
 
-
 def fourDresidual(x, *args):
     '''
     :param x: Initial condition for the forward model. [num_vars, 128, 256]
@@ -225,6 +227,7 @@ def fourDresidual(x, *args):
     dv_layer = args[8]
     sht = args[9]
     sht_scaler = args[10]
+    
     num_vars = x.shape[0]
     time_steps = obs.shape[0]
     #total_obs = torch.sum(num_obs)
@@ -287,7 +290,6 @@ def fourDresidual(x, *args):
 
     return se_obs + se_background
 
-
 class ObsDataset(IterableDataset):
     def __init__(self, file_path, start_datetime, end_datetime, window_len, window_step, model_step, vars):
         super().__init__()
@@ -312,13 +314,14 @@ class ObsDataset(IterableDataset):
             all_obs = np.zeros((self.window_len_idxs, len(self.vars), max_obs))
             H_idxs = np.zeros((self.window_len_idxs, len(self.vars), 4*max_obs), dtype = 'i4')
             H_obs = np.zeros((self.window_len_idxs, len(self.vars), 4*max_obs))
+            obs_latlon = np.zeros((self.window_len_idxs, len(self.vars), max_obs, 2))
             for (i, obs_datetime), (j, var) in product(enumerate(obs_datetimes), enumerate(self.vars)):
                 all_obs[i, j, :shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 2]
                 H_idxs[i, j, :4*shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var + '_H'][:, 0]
                 H_obs[i, j, :4 * shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var + '_H'][:, 1]
+                obs_latlon[i, j, :shapes[i,j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, :2]
             output = (torch.from_numpy(all_obs).to(device), torch.from_numpy(H_idxs).long().to(device), torch.from_numpy(H_obs).to(device),
-                      torch.from_numpy(shapes).long().to(device))
-
+                      torch.from_numpy(shapes).long().to(device), obs_latlon)
             return output
 
     def __iter__(self):
@@ -344,11 +347,10 @@ class ObsDataset(IterableDataset):
             setattr(self, k, v)
 
 class FourDVar():
-    def __init__(self, nn_model, obs_dataloader, background, background_err, background_err_hf, obs_err, dv_layer, lr = 1., max_iter = 700, forecast_steps = 20, spin_up_cycles = 9, runstr = None):
+    def __init__(self, nn_model, obs_dataloader, background, background_err, background_err_hf, obs_err, dv_layer, lr = 1.,
+                 max_iter = 700):
         super(FourDVar).__init__()
         self.save_hyperparameters()
-        if not self.runstr:
-            self.runstr = "%dhr_%s" % (obs_dataloader.dataset.window_step, obs_dataloader.dataset.start_datetime.strftime("%d%m%Y"))
         #self.board = d2l.ProgressBoard(xlabel = '4D Var loss', ylabel = 'Cycle Iteration',
         #                               xlim = [0, obs_dataloader.num_cycles])
         self.sht = th.RealSHT(background.shape[2], background.shape[3], grid="equiangular").to(device).float()
@@ -376,7 +378,7 @@ class FourDVar():
                              print_loss,
                              save_loss_comps)
             if save_loss_comps:
-                filename = os.path.join(self.save_dir, 'loss_comps_cycle%d_step%d_%s.npy' % (itr, self.step, self.runstr))
+                filename = os.path.join(self.save_dir, 'loss_comps_cycle%d_step%d.npy' % (itr, self.step))
                 np.save(filename, out[1])
                 return out[0]
             else:
@@ -399,24 +401,38 @@ class FourDVar():
         return torch.optim.LBFGS([self.x], lr = self.lr, max_iter = self.max_iter, history_size=300, tolerance_grad = 1e-5)
         #return torch.optim.SGD([self.x], lr = self.lr)
 
-    def cycle(self, itr, forecast):
+    def cycle(self, itr):
         self.step = 0
         def closure():
             self.optim.zero_grad()
             self.nn_model.zero_grad()
-            loss = self.loss(print_loss = False, save_loss_comps = False, itr = itr)
+            loss = self.loss(print_loss = False, save_loss_comps = True, itr = itr)
             #self.optim.zero_grad()
             #self.nn_model.zero_grad()
             self.step += 1
-            print(loss)
+            #print(loss)
             #sys.exit(2)
             loss.backward(retain_graph=False)
             return loss
-
-        np.save(os.path.join(self.save_dir, 'background_%d_%s.npy' % (itr, self.runstr)), self.background.detach().cpu().numpy())
+         
+        #init_loss, loss_comps = self.loss(print_loss = True, save_loss_comps = True)
+        #np.save('/eagle/MDClimSim/awikner/climax_4dvar_troy/data/init_loss_comps_%d.npy' % itr,
+        #        loss_comps)
+        #for itr in range(self.max_iter):
+        #    self.optim.zero_grad()
+        #    self.nn_model.zero_grad()
+        #    if itr < 2:
+        #        loss = self.loss(print_loss = True)
+        #    else:
+        #        loss = self.loss()
+        #    print('Iter %d loss: %e' % (itr, loss))
+        #    loss.backward(retain_graph=False)
+        #    self.optim.step()
+        print(torch.sum(self.background))
+        np.save(os.path.join(self.save_dir, 'background_%d.npy' % itr), background.detach().cpu().numpy())
         self.optim.step(closure)
         save_analysis = self.x.detach().cpu().numpy()
-        np.save(os.path.join(self.save_dir, 'analysis_%d_%s.npy' % (itr, self.runstr)), save_analysis)
+        np.save(os.path.join(self.save_dir, 'analysis_%d.npy' % itr), save_analysis)
         cycle_loss = self.loss(print_loss = True, save_loss_comps = False)
         #np.save('/eagle/MDClimSim/awikner/climax_4dvar_troy/data/final_loss_comps_%d.npy' % itr,
         #        loss_comps)
@@ -429,32 +445,16 @@ class FourDVar():
         self.background = torch.clone(temp.detach())
         self.x = torch.clone(temp.detach())
         self.x.requires_grad_(True)
-        if forecast and itr > self.spin_up_cycles:
-            self.run_forecast(itr)
         return self.background, cycle_loss
         #self.plot('loss', cycle_loss, False)
 
-    def run_forecast(self, itr):
-        forecasts = np.zeros((self.forecast_steps, self.background.shape[-3], self.background.shape[-2], self.background.shape[-1]))
-        forecasts[0] = self.background[0].detach().cpu().numpy()
-        temp = torch.clone(self.background)
-        for i in range(self.forecast_steps - 1):
-            with torch.inference_mode():
-                nn_model.full_input[0,4::,:,:] = temp
-                _, temp = nn_model.net.forward_multi_step(nn_model.full_input, temp, nn_model.lead_times, nn_model.hold_variables, nn_model.hold_out_variables,steps=NUM_MODEL_STEPS)
-            forecasts[i+1] = torch.clone(temp.detach()).detach().cpu().numpy()[0]
-        np.save(os.path.join(self.save_dir, 'forecasts_%d_%s.npy' % (itr, self.runstr)), forecasts)
-        return
-
-
-
-    def fourDvar(self, forecast = False):
+    def fourDvar(self):
         self.x = torch.clone(self.background)
         #self.x = torch.from_numpy(np.load(os.path.join(self.save_dir, 'analysis_0.npy'))).to(device)
         self.x.requires_grad_(True)
         for itr, (self.all_obs, self.H_idxs, self.H_obs, self.n_obs) in enumerate(self.obs_dataloader):
             self.optim = self.configure_optimizer()
-            _, cycle_loss = self.cycle(itr, forecast)
+            _, cycle_loss = self.cycle(itr)
             print('Cycle loss %d: %0.2f' % (itr, cycle_loss))
 
     def save_hyperparameters(self, ignore=[]):
@@ -471,12 +471,12 @@ class FourDVar():
 
 if __name__ == '__main__':
     filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5"
-    means = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_mean.npz')
-    stds = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_std.npz')
+    means = np.load('/eagle/MDClimSim/awikner/normalize_mean.npz')
+    stds = np.load('/eagle/MDClimSim/awikner/normalize_std.npz')
     dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
     background_err_file = '/eagle/MDClimSim/awikner/background_err_sh_coeffs_var.npy'
     background_err_hf_file = '/eagle/MDClimSim/awikner/background_err_hf_var.npy'
-    background_file = '/eagle/MDClimSim/troyarcomano/ClimaX/predictions_test/forecasts.hdf5'
+    background_file = '/eagle/MDClimSim/awikner/2014_0.npz'
     #filepath = 'C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\irga_1415_test1_obs.hdf5'
     #means = np.load('C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\normalize_mean.npz')
     #stds = np.load('C:\\Users\\user\\Dropbox\\AlexanderWikner_1\\UMD_Grad_School\\aieada\\climaX_4dvar\\normalize_std.npz')
@@ -512,6 +512,8 @@ if __name__ == '__main__':
             'specific_humidity_850',
             'specific_humidity_925']
 
+
+
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind']
     var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0]
     obs_perc_err = [False, False, False, False, False]
@@ -530,24 +532,74 @@ if __name__ == '__main__':
     window_step = 12
     model_step = 12
 
+    lat = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lat.npy')
+    lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
+
     obs_dataset = ObsDataset(filepath, start_date, end_date, window_len, window_step, model_step, vars)
 
     loader = DataLoader(obs_dataset, batch_size = 1, num_workers=0)
 
-    nn_model = main() #torch.nn.Identity() #main()
-   
-    nn_model.to(device) 
-    nn_model.eval()
+    background_f = np.load(background_file)
+    
+    era5 = np.zeros((background_f['2m_temperature'].shape[0]//12+1, len(vars), 128, 256))
+    for i, var in enumerate(vars):
+        era5[:, i] = (background_f[var][::12, 0] - means[var][0])/stds[var][0]
 
-    nn_model.full_input = torch.clone(nn_model.full_input).to(device)
-    nn_model.lead_times = torch.clone(nn_model.lead_times).to(device)
+    plot_var = 3
+    obs_idx = 300
+    for itr, (all_obs, H_idxs, H_obs, n_obs, obs_latlon) in enumerate(loader):
+        print(obs_latlon.shape)
+        plot_lat = (obs_latlon[0, 0, plot_var, :n_obs[0, 0, plot_var], 0]+90)*128/180
+        plot_lon = obs_latlon[0, 0, plot_var, :n_obs[0, 0, plot_var], 1]
+        plot_lon[plot_lon < 0] = plot_lon[plot_lon < 0] + 360
+        plot_lon = plot_lon * 256/360
+        fig, axs = plt.subplots(1, 3, figsize = (18,5))
+        pcm = axs[0].pcolormesh(era5[itr, plot_var])
+        axs[0].scatter(plot_lon, plot_lat, c=all_obs[0, 0, plot_var, :n_obs[0, 0, plot_var]].detach().cpu().numpy(), s=30, edgecolor='k')
+        plt.colorbar(pcm, ax = axs[0])
+        print(np.max(lat))
+        print(np.min(lat))
+        print(np.max(lon))
+        print(np.min(lon))
+        print(np.max(plot_lon.numpy() * 360/256))
+        print(np.min(plot_lon.numpy() * 360/256))
+        print(np.max(obs_latlon[0, 0, plot_var, :n_obs[0, 0, plot_var], 0].numpy()))
+        print(np.min(obs_latlon[0, 0, plot_var, :n_obs[0, 0, plot_var], 0].numpy()))
 
-    background_f =h5py.File(background_file, 'r')
-    start_idx = 0
-    background = torch.unsqueeze(torch.from_numpy(background_f['truth_12hr'][start_idx]), 0)
-    background_f.close()
+        lat_idx = np.sum(lat - obs_latlon[0,0,plot_var,obs_idx,0].numpy() < 0) - 1
+        lon_idx = np.sum(lon - obs_latlon[0,0,plot_var,obs_idx,1].numpy() < 0) - 1
+        
+        print((lat_idx, lon_idx))
+        print(np.unravel_index(H_idxs[0,0,plot_var,4*obs_idx].detach().cpu().numpy(), (lat.size, lon.size)))
 
-    fourd_da = FourDVar(nn_model, loader, background, background_err, background_err_hf, obs_err, dv_layer)
-    fourd_da.fourDvar(forecast = True)
+        np.save('test_obs.npy', np.stack((obs_latlon[0, 0, plot_var, :n_obs[0, 0, plot_var], 0].numpy(), plot_lon.numpy() * 360/256, all_obs[0, 0, plot_var, :n_obs[0, 0, plot_var]].detach().cpu().numpy()), axis = 1))
+        np.save('test_era5.npy', era5[itr, plot_var])
+        era5_obs = interpn((lat, lon), era5[itr, plot_var], (obs_latlon[0, 0, plot_var, :n_obs[0, 0, plot_var], 0].numpy(), plot_lon.numpy() * 360/256), bounds_error = False)
+        print(era5_obs.shape)
+        scp = axs[1].scatter(plot_lon, plot_lat, c=all_obs[0, 0, plot_var, :n_obs[0, 0, plot_var]].detach().cpu().numpy() - era5_obs, s=30, edgecolor='k')
+        plt.colorbar(scp, ax = axs[1])
+        era5_obs2 = observe_linear(torch.from_numpy(era5[itr, plot_var].reshape(-1,1)).to(device), H_idxs[0, 0, plot_var, :4*n_obs[0, 0,plot_var]].reshape(-1, 4).T , H_obs[0, 0, plot_var, :4*n_obs[0, 0,plot_var]].reshape(-1, 4))
+        scp2 = axs[2].scatter(plot_lon, plot_lat, c=all_obs[0, 0, plot_var, :n_obs[0, 0, plot_var]].detach().cpu().numpy() - era5_obs2.detach().cpu().numpy(), s=30, edgecolor='k')
+        plt.colorbar(scp2, ax = axs[2])
+        plt.show()
+
+
+
+    """
+    tic = time.perf_counter()
+    iters = 0
+    num_obs = 0
+    for batch in loader:
+        iters += 1
+        num_obs += torch.sum(batch[3])
+    toc = time.perf_counter()
+    avg_obs = num_obs/(3 * iters)
+    print('Total time: %f sec., Total iters: %d' % ((toc - tic), iters))
+    print('Avg. # of Obs. per 12 hours: %0.2f' % avg_obs)
+    print('Load time per batch: %f sec.' % ((toc - tic)/iters))
+    """
+    # Import functions from module.py im climaX
+    # batch in the form of x, y, lead_time, out_variables, in_variables
+    # arch.py
 
 

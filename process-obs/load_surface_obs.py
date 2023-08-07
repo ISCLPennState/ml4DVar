@@ -3,6 +3,9 @@ import numpy as np
 from tqdm import tqdm
 from multiprocessing import Pool, current_process
 
+# Read in observations from .txt files in IGRA 2 data set
+# Change save_years variables to set which years are read in. Currently set to [2014, 2015]
+
 def get_var(line, var, var_dict):
     return line[var_dict[var][0]:var_dict[var][1]]
 
@@ -19,8 +22,9 @@ def get_etime(line, data_dict):
 
 def get_press(line, data_dict):
     press = get_var(line, 'PRESS', data_dict)
+    lvl_type_2 = get_var(line, 'LVLTYP2', data_dict)
     #pflag = get_var(line, 'PFLAG', data_dict)
-    if press == '-9999':# or pflag not in ['A', 'B']:
+    if press == '-9999' or lvl_type_2 != '1':# or pflag not in ['A', 'B']:
         return False, 0
     else:
         return True, int(press)
@@ -100,7 +104,8 @@ def append_radiosonde(f, lines, header_dict, data_dict):
     month = get_var(lines[0], 'MONTH', header_dict)
     day = get_var(lines[0], 'DAY', header_dict)
     hour = get_var(lines[0], 'HOUR', header_dict)
-    if hour != '99':
+    save_years = ['2014', '2015']
+    if hour != '99' and year in save_years:
         lat = int(get_var(lines[0], 'LAT', header_dict))
         lon = int(get_var(lines[0], 'LON', header_dict))
         if year not in f.keys():
@@ -121,18 +126,27 @@ def append_radiosonde(f, lines, header_dict, data_dict):
 
 def append_dataset(f, filepath, header_dict, data_dict):
     with open(filepath) as file:
-        lines = file.readlines()
+        try:
+            lines = file.readlines()
+        except:
+            print('Could not read file %s' % filepath)
+            return
         lines_processed = 0
         #with tqdm(total = len(lines)) as pbar:
         while lines_processed < len(lines):
-            data_len = int(get_var(lines[lines_processed], 'NUMLEV', header_dict))
-            append_radiosonde(f, lines[lines_processed:lines_processed+data_len+1], header_dict, data_dict)
+            try:
+                assert(lines[lines_processed][0] == "#")
+                data_len = int(get_var(lines[lines_processed], 'NUMLEV', header_dict))
+                append_radiosonde(f, lines[lines_processed:lines_processed + data_len + 1], header_dict, data_dict)
+            except:
+                data_len = 0
+                print('Line \"%s\" invalid' % lines[lines_processed])
             lines_processed += (data_len + 1)
             #pbar.update(data_len + 1)
     return
 
 def append_hdf_file(file):
-    dir = os.path.join("D:\\argonne_data", "IGRA_v2.2_data-y2d_s20210101_e20230608_c20230608")
+    dir = os.path.join("D:\\argonne_data", "IGRA_v2.2_data-por_s19050404_e20230606_c20230606")
     colspecs_head = [(0,1), (1, 12), (13, 17), (18, 20), (21,23),
                 (24, 26), (27, 31), (32, 36), (37, 45),
                 (46, 54), (55, 62), (63, 71)]
@@ -146,7 +160,7 @@ def append_hdf_file(file):
                  'DPDP', 'WDIR', 'WSPD']
     data_dict = dict(zip(data_name, colspecs_data))
     process_idx = current_process()._identity[0]
-    h5_filepath = os.path.join(dir, 'irga_y2d_%s.hdf5' % process_idx)
+    h5_filepath = os.path.join(dir, 'irga_y2d_%s_surface.hdf5' % process_idx)
     f = h5py.File(h5_filepath, 'a')
     append_dataset(f, os.path.join(dir, file), header_dict, data_dict)
     f.close()
@@ -158,13 +172,13 @@ def print_file(file):
 
 
 if __name__ == '__main__':
-    dir = os.path.join("D:\\argonne_data", "IGRA_v2.2_data-y2d_s20210101_e20230608_c20230608")
+    dir = os.path.join("D:\\argonne_data", "IGRA_v2.2_data-por_s19050404_e20230606_c20230606")
     filenames = [file for file in os.listdir(dir) if '.txt' in file]
-    hdf_files = [file for file in os.listdir(dir) if '.hdf5' in file]
+    hdf_files = [file for file in os.listdir(dir) if '.hdf5' in file and 'surface' in file]
     for file in hdf_files:
         os.remove(os.path.join(dir, file))
 
-    with Pool(processes = 10) as p:
+    with Pool(processes = 12) as p:
         with tqdm(total = len(filenames)) as pbar:
             for _ in p.imap_unordered(append_hdf_file, filenames):
                 pbar.update()

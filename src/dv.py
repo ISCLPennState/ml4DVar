@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import h5py
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def make_take(ndims, slice_dim):
     """Generate a take function to index in a particular dimension."""
     def take(indexer):
@@ -123,41 +125,44 @@ class DivergenceVorticity(torch.nn.Module):
     def __init__(self, vars, var_means, var_stds, dv_parameter_file):
         super().__init__()
         self.uwind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if 'u_component_of_wind' in var],
-                                                    dtype = 'int32')).long()
+                                                    dtype = 'int32')).long().to(device)
         self.vwind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if 'v_component_of_wind' in var],
-                                                    dtype='int32')).long()
+                                                    dtype='int32')).long().to(device)
         self.nowind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if \
                                                       'u_component_of_wind' not in var and \
                                                       'v_component_of_wind' not in var],
-                                                    dtype='int32')).long()
+                                                    dtype='int32')).long().to(device)
         self.uwind_means = torch.from_numpy(
             np.array([var_means[var][0] for var in vars if 'u_component_of_wind' in var],
-                     dtype = 'f4'))
+                     dtype = 'f4')).to(device)
         self.uwind_means = self.uwind_means.reshape(-1, 1, 1)
         self.vwind_means = torch.from_numpy(
             np.array([var_means[var][0] for var in vars if 'v_component_of_wind' in var],
-                     dtype='f4'))
+                     dtype='f4')).to(device)
         self.vwind_means = self.vwind_means.reshape(-1, 1, 1)
         self.uwind_stds = torch.from_numpy(
             np.array([var_stds[var][0] for var in vars if 'u_component_of_wind' in var],
-                     dtype='f4'))
+                     dtype='f4')).to(device)
         self.uwind_stds = self.uwind_stds.reshape(-1, 1, 1)
         self.vwind_stds = torch.from_numpy(
             np.array([var_stds[var][0] for var in vars if 'v_component_of_wind' in var],
-                     dtype='f4'))
+                     dtype='f4')).to(device)
         self.vwind_stds = self.vwind_stds.reshape(-1, 1, 1)
 
         dv_f = h5py.File(dv_parameter_file, 'r')
-        self.dx = torch.from_numpy(dv_f['delta_x'][:]).float()
-        self.dy = torch.from_numpy(dv_f['delta_y'][:]).float()
-        self.parallel_scale = torch.unsqueeze(torch.from_numpy(dv_f['parallel_scale'][:]).float(), 0)
-        self.meridional_scale = torch.unsqueeze(torch.from_numpy(dv_f['meridional_scale'][:]).float(), 0)
-        self.dx_correction = torch.unsqueeze(torch.from_numpy(dv_f['dx_correction'][:]).float(), 0)
-        self.dy_correction = torch.unsqueeze(torch.from_numpy(dv_f['dy_correction'][:]).float(), 0)
+        self.dx = torch.from_numpy(dv_f['delta_x'][:]).float().to(device)
+        self.dy = torch.from_numpy(dv_f['delta_y'][:]).float().to(device)
+        self.parallel_scale = torch.unsqueeze(torch.from_numpy(dv_f['parallel_scale'][:]).float(), 0).to(device)
+        self.meridional_scale = torch.unsqueeze(torch.from_numpy(dv_f['meridional_scale'][:]).float(), 0).to(device)
+        self.dx_correction = torch.unsqueeze(torch.from_numpy(dv_f['dx_correction'][:]).float(), 0).to(device)
+        self.dy_correction = torch.unsqueeze(torch.from_numpy(dv_f['dy_correction'][:]).float(), 0).to(device)
         dv_f.close()
 
     def forward(self, x):
-
+        #print(x.get_device)
+        #print(self.uwind_idxs.get_device)
+        #print(self.uwind_stds.get_device)
+        #print(self.uwind_means.get_device)
         uwind_unstand = x[self.uwind_idxs] * self.uwind_stds + self.uwind_means
         vwind_unstand = x[self.vwind_idxs] * self.vwind_stds + self.vwind_means
         divergence, vorticity = divergence_vorticity(uwind_unstand, vwind_unstand, self.dx, self.dy,
