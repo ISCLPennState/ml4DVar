@@ -13,6 +13,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_area_auto_adjustable
 
 from src.obs import *
+import matplotlib
+matplotlib.use('TkAgg')
 
 class ERA5Data:
     def __init__(self, start_date, end_date, time_step, vars, dir = None, shards = 40, means = None,
@@ -242,13 +244,13 @@ class ObsData():
         return var_max, var_min
 
     def observe_all(self, x, return_error = False, return_error_maxmin = False):
-        all_x_obs = np.array((x.shape[0], x.shape[1]), dtype = object)
+        all_x_obs = np.zeros((x.shape[0], x.shape[1]), dtype = object)
         for i, j in product(range(x.shape[0]), range(x.shape[1])):
             all_x_obs[i, j] = self.observe(x[i, j], i, j)
         if not return_error:
             return all_x_obs
         else:
-            all_x_obs_error = np.array((x.shape[0], x.shape[1]), dtype = object)
+            all_x_obs_error = np.zeros((x.shape[0], x.shape[1]), dtype = object)
             for i, j in product(range(x.shape[0]), range(x.shape[1])):
                 all_x_obs_error[i, j] = self.obs[i][j, :self.n_obs[i][j]].detach().cpu().numpy() - \
                     all_x_obs[i,j]
@@ -263,9 +265,12 @@ class ObsData():
                 return all_x_obs, all_x_obs_error, np.max(err_max, axis = 0), np.min(err_min, axis = 0)
 
     def observe(self, x, time_idx, var_idx):
-        output = observe_linear(torch.from_numpy(x).reshape(-1, 1),
-                                self.H_idxs[time_idx][var_idx, :self.n_obs[time_idx][var_idx]],
-                                self.H_vals[time_idx][var_idx, :self.n_obs[time_idx][var_idx]]).detach().cpu().numpy()
+        #print(time_idx, var_idx)
+        #print(len(self.n_obs))
+        #print(self.n_obs[time_idx].shape)
+        output = observe_linear(torch.from_numpy(x).reshape(-1, 1).to(device),
+                                self.H_idxs[time_idx][var_idx, :4*self.n_obs[time_idx][var_idx]].reshape(-1, 4).T,
+                                self.H_vals[time_idx][var_idx, :4*self.n_obs[time_idx][var_idx]].reshape(-1, 4)).detach().cpu().numpy()
         return output
 
     def unstandardize(self, obs, means=None, stds=None):
@@ -387,18 +392,19 @@ def plot_analysis(era5, analysis, obs, show = True, save = False, figsize = (15,
         save_dir = os.path.join(os.getcwd(), 'plots')
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-    if not var_idxs:
-        var_idxs = np.arange(analysis.shape[1], dtype = int)
-    if not var_lim:
+    if var_idxs is None:
+        var_idxs = np.arange(analysis.analysis.shape[1], dtype = int)
+    if var_lim is None:
         var_max = np.maximum(np.maximum(era5.varmax, analysis.varmax), obs.varmax)
         var_min = np.minimum(np.minimum(era5.varmin, analysis.varmin), obs.varmin)
         var_lim = [(vmin, vmax) for vmin, vmax in zip(var_min, var_max)]
-    era5_minus_analysis = era5.data[:analysis.analysis.shape[0]] - analysis.analysis
-    if not itr_idxs:
+    era5.data = era5.data[:analysis.analysis.shape[0]]
+    era5_minus_analysis = era5.data - analysis.analysis
+    if itr_idxs is None:
         itr_idxs = np.arange(era5_minus_analysis.shape[0])
     era5_err_max = np.max(era5_minus_analysis, axis = (0, 2, 3))
     era5_err_min = np.min(era5_minus_analysis, axis = (0, 2, 3))
-    if not err_var_lim:
+    if err_var_lim is None:
         era5_obs, era5_obs_error, era5_obs_error_max, era5_obs_error_min = obs.observe_all(era5.data,
                                                                                            return_error = True,
                                                                                            return_error_maxmin = True)
@@ -417,8 +423,11 @@ def plot_analysis(era5, analysis, obs, show = True, save = False, figsize = (15,
 
     if save or show:
         for itr, (var_idx, var) in product(itr_idxs, [(idx, analysis.vars[idx]) for idx in var_idxs]):
+            plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+            title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}'
+            print(title_str)
             obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
-            obs_lat_plot = obs_latlon[:, 0] + 90
+            obs_lat_plot = obs_latlon[:, 0]
             obs_lon_plot = (obs_latlon[:, 1] + 360) % 360
             fig, axs = plt.subplots(2, 3, sharex = True, sharey = True, figsize = figsize)
 
@@ -449,13 +458,13 @@ def plot_analysis(era5, analysis, obs, show = True, save = False, figsize = (15,
                                           vmin=err_var_lim[var_idx][0], vmax=err_var_lim[var_idx][1], cmap='bwr',
                                           edgecolor='k', s=35)
             plt.colorbar(sp_era_obs, ax=axs[1,1])
-            axs[1, 1].set_title('Obs - H(ERA5)')
+            axs[1, 1].set_title('Observations - H(ERA5)')
 
             sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                            vmin=err_var_lim[var_idx][0], vmax=err_var_lim[var_idx][1], cmap='bwr',
                                            edgecolor='k', s=35)
             plt.colorbar(sp_analysis_obs, ax=axs[1, 2])
-            axs[1, 2].set_title('Obs - H(Analysis)')
+            axs[1, 2].set_title('Observations - H(Analysis)')
 
             axs[0, 0].set_ylabel('Lat')
             axs[1, 0].set_ylabel('Lat')
@@ -463,8 +472,8 @@ def plot_analysis(era5, analysis, obs, show = True, save = False, figsize = (15,
             axs[1, 1].set_xlabel('Lon')
             axs[1, 2].set_xlabel('Lon')
 
-            plot_date = analysis.start_date + timedelta(hours = itr * analysis.time_step)
-            fig.suptitle(f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}')
+            plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+            fig.suptitle(title_str)
             if save:
                 plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_{analysis.runstr}.png'), dpi = 400,
                             bbox_inches = 'tight')
