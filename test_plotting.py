@@ -48,4 +48,4 @@ obs = ObsData(start_date, analysis.end_date, 12, vars, obs_file, means = means, 
 
 forecasts = ForecastData(start_date, 12, vars, means = means, stds = stds, lat = lat, lon = lon)
 
-plot_analysis(era5, analysis, obs, var_idxs = np.array([0]), save = False, show = True)
+plot_analysis(era5, analysis, obs, var_idxs = np.array([0]), itr_idxs = np.arange(3), save = True, show = False, save_movie = True)
