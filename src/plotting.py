@@ -195,6 +195,24 @@ class ObsData():
     def __init__(self, start_date, end_date, time_step, vars, file = None, means = None, stds = None, lat = None,
                  lon = None):
         self.save_hyperparameters()
+        if lat is not None:
+            self.nlat = lat.size
+        else:
+            self.nlat = 128
+        if lon is not None:
+            self.nlon = lon.size
+        else:
+            self.nlon = 256
+        if means is not None:
+            means_array = np.zeros(len(self.vars))
+            for i, var in enumerate(vars):
+                means_array[i] = means[var][0]
+            self.means = means_array
+        if stds is not None:
+            stds_array = np.zeros(len(self.vars))
+            for i, var in enumerate(vars):
+                stds_array[i] = stds[var][0]
+            self.stds = stds_array
         if not file:
             self.file = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5"
         obs_dataset = ObsDataset(self.file, self.start_date, self.end_date, 0, self.time_step, self.time_step,
