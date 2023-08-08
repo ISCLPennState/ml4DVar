@@ -330,7 +330,7 @@ class ForecastData():
             self.dir = '/eagle/MDClimSim/awikner/ml4dvar/data/climaX'
 
         self.forecasts = self.load_data()
-        self.forecasts = self.standardize()
+        self.forecasts = self.unstandardize()
 
     def load_data(self):
         if not self.end_date:
