@@ -283,7 +283,7 @@ class ObsData():
             for i, var in enumerate(vars):
                 stds_array[i] = stds[var][0]
             self.stds = stds_array
-        obs_unstandardized = obs * self.stds.reshape(-1, 1) + self.means.reshape(-1, 1)
+        obs_unstandardized = obs.detach().cpu() * self.stds.reshape(-1, 1) + self.means.reshape(-1, 1)
         return obs_unstandardized
 
     def save_hyperparameters(self, ignore=[]):
