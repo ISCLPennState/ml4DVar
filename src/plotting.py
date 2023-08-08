@@ -43,13 +43,13 @@ class ERA5Data:
         self.varmin = np.min(self.data, axis = (0, 2, 3))
 
     def load_era5(self, shards = 40):
-        hours_per_shard = 365 * 24 // shards
+        hours_per_shard = (365 * 24) // shards
         start_date_year = datetime(self.start_date.year, 1, 1, hour = 0)
-        start_shard = ((self.start_date - start_date_year).total_seconds() // 3600) // hours_per_shard
-        start_hour = (self.start_date -
-                      (start_date_year + timedelta(hours = hours_per_shard * start_shard))).total_seconds() // 3600
+        start_shard = int(((self.start_date - start_date_year).total_seconds() // 3600) // hours_per_shard)
+        start_hour = int((self.start_date -
+                      (start_date_year + timedelta(hours = hours_per_shard * start_shard))).total_seconds() // 3600)
         end_date_year = datetime(self.end_date.year, 1, 1, hour = 0)
-        end_shard = ((self.end_date - end_date_year).total_seconds() // 3600) // hours_per_shard
+        end_shard = int(((self.end_date - end_date_year).total_seconds() // 3600) // hours_per_shard)
         years = np.arange(self.start_date.year, self.end_date.year+1, dtype = int)
         if np.any([calendar.isleap(year) for year in years]):
             raise ValueError('Date range cannot contain a leap year.')
@@ -59,19 +59,21 @@ class ERA5Data:
                 first_shard = start_shard
             else:
                 first_shard = 0
-                start_hour = first_shard * hours_per_shard % self.time_step
+                start_hour = (first_shard * hours_per_shard) % self.time_step
             if year == self.end_date.year:
                 last_shard = end_shard
             else:
                 last_shard = shards
-            for shard in range(first_shard, last_shard):
+            for shard in range(first_shard, last_shard+1):
                 data_f = np.load(os.path.join(self.dir, f'{year}_{shard}.npz'))
                 data_in = np.zeros((data_f[self.vars[0]][start_hour::self.time_step].shape[0], len(self.vars),
                                     self.nlat, self.nlon))
+                print(np.arange(data_f[self.vars[0]].shape[0])[start_hour::self.time_step] + shard * hours_per_shard)
                 for i, var in enumerate(self.vars):
                     data_in[:, i] = data_f[var][start_hour::self.time_step, 0]
                 data = np.concatenate((data, data_in), axis = 0)
-                start_hour = shard * hours_per_shard % self.time_step
+                start_hour = self.time_step - ((shard+1) * hours_per_shard) % self.time_step
+                print(start_hour)
         return data
 
     def standardize(self, means = None, stds = None):
