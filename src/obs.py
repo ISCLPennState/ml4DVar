@@ -43,6 +43,7 @@ class ObsDataset(IterableDataset):
         hour_diff = datetime_diff.days*24 + datetime_diff.seconds // 3600
         self.all_obs_datetimes = [start_datetime + timedelta(hours = i) for i in \
                              range(0, hour_diff + model_step, model_step)]
+        print(self.all_obs_datetimes)
         self.window_len_idxs = window_len // model_step + 1
         self.window_step_idxs = window_step // model_step
         self.num_cycles = (len(self.all_obs_datetimes) - self.window_len_idxs) // self.window_step_idxs
