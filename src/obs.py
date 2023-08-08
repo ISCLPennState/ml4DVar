@@ -75,7 +75,7 @@ class ObsDataset(IterableDataset):
         return self
 
     def __next__(self):
-        if self.window_start <= len(self.all_obs_datetimes) - self.window_len_idxs:
+        if self.window_start <= len(self.all_obs_datetimes) - self.window_len_idxs - 1:
             self.window_start += self.window_step_idxs
             return self.read_file()
         else:
