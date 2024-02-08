@@ -1,5 +1,5 @@
 import os, sys
-sys.path.append("/eagle/MDClimSim/awikner/climax_4dvar_troy")
+#sys.path.append("/eagle/MDClimSim/awikner/climax_4dvar_troy")
 from torch.utils.data import IterableDataset, DataLoader
 import torch
 import inspect
@@ -36,9 +36,10 @@ def observe_linear(x, H_idxs, H_vals):
     return output
 
 class ObsDataset(IterableDataset):
-    def __init__(self, file_path, start_datetime, end_datetime, window_len, window_step, model_step, vars):
+    def __init__(self, file_path, start_datetime, end_datetime, window_len, window_step, model_step, vars, obs_start_idx=0, obs_steps=1):
         super().__init__()
         self.save_hyperparameters()
+        self.file_path = file_path
         datetime_diff = end_datetime - start_datetime
         hour_diff = datetime_diff.days*24 + datetime_diff.seconds // 3600
         self.all_obs_datetimes = [start_datetime + timedelta(hours = i) for i in \
@@ -47,6 +48,9 @@ class ObsDataset(IterableDataset):
         self.window_step_idxs = window_step // model_step
         self.num_cycles = (len(self.all_obs_datetimes) - self.window_len_idxs) // self.window_step_idxs
 
+        self.obs_start_idx = obs_start_idx
+        self.obs_steps = obs_steps
+
     def read_file(self):
         with h5py.File(self.file_path, 'r') as f:
             obs_datetimes = self.all_obs_datetimes[self.window_start: self.window_start + self.window_len_idxs]
@@ -54,6 +58,8 @@ class ObsDataset(IterableDataset):
             print(obs_datetimes)
             shapes = np.zeros((self.window_len_idxs, len(self.vars)), dtype = int)
             for (i, obs_datetime), (j, var) in product(enumerate(obs_datetimes), enumerate(self.vars)):
+                if var not in f[obs_datetime.strftime("%Y/%m/%d/%H") + '/'].keys():
+                    continue
                 shapes[i, j] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var].shape[0]
             max_obs = np.max(shapes)
             all_obs = np.zeros((self.window_len_idxs, len(self.vars), max_obs))
@@ -61,16 +67,18 @@ class ObsDataset(IterableDataset):
             H_obs = np.zeros((self.window_len_idxs, len(self.vars), 4*max_obs))
             obs_latlon = np.zeros((self.window_len_idxs, len(self.vars), max_obs, 2))
             for (i, obs_datetime), (j, var) in product(enumerate(obs_datetimes), enumerate(self.vars)):
+                if var not in f[obs_datetime.strftime("%Y/%m/%d/%H") + '/'].keys():
+                    continue
                 all_obs[i, j, :shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 2]
                 H_idxs[i, j, :4*shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var + '_H'][:, 0]
-                H_obs[i, j, :4 * shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var + '_H'][:, 1]
+                H_obs[i, j, :4*shapes[i, j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var + '_H'][:, 1]
                 obs_latlon[i, j, :shapes[i,j]] = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, :2]
             output = (torch.from_numpy(all_obs).to(device), torch.from_numpy(H_idxs).long().to(device), torch.from_numpy(H_obs).to(device),
                       torch.from_numpy(shapes).long().to(device), obs_latlon)
             return output
 
     def __iter__(self):
-        self.window_start = -self.window_step_idxs
+        self.window_start = -self.window_step_idxs + self.obs_start_idx
         return self
 
     def __next__(self):

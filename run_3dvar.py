@@ -38,11 +38,11 @@ if __name__ == '__main__':
     da_window = 12
     model_step = 6
     obs_freq = 3
-    #da_type = 'var3d'
-    da_type = 'var4d'
+    da_type = 'var3d'
+    #da_type = 'var4d'
     #save_dir = '/eagle/MDClimSim/mjp5595/data/var4d/'.format(da_type)
     #save_dir = '/eagle/MDClimSim/mjp5595/data/{}_cumObs/'.format(da_type)
-    save_dir = '/eagle/MDClimSim/mjp5595/data/{}_cumObs2/'.format(da_type)
+    save_dir = '/eagle/MDClimSim/mjp5595/data/{}_cumObs3/'.format(da_type)
 
     filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5" # Observations
     # TODO need Observations with all variables
@@ -54,9 +54,9 @@ if __name__ == '__main__':
     background_err_file = '/eagle/MDClimSim/troyarcomano/ml4dvar_climax_v2/background_24hr_diff_sh_coeffs_var_climaxv2_standardized_128_uv.npy' #B (spherical harmonics)
     background_err_hf_file = '/eagle/MDClimSim/troyarcomano/ml4dvar_climax_v2/background_24hr_diff_hf_var_climaxv2_standardized_128_uv.npy' #B (grid space (HF))
 
-    b_inflation = 1
+    b_inflation=1
     if da_type == 'var4d':
-        b_inflation = 1
+        b_inflation=1
 
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from

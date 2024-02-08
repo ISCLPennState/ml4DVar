@@ -33,19 +33,25 @@ import logging
 
 if __name__ == '__main__':
 
+    #da_type = 'var4d'
+    da_type = str(sys.argv[1])
+    save_dir_name = str(sys.argv[2])
+
     start_date = datetime(2014, 1, 1, hour=0)
     end_date = datetime(2015, 12, 31, hour=12)
     da_window = 12
     model_step = 6
     obs_freq = 3
-    #da_type = 'var3d'
-    da_type = 'var4d'
     #save_dir = '/eagle/MDClimSim/mjp5595/data/var4d/'.format(da_type)
     #save_dir = '/eagle/MDClimSim/mjp5595/data/{}_cumObs/'.format(da_type)
-    save_dir = '/eagle/MDClimSim/mjp5595/data/{}_cumObs2/'.format(da_type)
+    save_dir = '/eagle/MDClimSim/mjp5595/data/{}/'.format(save_dir_name)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
-    filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5" # Observations
-    # TODO need Observations with all variables
+    #filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5" # Old Observations
+    #filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized.hdf5"
+    #filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360.hdf5"
+    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360_2.hdf5"
 
     means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
@@ -78,7 +84,8 @@ if __name__ == '__main__':
     log_dir = os.path.join(save_dir,'logs')
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
-    logging.basicConfig(filename=os.path.join(log_dir,'{}_{}.log'.format(da_type,start_idx+1)),
+    num_logs = len(os.listdir(log_dir))
+    logging.basicConfig(filename=os.path.join(log_dir,'{}_{}.log'.format(save_dir_name,num_logs)),
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         filemode='w')
     logger = logging.getLogger()
@@ -88,9 +95,9 @@ if __name__ == '__main__':
     from vars_climaX import vars_climaX
     vars_climax = vars_climaX().vars_climax
 
-    var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind']
-    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0]
-    obs_perc_err = [False, False, False, False, False]
+    var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
+    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
+    obs_perc_err = [False, False, False, False, False, False]
     obs_err = ObsError(vars_climax, var_types, var_obs_err, obs_perc_err, stds)
     print('obs_err :',obs_err.obs_err)
 
@@ -137,8 +144,20 @@ if __name__ == '__main__':
         device=device,
     )
 
+    pytorch_total_params = sum(p.numel() for p in climaX_Wrapper.net.parameters())
+    pytorch_trainable_params = sum(p.numel() for p in climaX_Wrapper.net.parameters() if p.requires_grad)
+    print('Total model parameters : {}'.format(pytorch_total_params))
+    print('Trainable model parameters : {}'.format(pytorch_trainable_params))
+    logger.info('Total model parameters : {}'.format(pytorch_total_params))
+    logger.info('Trainable model parameters : {}'.format(pytorch_trainable_params))
+
     print('background_file_np :',background_file_np)
+    logger.info('background_file_np : {}'.format(background_file_np))
     background_f = np.load(background_file_np, 'r')
+    if 'rand' in save_dir:
+        #background_f = np.zeros_like(background_f)
+        print('using random background')
+        background_f = np.random.randn(*background_f.shape)
     background = torch.from_numpy(background_f.copy())
 
     fourd_da = FourDVar(climaX_Wrapper, obs_loader,

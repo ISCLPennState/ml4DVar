@@ -60,9 +60,11 @@ def first_derivative(f, axis=None, x=None, delta=None):
     """
     #n, axis, delta = _process_deriv_args(f, axis, x, delta)
     n = len(f.shape)
+    #print('uwins.shape :',f.shape)
     axis_shape = [1]*n
     axis_shape[axis] = delta.size()[0]
     delta = delta.reshape(*axis_shape)
+    #take = make_take(n_dims, slice_dim)
     take = make_take(n, axis)
 
     # First handle centered case
