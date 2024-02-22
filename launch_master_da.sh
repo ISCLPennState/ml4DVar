@@ -6,7 +6,7 @@
 
 START=1
 
-NUM_JOBS=$3
+NUM_JOBS=$1
 
 for i in $(seq $START $NUM_JOBS)
 do

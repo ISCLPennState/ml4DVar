@@ -11,4 +11,4 @@ conda activate climaX
 cd /eagle/MDClimSim/mjp5595/ml4dvar/
 #python run_da.py var4d
 #python run_da.py $1 $2
-python run_da.py var3d test_3D_ObsLoader_ds360_2
+python run_da.py var4d var4d_defVars

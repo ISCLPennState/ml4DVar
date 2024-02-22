@@ -1,35 +1,21 @@
 import os, sys
-sys.path.append("/eagle/MDClimSim/mjp5595/ClimaX-v2/src/climax")
 from torch.utils.data import IterableDataset, DataLoader
 import torch
-#from d2l import torch as d2l
-import inspect
-import h5py
 from datetime import datetime, timedelta
 import numpy as np
-from itertools import product
-import torch_harmonics as th
 from src.dv import *
-#from src.obs import ObsDataset, ObsError 
 from src.obs_cummulative import ObsDatasetCum, ObsError 
-#from src.var_4d import FourDVar
 from src.var_4d_reformatted import FourDVar
-import time
-from src.climax_utils import ClimaXWrapper
 
-from arch_swin import ClimaXSwin
-from arch import ClimaX
-#from ../Climax-v2/src/climax/arch_swin import ClimaXSwin
-
-import matplotlib.pyplot as plt
+from stormer.models.hub.vit_adaln import ViTAdaLN
+from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
+from stormer.stormer_utils import StormerWrapper
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print('USING DEVICE :',device)
 
 torch.autograd.set_detect_anomaly(True)
 import logging
-
-#NUM_MODEL_STEPS=2 #Current climax works at 6 hours so with assimilation wind of 12 hours we need to call the model twice
 
 if __name__ == '__main__':
 
@@ -42,23 +28,20 @@ if __name__ == '__main__':
     da_window = 12
     model_step = 6
     obs_freq = 3
-    #save_dir = '/eagle/MDClimSim/mjp5595/data/var4d/'.format(da_type)
-    #save_dir = '/eagle/MDClimSim/mjp5595/data/{}_cumObs/'.format(da_type)
-    save_dir = '/eagle/MDClimSim/mjp5595/data/{}/'.format(save_dir_name)
+    save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    #filepath = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5" # Old Observations
-    #filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized.hdf5"
-    #filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360.hdf5"
-    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360_2.hdf5"
+    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_2.hdf5"
 
     means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
     dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
 
-    background_err_file = '/eagle/MDClimSim/troyarcomano/ml4dvar_climax_v2/background_24hr_diff_sh_coeffs_var_climaxv2_standardized_128_uv.npy' #B (spherical harmonics)
-    background_err_hf_file = '/eagle/MDClimSim/troyarcomano/ml4dvar_climax_v2/background_24hr_diff_hf_var_climaxv2_standardized_128_uv.npy' #B (grid space (HF))
+    background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_sh_coeffs_var_stormer_standardized_128_uv.npy' #B (spherical harmonics)
+    background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_hf_var_stormer_standardized_128_uv.npy' #B (grid space (HF))
+
+    ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
     b_inflation = 1
     if da_type == 'var4d':
@@ -67,7 +50,7 @@ if __name__ == '__main__':
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/background_starter.npy' # This is just to initialize the model background
+    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/background_init_stormer_norm.npy' # Init with 'random' era5 weather state from 1990
     analyses = os.listdir(save_dir)
     analysis_files = analyses
     start_idx = -1
@@ -92,23 +75,30 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     logger.info('Starting with analysis file : {}'.format(background_file_np))
 
-    from vars_climaX import vars_climaX
-    vars_climax = vars_climaX().vars_climax
+    from stormer.varsStormer import varsStormer
+    vars_stormer = varsStormer().vars_stormer
 
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
     var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
     obs_perc_err = [False, False, False, False, False, False]
-    obs_err = ObsError(vars_climax, var_types, var_obs_err, obs_perc_err, stds)
+    obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds)
     print('obs_err :',obs_err.obs_err)
 
     # from src/dv.py
-    dv_layer = DivergenceVorticity(vars_climax, means, stds, dv_param_file)
+    dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file)
 
     background_err = torch.from_numpy(np.load(background_err_file)).float()
     background_err = background_err[torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
     background_err_hf = torch.from_numpy(np.load(background_err_hf_file)).float()
     background_err_hf = background_err_hf[
         torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
+
+    # Set B to identity matrix
+    #print('background_err.shape (0):',background_err.shape)
+    #a,b = background_err.shape
+    #background_err = torch.eye(a,b)
+    #print('background_err.shape (1):',background_err.shape)
+    #background_err = background_err + 1e-6
 
     # 3d var
     # (2014,1,1,1,0)->(2014,1,1,12,0)
@@ -124,28 +114,37 @@ if __name__ == '__main__':
     obs_steps = 1
     if da_type == 'var4d':
         obs_steps = da_window // model_step
-    obs_dataset = ObsDatasetCum(filepath, start_date, end_date, vars_climax, 
+    obs_dataset = ObsDatasetCum(filepath, start_date, end_date, vars_stormer, 
                                 obs_freq=obs_freq, da_window=da_window, 
                                 obs_start_idx=start_idx+1, obs_steps=obs_steps,
                                 logger=logger)
     obs_loader = DataLoader(obs_dataset, batch_size=1, num_workers=0)
-    
-    nn_model = ClimaX(vars_climax,
-                      img_size=[128,256],
-                      patch_size=4,
-                      )
-    nn_model.to(device)
-    nn_model.eval()
 
-    climaX_Wrapper = ClimaXWrapper(
+    ###################################################################################################################
+    ###################################################################################################################
+    net = ViTAdaLN(
+        in_img_size=(128, 256),
+        list_variables=vars_stormer,
+        patch_size=2,
+        embed_norm=True,
+        hidden_size=1024,
+        depth=24,
+        num_heads=16,
+        mlp_ratio=4,
+    )
+    net.to(device)
+    net.eval()
+    stormer_wrapper = StormerWrapper(
         root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
-        variables=vars_climax,
-        net=nn_model,
+        variables=vars_stormer,
+        net=net,
+        list_lead_time=[6],
+        ckpt=ckpt_pth,
         device=device,
     )
 
-    pytorch_total_params = sum(p.numel() for p in climaX_Wrapper.net.parameters())
-    pytorch_trainable_params = sum(p.numel() for p in climaX_Wrapper.net.parameters() if p.requires_grad)
+    pytorch_total_params = sum(p.numel() for p in stormer_wrapper.net.parameters())
+    pytorch_trainable_params = sum(p.numel() for p in stormer_wrapper.net.parameters() if p.requires_grad)
     print('Total model parameters : {}'.format(pytorch_total_params))
     print('Trainable model parameters : {}'.format(pytorch_trainable_params))
     logger.info('Total model parameters : {}'.format(pytorch_total_params))
@@ -160,15 +159,16 @@ if __name__ == '__main__':
         background_f = np.random.randn(*background_f.shape)
     background = torch.from_numpy(background_f.copy())
 
-    fourd_da = FourDVar(climaX_Wrapper, obs_loader,
+    fourd_da = FourDVar(stormer_wrapper, obs_loader,
                         background, background_err, background_err_hf,
                         obs_err, dv_layer, 
                         model_step=model_step,
                         da_window=da_window,
                         obs_freq=obs_freq,
                         da_type=da_type,
-                        vars=vars_climax,
+                        vars=vars_stormer,
                         b_inflation=b_inflation,
+                        max_iter=200,
                         savedir=save_dir,
                         device=device,
                         save_idx=start_idx+1,

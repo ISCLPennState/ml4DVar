@@ -162,3 +162,7 @@ cython_debug/
 # Data Files
 data/
 submit/
+obs/
+plots/
+figs/
+process-obs/*.png
