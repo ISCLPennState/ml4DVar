@@ -1,4 +1,4 @@
-class vars_climaX():
+class varsClimax():
     def __init__(self,):
         self.vars_climax = [
         "2m_temperature",

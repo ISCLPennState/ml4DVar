@@ -50,6 +50,7 @@ class ClimaXWrapper:
         self.reverse_diff_transform = self.get_reverse_transform(self.diff_transforms)
         
         self.device = device
+        self.base_lead_time = base_lead_time
 
         self.net = net
         #self.freeze_model()

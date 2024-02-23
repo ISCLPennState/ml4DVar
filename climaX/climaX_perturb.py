@@ -15,7 +15,7 @@ from src.obs_cummulative import ObsDatasetCum, ObsError
 #from src.var_4d import FourDVar
 from src.var_4d_reformatted import FourDVar
 import time
-from ml4dvar.climaX.climax_utils import ClimaXWrapper
+from climax_utils import ClimaXWrapper
 
 from arch_swin import ClimaXSwin
 from arch import ClimaX
@@ -69,9 +69,9 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     logger.info('Starting with analysis file : {}'.format(background_file_np))
 
-    from ml4dvar.climaX.vars_climaX import vars_climaX
-    vars_climax = vars_climaX().vars_climax
-    DEF_VARIABLES=vars_climaX().DEF_VARIABLES
+    from varsClimaX import varsClimax
+    vars_climax = varsClimax().vars_climax
+    DEF_VARIABLES=varsClimax().DEF_VARIABLES
 
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
     var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
