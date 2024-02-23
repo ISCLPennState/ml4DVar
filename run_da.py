@@ -10,6 +10,7 @@ from src.var_4d_reformatted import FourDVar
 from stormer.models.hub.vit_adaln import ViTAdaLN
 from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
 from stormer.stormer_utils import StormerWrapper
+from stormer.stormer_utils_pangu import StormerWrapperPangu
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print('USING DEVICE :',device)
@@ -19,7 +20,7 @@ import logging
 
 if __name__ == '__main__':
 
-    #da_type = 'var4d'
+    #da_type = ['var4d','var3d']
     da_type = str(sys.argv[1])
     save_dir_name = str(sys.argv[2])
 
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/background_init_stormer_norm.npy' # Init with 'random' era5 weather state from 1990
+    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm.npy' # Init with 'random' era5 weather state from 1990
     analyses = os.listdir(save_dir)
     analysis_files = analyses
     start_idx = -1
@@ -87,9 +88,9 @@ if __name__ == '__main__':
     # from src/dv.py
     dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file)
 
-    background_err = torch.from_numpy(np.load(background_err_file)).float()
+    background_err = torch.from_numpy(np.load(background_err_file)).float().to(device)
     background_err = background_err[torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
-    background_err_hf = torch.from_numpy(np.load(background_err_hf_file)).float()
+    background_err_hf = torch.from_numpy(np.load(background_err_hf_file)).float().to(device)
     background_err_hf = background_err_hf[
         torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
 
@@ -134,13 +135,23 @@ if __name__ == '__main__':
     )
     net.to(device)
     net.eval()
-    stormer_wrapper = StormerWrapper(
+    #stormer_wrapper = StormerWrapper(
+    #    root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
+    #    variables=vars_stormer,
+    #    net=net,
+    #    list_lead_time=[6],
+    #    ckpt=ckpt_pth,
+    #    device=device,
+    #)
+    stormer_wrapper = StormerWrapperPangu(
         root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
         variables=vars_stormer,
         net=net,
-        list_lead_time=[6],
+        base_lead_time=6,
+        possible_lead_times=[24,12,6],
         ckpt=ckpt_pth,
         device=device,
+        logger=logger,
     )
 
     pytorch_total_params = sum(p.numel() for p in stormer_wrapper.net.parameters())

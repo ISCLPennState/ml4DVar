@@ -22,17 +22,16 @@ CONSTANTS = [
     "lattitude",
 ]
 
-class StormerWrapper:
+class StormerWrapperPangu:
     def __init__(self,
                  root_dir,
                  variables,
                  net,
-                 #list_train_lead_time=[[6,6]],
-                 #list_train_lead_time=[[6]],
-                 list_lead_time=[6],
-                 #base_lead_time=6,
+                 base_lead_time=6,
+                 possible_lead_times=[24,12,6],
                  ckpt=None,
                  device=None,
+                 logger=None,
                  ):
 
         #####################################################################################################
@@ -45,7 +44,7 @@ class StormerWrapper:
         
         self.diff_transforms = {}
         #for l in list_train_lead_time:
-        for l in list_lead_time:
+        for l in possible_lead_times:
             normalize_diff_std = dict(np.load(os.path.join(root_dir, f"normalize_diff_std_{l}.npz")))
             normalize_diff_std = np.concatenate([normalize_diff_std[v] for v in variables], axis=0)
             self.diff_transforms[l] = transforms.Normalize(np.zeros_like(normalize_diff_std), normalize_diff_std)
@@ -61,9 +60,14 @@ class StormerWrapper:
         #####################################################################################################
         #####################################################################################################
 
-        #self.list_train_lead_time = list_train_lead_time
-        self.list_lead_time = list_lead_time
+        self.base_lead_time = base_lead_time
+        for i,lt in enumerate(possible_lead_times[1:]):
+            assert possible_lead_times[i+1] < possible_lead_times[i]
+        self.possible_lead_times = possible_lead_times
 
+        self.variables = variables
+
+        self.logger = logger
         self.device = device
         self.net = net
         if ckpt is not None:
@@ -84,7 +88,6 @@ class StormerWrapper:
         print("Loading pre-trained checkpoint from: %s" % pretrained_path)
         checkpoint = torch.load(pretrained_path, map_location=torch.device("cpu"))
         checkpoint_model = checkpoint["state_dict"]
-        #print('checkpoint_model.keys() :',checkpoint_model.keys())
 
         ############################################################################################
         ############################################################################################
@@ -132,41 +135,57 @@ class StormerWrapper:
                 yhat[:, i] = 0.0
         return yhat
 
-    def forward_given_list_lead_times(self, x: torch.Tensor, in_variables, list_lead_times):
+    def forward_given_lead_time(self, x: torch.Tensor, lead_time):
         # x is in the normalized input space
         
         norm_preds = []
         raw_preds = []
         norm_diff = []
-        for i in range(len(list_lead_times)):
-            lead_time = list_lead_times[i]
-            #print('i, list_lead_times[i] :',i,list_lead_times[i])
-            lead_time_tensor = torch.Tensor([lead_time]).to(device=x.device, dtype=x.dtype) / 10.0
-            pred_diff = self.net(x, in_variables, lead_time_tensor) # diff in the normalized space
-            pred_diff = self.replace_constant(pred_diff, in_variables)
-            norm_diff.append(pred_diff)
-            pred_diff = self.reverse_diff_transform[lead_time](pred_diff) # diff in the original space
-            pred = self.reverse_inp_transform(x.squeeze(1)) + pred_diff # prediction in the original space
-            raw_preds.append(pred)
-            x = self.inp_transform(pred) # prediction in the normalized space
-            norm_preds.append(x)
-            x = x.unsqueeze(1)
+
+        lead_time_tensor = torch.Tensor([lead_time]).to(device=x.device, dtype=x.dtype) / 10.0
+        pred_diff = self.net(x, self.variables, lead_time_tensor) # diff in the normalized space
+        pred_diff = self.replace_constant(pred_diff, self.variables)
+        norm_diff = pred_diff
+        pred_diff = self.reverse_diff_transform[lead_time](pred_diff) # diff in the original space
+        pred = self.reverse_inp_transform(x.squeeze(1)) + pred_diff # prediction in the original space
+        raw_preds = pred
+        x = self.inp_transform(pred) # prediction in the normalized space
+        norm_preds = x
+
         return norm_preds, raw_preds, norm_diff
 
-    def eval_multi_step(self, x: torch.Tensor, in_variables, steps):
+    def eval_to_forecast_time_with_lead_time(self, x: torch.Tensor, forecast_time, lead_time=None):
         # x is in the normalized input space
         norm_pred_tot = []
         raw_pred_tot = []
 
+        lead_time_combos = self.get_forecast_time_combinations(forecast_time,lead_time)
+        print('\tlead_time_combos :',lead_time_combos)
+        if self.logger:
+            self.logger.info('\tlead_time_combos : {}'.format(lead_time_combos))
+
         norm_pred = x
-        for step in range(steps):
-            print('\teval model step {}/{}'.format(step+1,steps))
-            norm_pred, raw_pred, _ = self.forward_given_list_lead_times(norm_pred, in_variables, self.list_lead_time)
-            # print('len(norm_pred), norm_pred[0].shape :',len(norm_pred),norm_pred[0].shape)
-            norm_pred = norm_pred[-1]
-            raw_pred = raw_pred[-1]
-            raw_pred_tot.append(raw_pred)
-            norm_pred_tot.append(norm_pred)
+        for step,lt in enumerate(lead_time_combos):
+            print('\teval model step {}/{} w/ lead time {}'.format(step+1,len(lead_time_combos),lt))
+            if self.logger:
+                self.logger.info('\teval model step {}/{} w/ lead time {}'.format(step+1,len(lead_time_combos),lt))
+            norm_pred, raw_pred, _ = self.forward_given_lead_time(norm_pred, lt)
+            raw_pred_tot.append(raw_pred[0,:,:,:])
+            norm_pred_tot.append(norm_pred[0,:,:,:])
         
-        # (steps, vars, lat, lon)
-        return norm_pred_tot, raw_pred_tot
+        # [(vars, lat, lon)]*steps
+        return norm_pred_tot, raw_pred_tot, lead_time_combos
+
+    def get_forecast_time_combinations(self, forecast_time, lead_time=None):
+        forecast_time_combinations = []
+
+        for plt in self.possible_lead_times:
+            if lead_time:
+                if plt != lead_time:
+                    continue
+            while forecast_time >= plt:
+                forecast_time -= plt
+                forecast_time_combinations.append(plt)
+        assert forecast_time == 0
+        
+        return forecast_time_combinations
