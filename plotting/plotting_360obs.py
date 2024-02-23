@@ -23,7 +23,7 @@ def rmse_diff(diff):
     return np.sqrt(np.nanmean((diff)**2))
 
 def rmse_lat_diff(diff,lats):
-    print('diff.shape :',diff.shape)
+    #print('diff.shape :',diff.shape)
     width = np.shape(diff)[-1]
 
     weights = np.cos(np.deg2rad(lats))
@@ -190,7 +190,7 @@ class ERA5Data:
         data = np.zeros((0, len(self.vars), self.nlat, self.nlon))
         for win_num in range(num_windows):
             shard = int(era5_start_idx + win_num*(da_window//data_freq))
-            # print('win_num,shard :',win_num,shard)
+            print('era5 file {} : {}_{:04d}.h5'.format(win_num,self.start_date.year,shard))
             h5file = h5py.File(os.path.join(self.dir, '{}_{:04d}.h5'.format(self.start_date.year,shard)))
             data_f = []
             for var in self.vars:
@@ -287,9 +287,11 @@ class AnalysisData:
         analysis = np.zeros((len(self.analysis_files), len(self.vars), self.nlat, self.nlon))
         background = np.zeros((len(self.analysis_files), len(self.vars), self.nlat, self.nlon))
         for i, file in enumerate(self.analysis_files):
+            print('analysis_file {} : {}'.format(i,file))
             analysis[i] = np.load(file)[0]
         for i, file in enumerate(self.background_files):
             background[i] = np.load(file)[0]
+            print('background_file {} : {}'.format(i,file))
 
         return analysis, background
 
@@ -498,6 +500,7 @@ class ForecastData():
                                   for n in range(self.spin_up_cycles + 1, cycles, self.forecast_step)]
         forecasts = np.zeros((len(self.forecast_files), self.forecast_len, len(self.vars), self.nlat, self.nlon))
         for i, file in enumerate(self.forecast_files):
+            print('forecast_file {} : {}'.format(i,file))
             #forecasts[i] = np.load(file)
             h5file = h5py.File(file)
             forecast_tmp = []

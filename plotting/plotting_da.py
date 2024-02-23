@@ -43,9 +43,10 @@ lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
 
 obs_start_date = datetime(2014, 1, 1, hour=0)
 analysis_start_date = datetime(2014, 1, 1, hour=12)
-
-save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/data/'
-plot_dir = os.path.join(save_dir,'plots')
+exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/'
+save_dir = os.path.join(exp_dir,'data')
+print('save_dir :',save_dir)
+plot_dir = os.path.join(exp_dir,'plots')
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 da_window = 12

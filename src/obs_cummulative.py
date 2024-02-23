@@ -147,6 +147,8 @@ class ObsDatasetCum(IterableDataset):
                         if self.logger and j==0:
                             self.logger.info('\tobs_datetime not found : {}'.format(obs_datetime))
                         continue
+                    if j == 0:
+                        print('\tobs_step : {},\tobs_datetime : {}'.format(step,obs_datetime))
                     if self.logger and j==0:
                         self.logger.info('\tobs_step : {},\tobs_datetime : {}'.format(step,obs_datetime))
                     all_obs_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 2]
