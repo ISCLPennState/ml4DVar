@@ -2,118 +2,9 @@ from plotting_360obs import *
 import numpy as np
 from datetime import *
 
-vars = ['2m_temperature',
-            '10m_u_component_of_wind',
-            '10m_v_component_of_wind',
-            'geopotential_500',
-            'geopotential_700',
-            'geopotential_850',
-            'geopotential_925',
-            'u_component_of_wind_250',
-            'u_component_of_wind_500',
-            'u_component_of_wind_700',
-            'u_component_of_wind_850',
-            'u_component_of_wind_925',
-            'v_component_of_wind_250',
-            'v_component_of_wind_500',
-            'v_component_of_wind_700',
-            'v_component_of_wind_850',
-            'v_component_of_wind_925',
-            'temperature_250',
-            'temperature_500',
-            'temperature_700',
-            'temperature_850',
-            'temperature_925',
-            'specific_humidity_250',
-            'specific_humidity_500',
-            'specific_humidity_700',
-            'specific_humidity_850',
-            'specific_humidity_925']
-
-
-vars2 = ["2m_temperature",
-        "10m_u_component_of_wind",
-        "10m_v_component_of_wind",
-        "mean_sea_level_pressure",
-        "geopotential_50",
-        "geopotential_100",
-        "geopotential_150",
-        "geopotential_200",
-        "geopotential_250",#
-        "geopotential_300",
-        "geopotential_400",
-        "geopotential_500",
-        "geopotential_600",
-        "geopotential_700",
-        "geopotential_850",
-        "geopotential_925",
-        "geopotential_1000",
-        "u_component_of_wind_50",
-        "u_component_of_wind_100",
-        "u_component_of_wind_150",
-        "u_component_of_wind_200",
-        "u_component_of_wind_250",
-        "u_component_of_wind_300",
-        "u_component_of_wind_400",
-        "u_component_of_wind_500",
-        "u_component_of_wind_600",
-        "u_component_of_wind_700",
-        "u_component_of_wind_850",
-        "u_component_of_wind_925",
-        "u_component_of_wind_1000",
-        "v_component_of_wind_50",
-        "v_component_of_wind_100",
-        "v_component_of_wind_150",
-        "v_component_of_wind_200",
-        "v_component_of_wind_250",
-        "v_component_of_wind_300",
-        "v_component_of_wind_400",
-        "v_component_of_wind_500",
-        "v_component_of_wind_600",
-        "v_component_of_wind_700",
-        "v_component_of_wind_850",
-        "v_component_of_wind_925",
-        "v_component_of_wind_1000",
-        "vertical_velocity_50",#   
-        "vertical_velocity_100",#  
-        "vertical_velocity_150",#
-        "vertical_velocity_200",#
-        "vertical_velocity_250",#
-        "vertical_velocity_300",#
-        "vertical_velocity_400",#
-        "vertical_velocity_500",#
-        "vertical_velocity_600",#
-        "vertical_velocity_700",#
-        "vertical_velocity_850",#
-        "vertical_velocity_925",#
-        "vertical_velocity_1000",# unmeasurable
-        "temperature_50",
-        "temperature_100",
-        "temperature_150",
-        "temperature_200",
-        "temperature_250",
-        "temperature_300",
-        "temperature_400",
-        "temperature_500",
-        "temperature_600",
-        "temperature_700",
-        "temperature_850",
-        "temperature_925",
-        "temperature_1000",
-        "specific_humidity_50",
-        "specific_humidity_100",
-        "specific_humidity_150",
-        "specific_humidity_200",
-        "specific_humidity_250",
-        "specific_humidity_300",
-        "specific_humidity_400",
-        "specific_humidity_500",
-        "specific_humidity_600",
-        "specific_humidity_700",
-        "specific_humidity_850",
-        "specific_humidity_925",
-        "specific_humidity_1000",
-        ]
+sys.path.append("/eagle/MDClimSim/mjp5595/ml4dvar/")
+from stormer.varsStormer import varsStormer
+vars2 = varsStormer().vars_stormer
 
 vars_units = ['K',
             'm/s',
@@ -145,7 +36,7 @@ vars_units = ['K',
 
 means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
 stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
-obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360_2.hdf5"
+obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_2.hdf5"
 
 lat = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lat.npy')
 lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
@@ -153,7 +44,7 @@ lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
 obs_start_date = datetime(2014, 1, 1, hour=0)
 analysis_start_date = datetime(2014, 1, 1, hour=12)
 
-save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/'
+save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/data/'
 plot_dir = os.path.join(save_dir,'plots')
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
@@ -250,6 +141,7 @@ plot_analysis_global_rmse(era5_minus_analysis,
                           #var_idxs = [0],
                           var_idxs = [11],
                           window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                          #lat_weighted = True, 
                           lat_weighted = True, 
                           lats = lat,
                           save = True,

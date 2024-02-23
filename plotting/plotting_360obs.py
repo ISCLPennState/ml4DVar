@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import os, sys, glob, calendar
 import torch
 import inspect
-sys.path.append("/eagle/MDClimSim/awikner/climax_4dvar_troy")
 from datetime import *
 from torch.utils.data import IterableDataset, DataLoader
 from itertools import product
@@ -15,6 +14,7 @@ import subprocess
 
 # TODO obs cummulative!!!
 #from src.obs import *
+sys.path.append("/eagle/MDClimSim/mjp5595/ml4dvar/")
 from src.obs_cummulative import *
 import matplotlib
 #matplotlib.use('TkAgg')
@@ -23,6 +23,7 @@ def rmse_diff(diff):
     return np.sqrt(np.nanmean((diff)**2))
 
 def rmse_lat_diff(diff,lats):
+    print('diff.shape :',diff.shape)
     width = np.shape(diff)[-1]
 
     weights = np.cos(np.deg2rad(lats))
@@ -500,9 +501,10 @@ class ForecastData():
             #forecasts[i] = np.load(file)
             h5file = h5py.File(file)
             forecast_tmp = []
-            for key in range(len(h5file.keys())):
+            for j in range(len(h5file.keys())):
                 # TODO because we save a forecast every 6 hours
-                if int(key) % 2 != 0:
+                key = (j+1)*6
+                if int(key) % 12 != 0:
                     continue
                 #print('key :',key)
                 #print('h5file[str(key)].shape :',h5file[str(key)].shape)
@@ -926,8 +928,9 @@ def plot_analysis_global_rmse(era5_minus_analysis,
     if save or show:
         for var_idx, var in [(idx, var_names[idx]) for idx in var_idxs]:
             # TODO check which idx to use here
-            #length = np.shape(era5_minus_analysis)[0]
-            length = np.shape(era5_minus_analysis)[var_idx]
+            print('era5_minus_analysis.shape :',era5_minus_analysis.shape)
+            length = np.shape(era5_minus_analysis)[0]
+            #length = np.shape(era5_minus_analysis)[var_idx]
             rmse = np.zeros((length))
             rmse_background = np.zeros((length))
 

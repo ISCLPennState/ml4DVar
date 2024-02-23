@@ -29,7 +29,7 @@ if __name__ == '__main__':
     da_window = 12
     model_step = 6
     obs_freq = 3
-    save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
+    save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/data/'.format(save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
