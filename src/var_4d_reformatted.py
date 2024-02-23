@@ -106,9 +106,6 @@ class FourDVar():
         print('Cycling took {:0.4f} seconds'.format(toc-tic))
         if self.logger:
             self.logger.info('Cycling took {:0.4f} seconds'.format(toc-tic))
-        if self.save_analysis:
-            save_analysis = self.x_analysis.detach().cpu().numpy()
-            np.save(os.path.join(self.save_dir, 'analysis_%d_%s.npy' % (itr+self.save_idx, self.savestr)), save_analysis)
 
         cycle_loss = self.loss(print_loss=True, save_loss_comps=False)
         cycle_loss.backward(retain_graph=False)
@@ -122,6 +119,10 @@ class FourDVar():
                                                     lead_time=self.model_step,
                                                     inference=True)
             self.x_analysis = self.x_analysis[-1].unsqueeze(0)
+
+        if self.save_analysis:
+            save_analysis = self.x_analysis.detach().cpu().numpy()
+            np.save(os.path.join(self.save_dir, 'analysis_%d_%s.npy' % (itr+self.save_idx, self.savestr)), save_analysis)
 
         # gets and saves forecasts first before reassigning any variables
         if forecast:
@@ -180,7 +181,6 @@ class FourDVar():
                 x_temp,_,_ = self.run_forecast(x_temp,
                                                forecast_time=self.model_step,
                                                lead_time=self.model_step)
-            #se_obs_temp, save_array = self.calc_obs_err(x_temp.squeeze(0), print_loss, save_array, obs_step=step+1)
             se_obs_temp, save_array = self.calc_obs_err(x_temp, print_loss, save_array, obs_step=step+1)
             se_obs += se_obs_temp
 
