@@ -4,15 +4,9 @@ import torch
 import h5py
 import numpy as np
 
-#import climate_learn as cl
-#from climate_learn.data import OneStepDataRandomizedModule
-#from climate_learn.models import RandomizedForecastLitModule
-#from climate_learn.models.hub import ViTPretrainedAdaLN
-
-#from src.era5_iterative_dataset import ERA5OneStepRandomizedDataset, ERA5MultiLeadtimeDataset
 from stormer.models.hub.vit_adaln import ViTAdaLN
 from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
-from ml4dvar.stormer.stormer_utils import StormerWrapper
+from stormer_utils import StormerWrapper
 
 
 gpu_num = 0 
@@ -28,7 +22,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_val_forecasts'
+    save_dir_name = 'stormer_val_forecasts_test'
 
     save_dir = '/eagle/MDClimSim/mjp5595/data/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
@@ -39,7 +33,7 @@ if __name__ == '__main__':
 
     background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/background_starter.npy' # This is just to initialize the model background
 
-    from ml4dvar.stormer.varsStormer import varsStormer
+    from varsStormer import varsStormer
     vars_stormer = varsStormer().vars_stormer
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
