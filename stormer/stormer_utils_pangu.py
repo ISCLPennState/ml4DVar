@@ -154,21 +154,24 @@ class StormerWrapperPangu:
 
         return norm_preds, raw_preds, norm_diff
 
-    def eval_to_forecast_time_with_lead_time(self, x: torch.Tensor, forecast_time, lead_time=None):
+    def eval_to_forecast_time_with_lead_time(self, x: torch.Tensor, forecast_time, lead_time=None, print_steps=True):
         # x is in the normalized input space
         norm_pred_tot = []
         raw_pred_tot = []
 
         lead_time_combos = self.get_forecast_time_combinations(forecast_time,lead_time)
-        print('\tlead_time_combos :',lead_time_combos)
-        if self.logger:
-            self.logger.info('\tlead_time_combos : {}'.format(lead_time_combos))
+
+        if print_steps:
+            print('\tlead_time_combos :',lead_time_combos)
+            if self.logger:
+                self.logger.info('\tlead_time_combos : {}'.format(lead_time_combos))
 
         norm_pred = x
         for step,lt in enumerate(lead_time_combos):
-            print('\teval model step {}/{} w/ lead time {}'.format(step+1,len(lead_time_combos),lt))
-            if self.logger:
-                self.logger.info('\teval model step {}/{} w/ lead time {}'.format(step+1,len(lead_time_combos),lt))
+            if print_steps:
+                print('\teval model step {}/{} w/ lead time {}'.format(step+1,len(lead_time_combos),lt))
+                if self.logger:
+                    self.logger.info('\teval model step {}/{} w/ lead time {}'.format(step+1,len(lead_time_combos),lt))
             norm_pred, raw_pred, _ = self.forward_given_lead_time(norm_pred, lt)
             raw_pred_tot.append(raw_pred[0,:,:,:])
             norm_pred_tot.append(norm_pred[0,:,:,:])

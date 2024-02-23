@@ -135,14 +135,7 @@ if __name__ == '__main__':
     )
     net.to(device)
     net.eval()
-    #stormer_wrapper = StormerWrapper(
-    #    root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
-    #    variables=vars_stormer,
-    #    net=net,
-    #    list_lead_time=[6],
-    #    ckpt=ckpt_pth,
-    #    device=device,
-    #)
+
     stormer_wrapper = StormerWrapperPangu(
         root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
         variables=vars_stormer,

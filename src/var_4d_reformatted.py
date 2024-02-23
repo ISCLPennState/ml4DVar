@@ -174,14 +174,16 @@ class FourDVar():
         #############################################################################################################
         for step in range((self.da_window//self.model_step) - 1):
             if step == 0:
-                x_temp,_,_ = self.run_forecast(x,
+                x_temp,_,_ = self.run_forecast(x.unsqueeze(0),
                                                forecast_time=self.model_step,
-                                               lead_time=self.model_step)
+                                               lead_time=self.model_step,
+                                               print_steps=False,)
             else:
                 x_temp,_,_ = self.run_forecast(x_temp,
                                                forecast_time=self.model_step,
-                                               lead_time=self.model_step)
-            se_obs_temp, save_array = self.calc_obs_err(x_temp, print_loss, save_array, obs_step=step+1)
+                                               lead_time=self.model_step,
+                                               print_steps=False,)
+            se_obs_temp, save_array = self.calc_obs_err(x_temp[0], print_loss, save_array, obs_step=step+1)
             se_obs += se_obs_temp
 
         #print('(fourDresidual) se_background :',se_background)
@@ -193,7 +195,7 @@ class FourDVar():
         else:
             return 0.5*se_background + se_background_hf + 0.5*(se_obs)
 
-    def run_forecast(self, x, forecast_time, lead_time=None, inference=False):
+    def run_forecast(self, x, forecast_time, lead_time=None, inference=False, print_steps=True):
         # norm_preds: [(num_vars,lat,lon)]*num_steps -> [(63,128,256)]*num_steps
         if inference:
             with torch.inference_mode():
@@ -201,12 +203,14 @@ class FourDVar():
                     x.to(self.device),
                     forecast_time=forecast_time,
                     lead_time=lead_time,
+                    print_steps=print_steps,
                     )
         else:
             norm_preds, raw_preds, lead_time_combos = self.stormer_wrapper.eval_to_forecast_time_with_lead_time(
                 x.to(self.device),
                 forecast_time=forecast_time,
                 lead_time=lead_time,
+                print_steps=print_steps,
                 )
         return norm_preds, raw_preds, lead_time_combos
 
