@@ -143,36 +143,24 @@ vars_units = ['K',
             'kg/kg',
             'kg/kg']
 
-#means = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_mean.npz')
-#stds = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/normalize_std.npz')
-#obs_file = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5"
-
 means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
 stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
-#obs_file = "/eagle/MDClimSim/troyarcomano/ml4dvar_climax_v2/igra_141520_stormer_obs_standardized.hdf5"
-#obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized.hdf5"
 obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360_2.hdf5"
 
 lat = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lat.npy')
 lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
-print('lon min/max (0):',np.min(lon),np.max(lon))
-#lon = lon - 180
-print('lon min/max (1):',np.min(lon),np.max(lon))
 
 obs_start_date = datetime(2014, 1, 1, hour=0)
 analysis_start_date = datetime(2014, 1, 1, hour=12)
 
-#save_dir = '/eagle/MDClimSim/mjp5595/data/var3d_normForecast/'
-#save_dir = '/eagle/MDClimSim/mjp5595/data/var4d_mattObs/'
-#save_dir = '/eagle/MDClimSim/mjp5595/data/test_3D_ObsLoader_ds360_2/'
-#save_dir = '/eagle/MDClimSim/mjp5595/data/var4d_defVars/'
-save_dir = '/eagle/MDClimSim/mjp5595/data/var4d_eyeB/'
+save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/'
+plot_dir = os.path.join(save_dir,'plots')
+if not os.path.exists(plot_dir):
+    os.makedirs(plot_dir)
 da_window = 12
 max_steps_to_plot = 30
 
-#era5_dir = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_1_step_6hr_h5df/train/'
 era5_dir = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/train/'
-#era5_dir = '/eagle/MDClimSim/tungnd/data/datasets/climate/wb2/1.40625deg_6hr_h5df/train/'
 
 analysis = AnalysisData(analysis_start_date,
                         time_step=da_window, 
@@ -237,7 +225,7 @@ plot_stuff = plot_analysis(era5,
                           window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                           save = True,
                           show = False,
-                          save_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/plots/',
+                          save_dir = plot_dir,
                           return_error = True)
 era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background = plot_stuff
 print('Done with plot_analysis')
@@ -250,7 +238,7 @@ _ = plot_analysis_innovation(era5,
                              window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                              save = True,
                              show = False,
-                             save_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/plots/',
+                             save_dir = plot_dir,
                              return_error = False)
 
 plot_analysis_global_rmse(era5_minus_analysis,
@@ -259,13 +247,14 @@ plot_analysis_global_rmse(era5_minus_analysis,
                           vars2,
                           vars_units, 
                           #var_id = 3, 
-                          var_idxs = [0],
+                          #var_idxs = [0],
+                          var_idxs = [11],
                           window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                           lat_weighted = True, 
                           lats = lat,
                           save = True,
                           show = False,
-                          save_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/plots/',
+                          save_dir = plot_dir,
                           return_error = False)
 
 #_ = plot_analysis_innovation(era5, analysis, obs, vars_units, var_idxs = [3], itr_idxs = np.arange(30), save = True, show = False, save_dir='/eagle/MDClimSim/troyarcomano/ml4dvar/plots/',return_error=False)
