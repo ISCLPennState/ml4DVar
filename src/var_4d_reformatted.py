@@ -251,6 +251,8 @@ class FourDVar():
 
         hf_norm = h5py.File(os.path.join(self.save_dir, 'forecasts_%d_%s.h5' % (itr+self.save_idx, self.savestr)),'w')
         hf_raw = h5py.File(os.path.join(self.save_dir, 'raw_forecasts_%d_%s.h5' % (itr+self.save_idx, self.savestr)),'w')
+        hf_norm.create_dataset(str(0), data=self.x_analysis[0].detach().cpu().numpy())
+        hf_raw.create_dataset(str(0), data=self.x_analysis[0].detach().cpu().numpy())
         forecast_time = 0
         for i in range(len(norm_forecasts)):
             hf_norm.create_dataset(str(forecast_time+lead_time_combo[i]), data=norm_forecasts[i].detach().cpu().numpy())
@@ -325,9 +327,6 @@ class FourDVar():
         # step1 -> 12hrs for 4dvar
         #
         # Obs are (b, time_step, vars, num_obs)
-
-        #if self.logger:
-        #    self.logger.info('calc_obs_err x.shape : {}'.format(x.shape))
 
         se_obs = torch.zeros(1).to(device)
         for var in range(len(self.vars)):
