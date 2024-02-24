@@ -75,7 +75,7 @@ class varsStormer():
             'K',
             'm/s',
             'm/s',
-            'Pa???',
+            'Pa',
             'm^2/s^2',
             'm^2/s^2',
             'm^2/s^2',
