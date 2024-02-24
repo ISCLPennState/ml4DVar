@@ -1,6 +1,7 @@
 from plotting_360obs import *
 import numpy as np
 from datetime import *
+import sys
 
 sys.path.append("/eagle/MDClimSim/mjp5595/ml4dvar/")
 from stormer.varsStormer import varsStormer
@@ -17,7 +18,11 @@ lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
 obs_start_date = datetime(2014, 1, 1, hour=0)
 analysis_start_date = datetime(2014, 1, 1, hour=12)
 
-exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/'
+base_dir = '/eagle/MDClimSim/mjp5595/data/stormer/'
+if len(sys.argv) > 1:
+    exp_dir = os.path.join(base_dir,sys.argv[1])
+else:
+    exp_dir = os.path.join(base_dir,'stormer3d')
 
 save_dir = os.path.join(exp_dir,'data')
 print('save_dir :',save_dir)
