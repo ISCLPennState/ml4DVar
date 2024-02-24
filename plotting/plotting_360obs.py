@@ -686,7 +686,8 @@ def plot_analysis_innovation(era5,
                              err_var_lim = None,
                              save_dir = None,
                              zero_center_error = True,
-                             return_error = False):
+                             return_error = False,
+                             plot_obs=True):
     if not save and not show and not return_error:
         print('Function does not return anything, aborting...')
         return
@@ -746,10 +747,11 @@ def plot_analysis_innovation(era5,
                 pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, analysis_increment[itr, var_idx], vmin = -1*max_val,
                                                vmax = max_val, cmap = 'seismic')
 
-                #print(' innovation[itr, var_idx]', innovation[itr, var_idx])
-                ra_obs = axs.scatter(obs_lon_plot, obs_lat_plot, c = innovation[itr, var_idx],
-                                              vmin=-1*max_val, vmax=max_val, cmap='seismic',
-                                              edgecolor='k', s=35)
+                if plot_obs:
+                    #print(' innovation[itr, var_idx]', innovation[itr, var_idx])
+                    ra_obs = axs.scatter(obs_lon_plot, obs_lat_plot, c = innovation[itr, var_idx],
+                                                vmin=-1*max_val, vmax=max_val, cmap='seismic',
+                                                edgecolor='k', s=35, linewidth=0.5)
 
                 plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
                 axs.set_title('Analysis Increment')
@@ -763,8 +765,12 @@ def plot_analysis_innovation(era5,
                 if save:
                     #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
                     #        bbox_inches = 'tight')
-                    plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
-                            bbox_inches = 'tight')
+                    if plot_obs:
+                        plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
+                                bbox_inches = 'tight')
+                    else:
+                        plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}_noObs.png'), dpi = 200,
+                                bbox_inches = 'tight')
                 if show:
                     plt.show()
                 else:

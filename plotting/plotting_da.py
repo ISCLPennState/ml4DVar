@@ -102,7 +102,20 @@ _ = plot_analysis_innovation(era5,
                              save = True,
                              show = False,
                              save_dir = plot_dir,
-                             return_error = False)
+                             return_error = False,
+                             plot_obs = True)
+
+_ = plot_analysis_innovation(era5,
+                             analysis,
+                             obs,
+                             var_units,
+                             var_idxs = [0,3,11],
+                             window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                             save = True,
+                             show = False,
+                             save_dir = plot_dir,
+                             return_error = False,
+                             plot_obs = False)
 
 plot_analysis_global_rmse(era5_minus_analysis,
                           era5_minus_background,
