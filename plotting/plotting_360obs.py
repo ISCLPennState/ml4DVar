@@ -802,7 +802,7 @@ def plot_analysis_global_rmse(era5_minus_analysis,
     if save or show:
         for var_idx, var in [(idx, var_names[idx]) for idx in var_idxs]:
             # TODO check which idx to use here
-            print('era5_minus_analysis.shape :',era5_minus_analysis.shape)
+            #print('era5_minus_analysis.shape :',era5_minus_analysis.shape)
             length = np.shape(era5_minus_analysis)[0]
             #length = np.shape(era5_minus_analysis)[var_idx]
             rmse = np.zeros((length))
