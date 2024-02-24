@@ -12,11 +12,12 @@ from src.dv import *
 class ObsError(torch.nn.Module):
     def __init__(self, vars, var_types, var_obs_errs, obs_perc_errs, var_stds):
         super().__init__()
-        print('vars :',vars)
+        #print('vars :',vars)
         mult_vars = np.zeros(len(vars), dtype = bool)
         obs_err = np.zeros(len(vars), dtype = 'f4')
         for var_type, var_obs_err, obs_perc_err in zip(var_types, var_obs_errs, obs_perc_errs):
             var_idxs = [i for i, var in enumerate(vars) if var_type in var]
+            #print('var_type, var_idxs :',var_type,var_idxs)
             if not obs_perc_err:
                 obs_err[var_idxs] = (var_obs_err / np.array([var_stds[var][0] for var in vars if var_type in var]))**2.0
             else:

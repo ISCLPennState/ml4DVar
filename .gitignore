@@ -166,3 +166,4 @@ obs/
 plots/
 figs/
 process-obs/*.png
+*.npy

@@ -150,6 +150,9 @@ class FourDVar():
         # Background is the forecast of previous analysis
 
         # x_analysis becomes forecast of previous analysis
+        print('Setting new x_analysis to new background')
+        if self.logger:
+            self.logger.info('Setting new x_analysis to new background')
         self.x_analysis = torch.clone(self.background).detach()
         self.x_analysis.requires_grad_(True)
 
@@ -265,7 +268,7 @@ class FourDVar():
         #return torch.optim.LBFGS([self.x_analysis], lr = self.lr, max_iter = 200, history_size=300, tolerance_grad = 1e-5)
         #return torch.optim.LBFGS([self.x_analysis], lr = self.lr, max_iter = 10, history_size=300, tolerance_grad = 1e-5)
 
-    def fourDvar(self, forecast = False):
+    def cycleDataAssimilation(self, forecast = False):
         
         self.x_analysis = torch.clone(self.background)
         self.x_analysis.requires_grad_(True)

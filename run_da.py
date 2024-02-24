@@ -29,7 +29,13 @@ if __name__ == '__main__':
     da_window = 12
     model_step = 6
     obs_freq = 3
+
+    exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}'.format(save_dir_name)
+    if not os.path.exists(exp_dir):
+        os.makedirs(exp_dir)
+
     save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/data/'.format(save_dir_name)
+    save_dir = os.path.join(exp_dir,'data')
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -39,6 +45,9 @@ if __name__ == '__main__':
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
     dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
 
+
+    #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/climaX/background_24hr_diff_sh_coeffs_var_climaxv2_standardized_128_uv.npy' #B (spherical harmonics)
+    #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/climaX/background_24hr_diff_hf_var_climaxv2_standardized_128_uv.npy' #B (grid space (HF))
     background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_sh_coeffs_var_stormer_standardized_128_uv.npy' #B (spherical harmonics)
     background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_hf_var_stormer_standardized_128_uv.npy' #B (grid space (HF))
 
@@ -65,7 +74,7 @@ if __name__ == '__main__':
     print('Starting with analysis file :',background_file_np)
     ####################################################################################################################################
 
-    log_dir = os.path.join(save_dir,'logs')
+    log_dir = os.path.join(exp_dir,'logs')
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
     num_logs = len(os.listdir(log_dir))
@@ -80,17 +89,28 @@ if __name__ == '__main__':
     vars_stormer = varsStormer().vars_stormer
 
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
-    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
+    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 5000.]
     obs_perc_err = [False, False, False, False, False, False]
     obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds)
     print('obs_err :',obs_err.obs_err)
+    if logger:
+        logger.info('obs_err : {}'.format(obs_err))
 
     # from src/dv.py
     dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file)
 
-    background_err = torch.from_numpy(np.load(background_err_file)).float().to(device)
+    be = np.load(background_err_file)
+    bef = np.load(background_err_hf_file)
+
+    ## This is for converting climaX B -> stormer B
+    #be_idxs = np.arange(69)
+    #be_idxs = np.where(be_idxs>=43,be_idxs+13,be_idxs)
+    #be = be[be_idxs]
+    #bef = bef[be_idxs]
+
+    background_err = torch.from_numpy(be).float().to(device)
     background_err = background_err[torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
-    background_err_hf = torch.from_numpy(np.load(background_err_hf_file)).float().to(device)
+    background_err_hf = torch.from_numpy(bef).float().to(device)
     background_err_hf = background_err_hf[
         torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
 
@@ -178,4 +198,4 @@ if __name__ == '__main__':
                         save_idx=start_idx+1,
                         logger=logger,
                         )
-    fourd_da.fourDvar(forecast=True)
+    fourd_da.cycleDataAssimilation(forecast=True)
