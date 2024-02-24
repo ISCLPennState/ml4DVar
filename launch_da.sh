@@ -2,13 +2,11 @@
 #PBS -l select=1:system=polaris
 #PBS -l walltime=1:00:00
 #PBS -q debug
-#PBS -A NeuralDE 
+#PBS -A MDClimSim
 #PBS -l filesystems=home:eagle:grand
 #PBS -m bae
 
 ml conda
-conda activate climaX
+conda activate /eagle/MDClimSim/troyarcomano/.conda/envs/pytorch_2_troy/
 cd /eagle/MDClimSim/mjp5595/ml4dvar/
-#python run_da.py var4d
-#python run_da.py $1 $2
-python run_da.py var4d var4d_defVars
+python run_da.py $da_type $exp_name
