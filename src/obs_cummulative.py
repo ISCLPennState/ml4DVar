@@ -54,7 +54,7 @@ def observe_linear(x, H_idxs, H_vals, logger=None):
 class ObsDatasetCum(IterableDataset):
     def __init__(self, file_path, start_datetime, end_datetime, vars, 
                  obs_freq=3, da_window=12, obs_start_idx=0, obs_steps=1,
-                 logger=None):
+                 only_recent_obs=False, logger=None):
         super().__init__()
         self.save_hyperparameters()
         self.file_path = file_path
@@ -75,6 +75,8 @@ class ObsDatasetCum(IterableDataset):
         self.start_datetime = self.start_datetime + timedelta(hours=self.da_window*self.obs_start_idx)
         self.curr_datetime = self.start_datetime + timedelta(hours=self.da_window)
 
+        self.only_recent_obs = only_recent_obs
+
     # This accumulates the observations that take place within the obs_window up/including the current datetime
     # eg. for obs_window=12hrs and a datetime of (2014,1,1,12) it will accumulate the datetimes (2014,1,1,3),(2014,1,1,6),(2014,1,1,9),(2014,1,1,12)
     # with a obs_window=6hrs and obs_steps=2 it will accumulate [(2014,1,1,3),(2014,1,1,6)],[(2014,1,1,9),(2014,1,1,12)]
@@ -85,6 +87,12 @@ class ObsDatasetCum(IterableDataset):
             shapes = np.zeros((self.obs_steps, len(self.vars)), dtype = int)
             obs_datetimes = [self.start_datetime + timedelta(hours=int((i+1)*self.obs_freq)) for i in range(int(self.da_window/self.obs_freq))]
             obs_per_step = self.da_window // (self.obs_freq*self.obs_steps)
+
+            if self.only_recent_obs:
+                obs_datetimes = [obs_datetimes[-1]]
+                print('Taking only the most recent obs_datetime')
+                if self.logger:
+                    self.logger.info('Taking only the most recent obs_datetime')
 
             print('all obs_datetimes :',obs_datetimes)
             if self.logger:

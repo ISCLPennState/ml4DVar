@@ -94,7 +94,7 @@ if __name__ == '__main__':
     obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds)
     print('obs_err :',obs_err.obs_err)
     if logger:
-        logger.info('obs_err : {}'.format(obs_err))
+        logger.info('obs_err : {}'.format(obs_err.obs_err))
 
     # from src/dv.py
     dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file)
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     background_err_hf = background_err_hf[
         torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
 
-    # Set B to identity matrix
+    ## Set B to identity matrix
     #print('background_err.shape (0):',background_err.shape)
     #a,b = background_err.shape
     #background_err = torch.eye(a,b)
@@ -132,13 +132,16 @@ if __name__ == '__main__':
 
     # in 3d var se_obs makes the assumption that all the obs happen at the analysis time
     # 4d var we optimizing trajectory instead of point in time
+    use_only_recent_obs = False
+    if da_type == 'var3d':
+        use_only_recent_obs = True
     obs_steps = 1
     if da_type == 'var4d':
         obs_steps = da_window // model_step
     obs_dataset = ObsDatasetCum(filepath, start_date, end_date, vars_stormer, 
                                 obs_freq=obs_freq, da_window=da_window, 
                                 obs_start_idx=start_idx+1, obs_steps=obs_steps,
-                                logger=logger)
+                                only_recent_obs=use_only_recent_obs, logger=logger)
     obs_loader = DataLoader(obs_dataset, batch_size=1, num_workers=0)
 
     ###################################################################################################################
@@ -192,7 +195,7 @@ if __name__ == '__main__':
                         da_type=da_type,
                         vars=vars_stormer,
                         b_inflation=b_inflation,
-                        max_iter=200,
+                        max_iter=700,
                         savedir=save_dir,
                         device=device,
                         save_idx=start_idx+1,

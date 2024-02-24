@@ -31,7 +31,7 @@ class FourDVar():
         self.dv_layer = dv_layer
 
         self.background_err = self.background_err*b_inflation
-        #self.background_err_hf = self.background_err_hf*b_inflation
+        self.background_err_hf = self.background_err_hf*b_inflation
 
         self.model_step = model_step
         self.da_window = da_window
@@ -144,7 +144,8 @@ class FourDVar():
             self.logger.info('Running forecast for next background (forecast_time : {})'.format(forecast_time))
         self.background,_,_ = self.run_forecast(self.x_analysis,
                                                 forecast_time=forecast_time,
-                                                lead_time=None,
+                                                #lead_time=None,
+                                                lead_time=self.model_step,
                                                 inference=True)
         self.background = self.background[-1].unsqueeze(0)
         # Background is the forecast of previous analysis
