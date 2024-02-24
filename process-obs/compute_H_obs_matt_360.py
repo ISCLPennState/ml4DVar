@@ -94,7 +94,7 @@ print('\nOld stds :',old_stds)
 
 dir = '/eagle/MDClimSim/awikner'
 troy_dir = '/eagle/MDClimSim/troyarcomano/ml4dvar_climax_v2/'
-matt_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/'
+matt_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/obs/'
 
 #full_obs_file = 'irga_1415_proc.hdf5'
 #full_surface_obs_file = 'irga_1415_surface_proc.hdf5'
@@ -102,29 +102,23 @@ matt_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/'
 
 full_obs_file = 'irga_2014_2015_2020_all.hdf5'
 msl_obs_file = 'irga_2014_2015_2020_msl_all.hdf5'
-obs_file = 'igra_141520_stormer_obs_standardized_360_test.hdf5'
+obs_file = 'igra_141520_stormer_obs_standardized_360_3.hdf5'
+obs_file_raw = 'igra_141520_stormer_obs_standardized_360_3_raw.hdf5'
 
 if os.path.exists(os.path.join(matt_dir, obs_file)):
     os.remove(os.path.join(matt_dir, obs_file))
 f = h5py.File(os.path.join(dir, full_obs_file), 'r')
 f_msl = h5py.File(os.path.join(dir, msl_obs_file), 'r')
 f_obs = h5py.File(os.path.join(matt_dir, obs_file), 'a')
+#f_obs_raw = h5py.File(os.path.join(matt_dir, obs_file_raw), 'a')
 #f_surface = h5py.File(os.path.join(dir, full_surface_obs_file), 'r')
 
 modeled_vars = ['gph', 'uwind', 'vwind', 'temp', 'q']
 mean_std_names = ['geopotential', 'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity']
 
-#surface_modeled_vars = ['temp', 'uwind', 'vwind']
-surface_modeled_vars = ['surface_temp', 'surface_uwind', 'surface_vwind']
 modeled_surface_vars = ['surface_press', 'surface_uwind', 'surface_vwind', 'surface_temp']
-surface_mean_std_names = ['2m_temperature', '10m_u_component_of_wind', '10m_v_component_of_wind']
 
 pred_plevels = np.array([1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100, 50], dtype='f8')
-
-vars_dict = dict(zip(modeled_vars, mean_std_names))
-surface_vars_dict = dict(zip(surface_modeled_vars, surface_mean_std_names))
-#gph_pred_plevels = np.array([500, 700, 850, 925], dtype='f8')*100
-#pred_plevels     = np.array([250, 500, 700, 850, 925], dtype='f8')*100
 
 for year in list(f.keys()):
     yr_grp = f_obs.create_group(year)
@@ -148,7 +142,7 @@ for year in list(f.keys()):
                             obs_data = f[year + '/' + month + '/' + day + '/' + hour + '/' + var][:]
                         except:
                             continue
-                    obs_data = f[year + '/' + month + '/' + day + '/' + hour + '/' + var][:] # (n_obs, 4) -> (605, 4)
+                    #obs_data = f[year + '/' + month + '/' + day + '/' + hour + '/' + var][:] # (n_obs, 4) -> (605, 4)
                     var_mean = means[f'{SOUNDING_TO_STORMER_sl[var]}'][0]
                     var_std = stds[f'{SOUNDING_TO_STORMER_sl[var]}'][0]
 

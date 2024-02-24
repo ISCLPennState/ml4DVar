@@ -39,7 +39,7 @@ if __name__ == '__main__':
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_2.hdf5"
+    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
 
     means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     vars_stormer = varsStormer().vars_stormer
 
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
-    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 5000.]
+    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
     obs_perc_err = [False, False, False, False, False, False]
     obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds)
     print('obs_err :',obs_err.obs_err)
