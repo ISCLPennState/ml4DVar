@@ -4,35 +4,8 @@ from datetime import *
 
 sys.path.append("/eagle/MDClimSim/mjp5595/ml4dvar/")
 from stormer.varsStormer import varsStormer
-vars2 = varsStormer().vars_stormer
-
-vars_units = ['K',
-            'm/s',
-            'm/s',
-            'm^2/s^2',
-            'm^2/s^2',
-            'm^2/s^2',
-            'm^2/s^2',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'm/s',
-            'K',
-            'K',
-            'K',
-            'K',
-            'K',
-            'kg/kg',
-            'kg/kg',
-            'kg/kg',
-            'kg/kg',
-            'kg/kg']
+vars = varsStormer().vars_stormer
+var_units = varsStormer().var_units
 
 means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
 stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
@@ -43,7 +16,10 @@ lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
 
 obs_start_date = datetime(2014, 1, 1, hour=0)
 analysis_start_date = datetime(2014, 1, 1, hour=12)
-exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/'
+
+#exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d/'
+exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer3d_climaxB/'
+
 save_dir = os.path.join(exp_dir,'data')
 print('save_dir :',save_dir)
 plot_dir = os.path.join(exp_dir,'plots')
@@ -56,7 +32,7 @@ era5_dir = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr
 
 analysis = AnalysisData(analysis_start_date,
                         time_step=da_window, 
-                        vars=vars2, 
+                        vars=vars, 
                         dir=save_dir, 
                         means=means, 
                         stds=stds, 
@@ -64,21 +40,12 @@ analysis = AnalysisData(analysis_start_date,
                         lon=lon)
 num_windows,_,_,_ = analysis.analysis.shape
 print('analysis.shape :',analysis.analysis.shape)
-#era5 = ERA5Data(start_date,
-#                analysis.end_date,
-#                time_step=12,
-#                vars=vars2,
-#                dir=era5_dir,
-#                shards=min(40,times),
-#                means=means,
-#                stds=stds,
-#                lat=lat,
-#                lon=lon)
+
 era5 = ERA5Data(analysis_start_date,
                 da_window=da_window,
                 data_freq=6,
                 num_windows=num_windows,
-                vars=vars2,
+                vars=vars,
                 dir=era5_dir,
                 means=means,
                 stds=stds,
@@ -89,7 +56,7 @@ print('era5.shape :',era5.data.shape)
 obs = ObsData(obs_start_date,
               analysis.end_date,
               12,
-              vars2,
+              vars,
               obs_file,
               means = means,
               stds = stds,
@@ -99,7 +66,7 @@ print('obs.obs :',len(obs.obs))
 
 forecasts = ForecastData(analysis_start_date,
                          12,
-                         vars2,
+                         vars,
                          dir=save_dir,
                          means = means,
                          stds = stds,
@@ -107,14 +74,14 @@ forecasts = ForecastData(analysis_start_date,
                          lon = lon)
 print('forecasts.forecasts.shape :',forecasts.forecasts.shape)
 
-#era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background = plot_analysis(era5, analysis, obs, vars_units, var_idxs = np.arange(len(vars)), itr_idxs = np.arange(30), save = False, show = False, save_dir='/eagle/MDClimSim/troyarcomano/ml4dvar/plots/',return_error=True)
 plot_stuff = plot_analysis(era5,
                           analysis,
                           obs,
-                          vars_units,
-                          #var_idxs = np.arange(len(vars2)),
-                          var_idxs = [0],
-                          window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                          var_units,
+                          #var_idxs = [0,3,11],
+                          var_idxs = None,
+                          #window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                          window_idxs = [0],
                           save = True,
                           show = False,
                           save_dir = plot_dir,
@@ -122,35 +89,34 @@ plot_stuff = plot_analysis(era5,
 era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background = plot_stuff
 print('Done with plot_analysis')
 
-_ = plot_analysis_innovation(era5,
-                             analysis,
-                             obs,
-                             vars_units,
-                             var_idxs = [0],
-                             window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
-                             save = True,
-                             show = False,
-                             save_dir = plot_dir,
-                             return_error = False)
+#_ = plot_analysis_innovation(era5,
+#                             analysis,
+#                             obs,
+#                             var_units,
+#                             var_idxs = [0,3,11],
+#                             window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+#                             save = True,
+#                             show = False,
+#                             save_dir = plot_dir,
+#                             return_error = False)
+#
+#plot_analysis_global_rmse(era5_minus_analysis,
+#                          era5_minus_background,
+#                          analysis,
+#                          vars,
+#                          var_units, 
+#                          #var_id = 3, 
+#                          var_idxs = [0,3,11],
+#                          window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+#                          #lat_weighted = True, 
+#                          lat_weighted = True, 
+#                          lats = lat,
+#                          save = True,
+#                          show = False,
+#                          save_dir = plot_dir,
+#                          return_error = False)
 
-plot_analysis_global_rmse(era5_minus_analysis,
-                          era5_minus_background,
-                          analysis,
-                          vars2,
-                          vars_units, 
-                          #var_id = 3, 
-                          #var_idxs = [0],
-                          var_idxs = [11],
-                          window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
-                          #lat_weighted = True, 
-                          lat_weighted = True, 
-                          lats = lat,
-                          save = True,
-                          show = False,
-                          save_dir = plot_dir,
-                          return_error = False)
-
-#_ = plot_analysis_innovation(era5, analysis, obs, vars_units, var_idxs = [3], itr_idxs = np.arange(30), save = True, show = False, save_dir='/eagle/MDClimSim/troyarcomano/ml4dvar/plots/',return_error=False)
+#_ = plot_analysis_innovation(era5, analysis, obs, var_units, var_idxs = [3], itr_idxs = np.arange(30), save = True, show = False, save_dir='/eagle/MDClimSim/troyarcomano/ml4dvar/plots/',return_error=False)
 '''
 print(np.shape(analysis_obs_error))
 print(np.shape(analysis_obs_error[:,0]))
