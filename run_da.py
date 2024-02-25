@@ -8,7 +8,6 @@ from src.obs_cummulative import ObsDatasetCum, ObsError
 from src.var_4d_reformatted import FourDVar
 
 from stormer.models.hub.vit_adaln import ViTAdaLN
-from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
 from stormer.stormer_utils import StormerWrapper
 from stormer.stormer_utils_pangu import StormerWrapperPangu
 
@@ -39,7 +38,7 @@ if __name__ == '__main__':
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
+    obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
 
     means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
@@ -53,7 +52,7 @@ if __name__ == '__main__':
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
-    b_inflation = 1
+    b_inflation = 1 
     if da_type == 'var4d':
         b_inflation = 1
 
@@ -138,7 +137,7 @@ if __name__ == '__main__':
     obs_steps = 1
     if da_type == 'var4d':
         obs_steps = da_window // model_step
-    obs_dataset = ObsDatasetCum(filepath, start_date, end_date, vars_stormer, 
+    obs_dataset = ObsDatasetCum(obs_filepath, start_date, end_date, vars_stormer, 
                                 obs_freq=obs_freq, da_window=da_window, 
                                 obs_start_idx=start_idx+1, obs_steps=obs_steps,
                                 only_recent_obs=use_only_recent_obs, logger=logger)
