@@ -552,127 +552,6 @@ class ForecastData():
         for k, v in self.hparams.items():
             setattr(self, k, v)
 
-def plot_observations(era5,
-                  analysis,
-                  obs_new,
-                  obs_old,
-                  units,
-                  save = False,
-                  show = True,
-                  figsize = (15, 7),
-                  var_lim = None,
-                  err_var_lim = None,
-                  var_idxs = None,
-                  save_dir = None,
-                  window_idxs = None, 
-                  zero_center_error = True, 
-                  return_error = False):
-    if not save and not show and not return_error:
-        print('Function does not return anything, aborting...')
-        return
-    if save and not save_dir:
-        save_dir = os.path.join(os.getcwd(), 'plots')
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-    if var_idxs is None:
-        var_idxs = np.arange(analysis.analysis.shape[1], dtype = int)
-    if var_lim is None:
-        print('era5.varmax :',era5.varmax)
-        print('analysis.varmax :',analysis.varmax)
-        print('obs_old.varmax :',obs_old.varmax)
-        print('obs_new.varmax :',obs_new.varmax)
-        var_max = np.maximum(np.maximum(np.maximum(era5.varmax, analysis.varmax), obs_old.varmax), obs_new.varmax)
-        var_min = np.minimum(np.minimum(np.minimum(era5.varmin, analysis.varmin), obs_old.varmin), obs_new.varmax)
-        #var_max = np.maximum(np.maximum(era5.varmax, analysis.varmax), obs_old.varmax)
-        #var_min = np.minimum(np.minimum(era5.varmin, analysis.varmin), obs_old.varmin)
-        var_lim = [(vmin, vmax) for vmin, vmax in zip(var_min, var_max)]
-    print('var_max :',var_max)
-    era5_data = era5.data[:analysis.analysis.shape[0]]
-    era5_minus_analysis = era5_data - analysis.analysis
-    era5_minus_background = era5_data - analysis.background
-    if window_idxs is None:
-        window_idxs = np.arange(era5_minus_analysis.shape[0])
-    era5_err_max = np.max(era5_minus_analysis, axis = (0, 2, 3))
-    era5_err_min = np.min(era5_minus_analysis, axis = (0, 2, 3))
-    if err_var_lim is None:
-        era5_obs, era5_obs_error, era5_obs_error_max, era5_obs_error_min = obs_new.observe_all(era5_data,
-                                                                                           return_error = True,
-                                                                                           return_error_maxmin = True)
-        analysis_obs, analysis_obs_error, analysis_obs_error_max, analysis_obs_error_min = \
-            obs_new.observe_all(analysis.analysis, return_error=True, return_error_maxmin=True)
-        err_var_max = np.maximum(np.maximum(era5_obs_error_max, analysis_obs_error_max), era5_err_max)
-        err_var_min = np.minimum(np.minimum(era5_obs_error_min, analysis_obs_error_min), era5_err_min)
-        if zero_center_error:
-            err_var_maxmin = np.maximum(np.abs(err_var_max), np.abs(err_var_min))
-            err_var_lim = [(-vmax, vmax) for vmax in err_var_maxmin]
-        else:
-            err_var_lim = [(vmin, vmax) for vmin, vmax in zip(err_var_min, err_var_max)]
-    else:
-        era5_obs, era5_obs_error = obs_new.observe_all(era5_data, return_error=True)
-        analysis_obs, analysis_obs_error = obs_new.observe_all(analysis.analysis, return_error=True)
-
-    if save or show:
-        for var_idx, var in [(idx, analysis.vars[idx]) for idx in var_idxs]:
-            for itr in window_idxs:
-                if itr != 0:
-                    continue
-                plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
-                title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}'
-                print(title_str)
-                obs_latlon_new = obs_new.obs_latlon[itr][var_idx, :obs_old.n_obs[itr][var_idx]].detach().cpu().numpy()
-                obs_lat_plot_new = obs_latlon_new[:, 0]
-                #obs_lon_plot_new = (obs_latlon_new[:, 1] + 360) % 360
-                obs_lon_plot_new = (obs_latlon_new[:, 1])
-                print('obs_latlon_new :',obs_latlon_new)
-                print('obs_latlon_new.shape :',obs_latlon_new.shape)
-                print('obs_new.obs[itr].shape :',obs_new.obs[itr].shape)
-                obs_latlon_old = obs_old.obs_latlon[itr][var_idx, :obs_old.n_obs[itr][var_idx]].detach().cpu().numpy()
-                obs_lat_plot_old = obs_latlon_old[:, 0]
-                #obs_lon_plot_old = (obs_latlon_old[:, 1] + 360) % 360
-                obs_lon_plot_old = (obs_latlon_old[:, 1])
-                print('obs_latlon_old :',obs_latlon_old)
-                print('obs_latlon_old.shape :',obs_latlon_old.shape)
-                print('obs_old.obs[itr].shape :',obs_old.obs[itr].shape)
-                fig, axs = plt.subplots(2, 1, sharex = True, sharey = True, figsize = figsize)
-
-                sp_obs = axs[0].scatter(obs_lon_plot_new, obs_lat_plot_new,
-                                          c = obs_new.obs[itr][var_idx, :min(obs_new.n_obs[itr][var_idx],len(obs_lon_plot_new))].detach().cpu().numpy(),
-                                          vmin=var_lim[var_idx][0], vmax=var_lim[var_idx][1], cmap='viridis',
-                                          edgecolor = 'k', s= 35)
-
-                sp_obs = axs[1].scatter(obs_lon_plot_old, obs_lat_plot_old,
-                                          c = obs_old.obs[itr][var_idx, :min(obs_old.n_obs[itr][var_idx],len(obs_lon_plot_old))].detach().cpu().numpy(),
-                                          vmin=var_lim[var_idx][0], vmax=var_lim[var_idx][1], cmap='viridis',
-                                          edgecolor = 'k', s= 35)
-
-                plt.colorbar(sp_obs, ax = axs[0], label=units[var_idx])
-                axs[0].set_title('Observations new')
-                plt.colorbar(sp_obs, ax = axs[1], label=units[var_idx])
-                axs[1].set_title('Observations old')
-
-                axs[0].set_ylabel('Lat')
-                axs[1].set_ylabel('Lat')
-                axs[0].set_xlabel('Lon')
-                axs[1].set_xlabel('Lon')
-
-                plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
-                fig.suptitle(title_str)
-    
-                plt.tight_layout()
-
-                if save:
-                    plt.savefig(os.path.join(save_dir, 'old_vs_new_obs.png'), dpi = 400,
-                            bbox_inches = 'tight')
-                if show:
-                    plt.show()
-                else:
-                    plt.close(fig)
-
-    if return_error:
-        return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background
-    else:
-        return
-
 def plot_analysis_innovation(era5,
                              analysis,
                              obs,
@@ -755,6 +634,7 @@ def plot_analysis_innovation(era5,
 
                 plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
                 axs.set_title('Analysis Increment')
+                axs.set_xticks(np.linspace(0,360,9))
 
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
                 fig.suptitle(title_str)
@@ -936,34 +816,18 @@ def plot_analysis(era5,
             os.makedirs(save_dir)
     if var_idxs is None:
         var_idxs = np.arange(analysis.analysis.shape[1], dtype = int)
-    if var_lim is None:
-        var_max = np.maximum(np.maximum(era5.varmax, analysis.varmax), obs.varmax)
-        var_min = np.minimum(np.minimum(era5.varmin, analysis.varmin), obs.varmin)
-        var_lim = [(vmin, vmax) for vmin, vmax in zip(var_min, var_max)]
 
     era5_data = era5.data[:analysis.analysis.shape[0]]
     era5_minus_analysis = era5_data - analysis.analysis
     era5_minus_background = era5_data - analysis.background
     if window_idxs is None:
         window_idxs = np.arange(era5_minus_analysis.shape[0])
-    era5_err_max = np.max(era5_minus_analysis, axis = (0, 2, 3))
-    era5_err_min = np.min(era5_minus_analysis, axis = (0, 2, 3))
     if err_var_lim is None:
         era5_obs, era5_obs_error, era5_obs_error_max, era5_obs_error_min = obs.observe_all(era5_data,
                                                                                            return_error = True,
                                                                                            return_error_maxmin = True)
         analysis_obs, analysis_obs_error, analysis_obs_error_max, analysis_obs_error_min = \
             obs.observe_all(analysis.analysis, return_error=True, return_error_maxmin=True)
-
-
-        err_var_max = np.maximum(np.maximum(era5_obs_error_max, analysis_obs_error_max), era5_err_max)
-        err_var_min = np.minimum(np.minimum(era5_obs_error_min, analysis_obs_error_min), era5_err_min)
-
-        if zero_center_error:
-            err_var_maxmin = np.maximum(np.abs(err_var_max), np.abs(err_var_min))
-            err_var_lim = [(-vmax, vmax) for vmax in err_var_maxmin]
-        else:
-            err_var_lim = [(vmin, vmax) for vmin, vmax in zip(err_var_min, err_var_max)]
     else:
         era5_obs, era5_obs_error = obs.observe_all(era5_data, return_error=True)
         analysis_obs, analysis_obs_error = obs.observe_all(analysis.analysis, return_error=True)
@@ -1043,6 +907,7 @@ def plot_analysis(era5,
                                                vmax = vmax, cmap = 'viridis')
                 plt.colorbar(pc_era5, ax = axs[0,0], label=units[var_idx])
                 axs[0, 0].set_title('ERA5')
+                axs[0, 0].set_xticks(np.linspace(0,360,9))
 
                 pc_analysis = axs[0,1].pcolormesh(analysis.lon, analysis.lat, analysis.analysis[itr, var_idx],
                                                   vmin = vmin, vmax = vmax, cmap = 'viridis')
@@ -1097,6 +962,191 @@ def plot_analysis(era5,
                     #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_{analysis.runstr}.png'), dpi = 400,
                     #        bbox_inches = 'tight')
                     plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_{analysis.runstr}.png'), dpi = 400,
+                            bbox_inches = 'tight')
+                if show:
+                    plt.show()
+                else:
+                    plt.close(fig)
+
+    if return_error:
+        return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background
+    else:
+        return
+
+def plot_background_vs_analysis(era5,
+                                analysis,
+                                obs,
+                                units,
+                                save = False,
+                                show = True,
+                                figsize = (15, 7),
+                                var_lim = None,
+                                err_var_lim = None,
+                                var_idxs = None,
+                                save_dir = None,
+                                window_idxs = None, 
+                                zero_center_error = True, 
+                                return_error = False):
+    if not save and not show and not return_error:
+        print('Function does not return anything, aborting...')
+        return
+    if save and not save_dir:
+        save_dir = os.path.join(os.getcwd(), 'plots')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+    if var_idxs is None:
+        var_idxs = np.arange(analysis.analysis.shape[1], dtype = int)
+
+    era5_data = era5.data[:analysis.analysis.shape[0]]
+    era5_minus_analysis = era5_data - analysis.analysis
+    era5_minus_background = era5_data - analysis.background
+    if window_idxs is None:
+        window_idxs = np.arange(era5_minus_analysis.shape[0])
+    if err_var_lim is None:
+        era5_obs, era5_obs_error, era5_obs_error_max, era5_obs_error_min = obs.observe_all(era5_data,
+                                                                                           return_error = True,
+                                                                                           return_error_maxmin = True)
+        analysis_obs, analysis_obs_error, analysis_obs_error_max, analysis_obs_error_min = \
+            obs.observe_all(analysis.analysis, return_error=True, return_error_maxmin=True)
+        background_obs, background_obs_error, background_obs_error_max, background_obs_error_min = \
+            obs.observe_all(analysis.background, return_error=True, return_error_maxmin=True)
+    else:
+        era5_obs, era5_obs_error = obs.observe_all(era5_data, return_error=True)
+        analysis_obs, analysis_obs_error = obs.observe_all(analysis.analysis, return_error=True)
+        background_obs, background_obs_error = obs.observe_all(analysis.background, return_error=True)
+
+    if save or show:
+        for var_idx, var in [(idx, analysis.vars[idx]) for idx in var_idxs]:
+            #print('era5,analysis,obs max ({}) : {}, {}, {}'.format(var,era5.varmax[var_idx], analysis.varmax[var_idx], obs.varmax[var_idx]))
+            #print('era5,analysis,obs min ({}) : {}, {}, {}'.format(var,era5.varmin[var_idx], analysis.varmin[var_idx], obs.varmin[var_idx]))
+
+            for itr in window_idxs:
+
+                ###################################################################################################################################
+                ###################################################################################################################################
+                era5_var_data = era5_data[itr,var_idx]
+                background_data = analysis.background[itr,var_idx]
+                analysis_data = analysis.analysis[itr,var_idx]
+                obs_data = obs.obs[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
+                if len(era5_var_data)==0 or len(analysis_data)==0 or len(obs_data)==0:
+                    continue
+                vmin = min(np.min(era5_var_data),np.min(background_data),np.min(analysis_data),np.min(obs_data))
+                vmax = max(np.max(era5_var_data),np.max(background_data),np.max(analysis_data),np.max(obs_data))
+
+                era5_var_obs_error = era5_obs_error[itr,var_idx]
+                background_var_obs_error = background_obs_error[itr,var_idx]
+                analysis_var_obs_error = analysis_obs_error[itr,var_idx]
+                err_vmin = min(np.min(era5_var_obs_error),np.min(background_var_obs_error),np.min(analysis_var_obs_error))
+                err_vmax = max(np.max(era5_var_obs_error),np.max(background_var_obs_error),np.max(analysis_var_obs_error))
+
+                #all_obs_error = era5_var_obs_error + analysis_var_obs_error
+                all_obs_error = background_var_obs_error + analysis_var_obs_error
+                counts_all, bins = np.histogram(all_obs_error, bins=50)
+
+                era5_counts = np.zeros(len(counts_all))
+                analysis_counts = np.zeros(len(counts_all))
+                background_counts = np.zeros(len(counts_all))
+                for i in range(len(background_var_obs_error)):
+                    for j,bin_lim in enumerate(bins[1:]):
+                        if background_var_obs_error[i] <= bin_lim:
+                            background_counts[j] += 1
+                            break
+                    for j,bin_lim in enumerate(bins[1:]):
+                        if analysis_var_obs_error[i] <= bin_lim:
+                            analysis_counts[j] += 1
+                            break
+
+                bar_cm = plt.cm.get_cmap('RdYlBu_r')
+                #bar_cm = plt.cm.get_cmap('bwr')
+                bar_span = err_vmax-err_vmin
+                # Gets color for each bin
+                C = [bar_cm((b-err_vmin)/bar_span) for b in bins]
+                # scale bins to lon
+                scaled_bins = np.linspace(5,355,51)
+                counts_max = max(np.max(background_counts),np.max(analysis_counts))
+                lat_range = max(analysis.lat)-min(analysis.lat)
+                lat_min = min(analysis.lat)
+                #scaled_era5_counts = (era5_counts/counts_max) * lat_range * 1.0 
+                scaled_background_counts = (background_counts/counts_max) * lat_range * 1.0 
+                scaled_analysis_counts = (analysis_counts/counts_max) * lat_range * 1.0
+
+                #print('len(era5.lon) :',len(era5.lon))
+                #print('era5.lon :',era5.lon)
+                #print('len(scaled_bins) :',len(scaled_bins))
+                #print('scaled_bins :',scaled_bins)
+                #print('lat_range :',lat_range)
+                #print('len(scaled_era5_counts) :',(scaled_era5_counts))
+                #print('scaled_era5_counts :',scaled_era5_counts)
+                ###################################################################################################################################
+                ###################################################################################################################################
+
+
+                plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+                title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}'
+                print(title_str)
+                obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
+                obs_lat_plot = obs_latlon[:, 0]
+                #obs_lon_plot = (obs_latlon[:, 1] + 360) % 360
+                obs_lon_plot = (obs_latlon[:, 1])
+                fig, axs = plt.subplots(2, 3, sharex = True, sharey = True, figsize = figsize)
+                #fig, axs = plt.subplots(2, 3, sharex = False, sharey = False, figsize = figsize)
+
+                pc_background = axs[0,0].pcolormesh(analysis.lon, analysis.lat, analysis.background[itr, var_idx],
+                                                  vmin = vmin, vmax = vmax, cmap = 'viridis')
+                plt.colorbar(pc_background, ax = axs[0, 0],label=units[var_idx])
+                axs[0, 0].set_title('Background')
+                axs[0, 0].set_xticks(np.linspace(0,360,9))
+
+                pc_era5 = axs[0, 1].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
+                                               vmax = vmax, cmap = 'viridis')
+                plt.colorbar(pc_era5, ax = axs[0,1], label=units[var_idx])
+                axs[0, 1].set_title('ERA5')
+
+                pc_background = axs[0,2].pcolormesh(analysis.lon, analysis.lat, analysis.analysis[itr, var_idx],
+                                                  vmin = vmin, vmax = vmax, cmap = 'viridis')
+                plt.colorbar(pc_background, ax = axs[0, 2],label=units[var_idx])
+                axs[0, 2].set_title('Analysis')
+
+                bg_err_obs = axs[1,0].bar(scaled_bins[:-1],scaled_background_counts,color=C,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.5,edgecolor='k')
+                sp_era_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
+                                              #vmin=err_vmin, vmax=err_vmax, cmap='bwr',
+                                              vmin=err_vmin, vmax=err_vmax, cmap='RdYlBu_r',
+                                              edgecolor='k', s=35, linewidth=0.5)
+                plt.colorbar(sp_era_obs, ax=axs[1,0], label=units[var_idx])
+                axs[1, 0].set_title('Observation Diff (Background)')
+
+                increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
+                inc_lim = np.max(np.abs(increment))
+                ana_inc = axs[1, 1].pcolormesh(era5.lon, era5.lat, increment,
+                                               cmap = 'bwr', vmin=-inc_lim, vmax=inc_lim)
+                                               #cmap = 'RdYlBu_r')
+                plt.colorbar(ana_inc, ax = axs[1, 1], label=units[var_idx])
+                axs[1, 1].set_title('Analysis - Background Increment')
+
+                analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=C,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.5,edgecolor='k')
+                sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
+                                                    #vmin=err_vmin, vmax=err_vmax, cmap='bwr',
+                                                    vmin=err_vmin, vmax=err_vmax, cmap='RdYlBu_r',
+                                                    edgecolor='k', s=35, linewidth=0.5)
+                plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
+                axs[1, 2].set_title('Observation Diff (Analysis)')
+
+                axs[0, 0].set_ylabel('Lat')
+                axs[1, 0].set_ylabel('Lat')
+                axs[1, 0].set_xlabel('Lon')
+                axs[1, 1].set_xlabel('Lon')
+                axs[1, 2].set_xlabel('Lon')
+
+                plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+                fig.suptitle(title_str)
+    
+                plt.tight_layout()
+
+                save_name = analysis.dir.split('/')[-2]
+                if save:
+                    #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_{analysis.runstr}.png'), dpi = 400,
+                    #        bbox_inches = 'tight')
+                    plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_{analysis.runstr}_bgVsAn.png'), dpi = 400,
                             bbox_inches = 'tight')
                 if show:
                     plt.show()

@@ -93,6 +93,19 @@ plot_stuff = plot_analysis(era5,
 era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background = plot_stuff
 print('Done with plot_analysis')
 
+_ = plot_background_vs_analysis(era5,
+                                analysis,
+                                obs,
+                                var_units,
+                                var_idxs = [0,3,11],
+                                #var_idxs = None,
+                                window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                                #window_idxs = [0],
+                                save = True,
+                                show = False,
+                                save_dir = plot_dir,
+                                return_error = True)
+
 _ = plot_analysis_innovation(era5,
                              analysis,
                              obs,
