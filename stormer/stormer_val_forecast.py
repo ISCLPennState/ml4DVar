@@ -5,7 +5,8 @@ import h5py
 import numpy as np
 
 from stormer.models.hub.vit_adaln import ViTAdaLN
-from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
+#from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
+from iterative_dataset import ERA5MultiLeadtimeDataset
 from stormer_utils import StormerWrapper
 
 
@@ -22,16 +23,14 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_val_forecasts_test'
+    save_dir_name = 'stormer_val_forecasts_2017'
 
-    save_dir = '/eagle/MDClimSim/mjp5595/data/{}/'.format(save_dir_name)
+    save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
-
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/background_starter.npy' # This is just to initialize the model background
 
     from varsStormer import varsStormer
     vars_stormer = varsStormer().vars_stormer
@@ -60,6 +59,7 @@ if __name__ == '__main__':
 
     ########################################################################################################################
     def run_forecasts(x,
+                    x_raw,
                     idx,
                     forecast_steps=2,
                     save_dir=save_dir,
@@ -78,6 +78,7 @@ if __name__ == '__main__':
         #print('len(norm_preds), norm_preds[1][0].shape:',len(norm_preds),norm_preds[1].shape)
 
         hf = h5py.File(os.path.join(save_dir, '{:0>4d}.h5'.format(idx)),'w')
+        hf.create_dataset(str(0), data=x_raw[0,:,:,:])
         for i in range(len(norm_preds)):
             #data = norm_preds[i].detach().cpu().numpy()
             data = raw_preds[i].detach().cpu().numpy()
@@ -87,12 +88,13 @@ if __name__ == '__main__':
     ########################################################################################################################
 
     data_test = ERA5MultiLeadtimeDataset(
-        root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','test'),
+        root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','train'),
         variables=vars_stormer,
         list_lead_times=[6],
         transform=stormer_wrapper.inp_transform,
         data_freq=6,
         year_list=[2017]
+        #year_list=[2014]
     )
 
     for idx, (input_norm, input_raw, _, _, _, _) in enumerate(data_test):
@@ -119,6 +121,7 @@ if __name__ == '__main__':
         print('running forecast {}/{}'.format(idx+1,len(data_test)))
         with torch.inference_mode():
             run_forecasts(input_norm,
+                        input_raw,
                         idx,
                         forecast_steps=40,
                         save_dir=save_dir,
