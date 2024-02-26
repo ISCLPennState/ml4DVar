@@ -26,7 +26,7 @@ class StormerWrapperPangu:
     def __init__(self,
                  root_dir,
                  variables,
-                 net,
+                 net=None,
                  base_lead_time=6,
                  possible_lead_times=[24,12,6],
                  ckpt=None,
@@ -68,13 +68,15 @@ class StormerWrapperPangu:
         self.variables = variables
 
         self.logger = logger
-        self.device = device
         self.net = net
         if ckpt is not None:
             self.load_model(ckpt)
         print('checkpoint model loaded')
-        self.net.to(self.device)
-        #self.freeze_model()
+
+        self.device = device
+        if self.device:
+            self.net.to(self.device)
+            #self.freeze_model()
 
     def get_reverse_transform(self, transform):
         mean, std = transform.mean, transform.std
