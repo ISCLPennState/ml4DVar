@@ -23,7 +23,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_val_forecasts_2017'
+    save_dir_name = 'stormer_init_bg_forecasts'
 
     save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
@@ -95,6 +95,7 @@ if __name__ == '__main__':
         data_freq=6,
         year_list=[2017]
         #year_list=[2014]
+        #year_list=[1979]
     )
 
     for idx, (input_norm, input_raw, _, _, _, _) in enumerate(data_test):
@@ -105,10 +106,14 @@ if __name__ == '__main__':
         # Generate init_background for DA
         #if idx == 0:
         #    np.save('background_init_stormer_norm',input_norm)
-        #    np.save('background_init_stormer_raw',input_norm)
+        #    np.save('background_init_stormer_raw',input_raw)
         #    break
         #else:
         #    continue
+
+        # Run forecast from init background for comparison w/ analysis
+        #input_norm = torch.from_numpy(np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm.npy'))
+        #input_raw = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_raw.npy')
 
         if (device_set == True):
             if (int(idx % torch.cuda.device_count()) != int(gpu_num)):
