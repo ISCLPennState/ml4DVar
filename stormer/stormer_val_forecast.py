@@ -77,13 +77,16 @@ if __name__ == '__main__':
         
         #print('len(norm_preds), norm_preds[1][0].shape:',len(norm_preds),norm_preds[1].shape)
 
-        hf = h5py.File(os.path.join(save_dir, '{:0>4d}.h5'.format(idx)),'w')
-        hf.create_dataset(str(0), data=x_raw[0,:,:,:])
+        hf_norm = h5py.File(os.path.join(save_dir, 'norm_{:0>4d}.h5'.format(idx)),'w')
+        hf_raw = h5py.File(os.path.join(save_dir, 'raw_{:0>4d}.h5'.format(idx)),'w')
+        hf_norm.create_dataset(str(0), data=x[0,:,:,:])
+        hf_raw.create_dataset(str(0), data=x_raw[0,:,:,:])
         for i in range(len(norm_preds)):
-            #data = norm_preds[i].detach().cpu().numpy()
-            data = raw_preds[i].detach().cpu().numpy()
+            data_norm = norm_preds[i].detach().cpu().numpy()
+            data_raw = raw_preds[i].detach().cpu().numpy()
             # data.shape : (1,vars,lat,lon) -> (1,63,128,256)
-            hf.create_dataset(str((i+1)*stormer_wrapper.list_lead_time[0]), data=data[0,:,:,:])
+            hf_norm.create_dataset(str((i+1)*stormer_wrapper.list_lead_time[0]), data=data_norm[0,:,:,:])
+            hf_raw.create_dataset(str((i+1)*stormer_wrapper.list_lead_time[0]), data=data_raw[0,:,:,:])
         return
     ########################################################################################################################
 
