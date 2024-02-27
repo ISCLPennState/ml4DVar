@@ -9,4 +9,4 @@
 ml conda
 conda activate /eagle/MDClimSim/troyarcomano/.conda/envs/pytorch_2_troy/
 cd /eagle/MDClimSim/mjp5595/ml4dvar/
-python run_da.py $da_type "${exp_name}_gpu0" & python run_da.py $da_type "${exp_name}_gpu1" & python run_da.py $da_type "${exp_name}_gpu2" & python run_da.py $da_type "${exp_name}_gpu3"
+python run_da.py $da_type "${exp_name}_gpu0" 0 & python run_da.py $da_type "${exp_name}_gpu1" 1 & python run_da.py $da_type "${exp_name}_gpu2" 2 & python run_da.py $da_type "${exp_name}_gpu3" 3
