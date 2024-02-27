@@ -326,8 +326,13 @@ class AnalysisData:
 
 class ObsData():
     def __init__(self, start_date, end_date, time_step, vars, file = None, means = None, stds = None, lat = None,
-                 lon = None):
+                 lon = None, device=None):
         self.save_hyperparameters()
+
+        self.device = device
+        if device is None:
+            self.device = 'cpu'
+
         if lat is not None:
             self.nlat = lat.size
         else:
@@ -417,7 +422,7 @@ class ObsData():
         #print(time_idx, var_idx)
         #print(len(self.n_obs))
         #print(self.n_obs[time_idx].shape)
-        output = observe_linear(torch.from_numpy(x).reshape(-1, 1).to(device),
+        output = observe_linear(torch.from_numpy(x).reshape(-1, 1).to(self.device),
                                 self.H_idxs[time_idx][var_idx, :4*self.n_obs[time_idx][var_idx]].reshape(-1, 4).T,
                                 self.H_vals[time_idx][var_idx, :4*self.n_obs[time_idx][var_idx]].reshape(-1, 4)).detach().cpu().numpy()
         return output
