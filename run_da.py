@@ -12,6 +12,12 @@ from stormer.stormer_utils import StormerWrapper
 from stormer.stormer_utils_pangu import StormerWrapperPangu
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device_set = False
+gpu2use = 0
+if len(sys.argv) > 3:
+    gpu2use = sys.argv[3]
+    device = torch.device("cuda:{}".format(gpu2use) if torch.cuda.is_available() else "cpu")
+    device_set = True
 print('USING DEVICE :',device)
 
 torch.autograd.set_detect_anomaly(True)
@@ -47,8 +53,23 @@ if __name__ == '__main__':
 
     #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/climaX/background_24hr_diff_sh_coeffs_var_climaxv2_standardized_128_uv.npy' #B (spherical harmonics)
     #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/climaX/background_24hr_diff_hf_var_climaxv2_standardized_128_uv.npy' #B (grid space (HF))
-    background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_sh_coeffs_var_stormer_standardized_128_uv.npy' #B (spherical harmonics)
-    background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_hf_var_stormer_standardized_128_uv.npy' #B (grid space (HF))
+    #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_sh_coeffs_var_stormer_standardized_128_uv.npy' #B (spherical harmonics)
+    #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_hf_var_stormer_standardized_128_uv.npy' #B (grid space (HF))
+    background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_normn.py'
+    background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_normn.py' #B (grid space (HF))
+    if device_set:
+        if gpu2use == 0:
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_normn.py'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_normn.py' #B (grid space (HF))
+        if gpu2use == 1:
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_normn.py'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_normn.py' #B (grid space (HF))
+        if gpu2use == 2:
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_normn.py'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_normn.py' #B (grid space (HF))
+        if gpu2use == 3:
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_196hr_stormer_normn.py'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_196hr_stormer_normn.py' #B (grid space (HF))
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
