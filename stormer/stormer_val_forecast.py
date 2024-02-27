@@ -23,7 +23,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_init_bg_forecasts'
+    save_dir_name = 'stormer_forecasts_2017_norm'
 
     save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
@@ -122,7 +122,7 @@ if __name__ == '__main__':
             if (int(idx % torch.cuda.device_count()) != int(gpu_num)):
                 continue
 
-        file_to_write = os.path.join(save_dir, '{:0>4d}.h5'.format(idx))
+        file_to_write = os.path.join(save_dir, 'norm_{:0>4d}.h5'.format(idx))
         if os.path.exists(file_to_write):
             continue
 
