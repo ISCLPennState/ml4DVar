@@ -14,7 +14,6 @@ from stormer.stormer_utils_pangu import StormerWrapperPangu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device_set = False
 gpu2use = 0
-print('sys.argv :',sys.argv)
 if len(sys.argv) > 3:
     gpu2use = sys.argv[3]
     device = torch.device("cuda:{}".format(gpu2use) if torch.cuda.is_available() else "cpu")
@@ -112,13 +111,13 @@ if __name__ == '__main__':
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
     var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
     obs_perc_err = [False, False, False, False, False, False]
-    obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds)
+    obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds, device)
     print('obs_err :',obs_err.obs_err)
     if logger:
         logger.info('obs_err : {}'.format(obs_err.obs_err))
 
     # from src/dv.py
-    dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file)
+    dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file, device)
 
     be = np.load(background_err_file)
     bef = np.load(background_err_hf_file)
@@ -162,7 +161,8 @@ if __name__ == '__main__':
     obs_dataset = ObsDatasetCum(obs_filepath, start_date, end_date, vars_stormer, 
                                 obs_freq=obs_freq, da_window=da_window, 
                                 obs_start_idx=start_idx+1, obs_steps=obs_steps,
-                                only_recent_obs=use_only_recent_obs, logger=logger)
+                                only_recent_obs=use_only_recent_obs, logger=logger,
+                                device=device)
     obs_loader = DataLoader(obs_dataset, batch_size=1, num_workers=0)
 
     ###################################################################################################################

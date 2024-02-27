@@ -10,7 +10,7 @@ from itertools import product
 from src.dv import *
 
 class ObsError(torch.nn.Module):
-    def __init__(self, vars, var_types, var_obs_errs, obs_perc_errs, var_stds):
+    def __init__(self, vars, var_types, var_obs_errs, obs_perc_errs, var_stds, device):
         super().__init__()
         #print('vars :',vars)
         mult_vars = np.zeros(len(vars), dtype = bool)
@@ -39,7 +39,7 @@ class ObsError(torch.nn.Module):
 def observe_linear(x, H_idxs, H_vals, logger=None):
     # TODO maybe this should be mean, but I don't think it really matters
     output = torch.sum(H_vals * torch.concat((x[H_idxs[0]], x[H_idxs[1]], x[H_idxs[2]], x[H_idxs[3]]), axis = 1),
-                       axis = 1).to(device)
+                       axis = 1).to(x.device)
     if logger:
         logger.info('\tx.shape : {}'.format(x.shape))
         logger.info('\tH_idxs : {}'.format(H_idxs))
@@ -54,7 +54,7 @@ def observe_linear(x, H_idxs, H_vals, logger=None):
 class ObsDatasetCum(IterableDataset):
     def __init__(self, file_path, start_datetime, end_datetime, vars, 
                  obs_freq=3, da_window=12, obs_start_idx=0, obs_steps=1,
-                 only_recent_obs=False, logger=None):
+                 only_recent_obs=False, logger=None, device=None):
         super().__init__()
         self.save_hyperparameters()
         self.file_path = file_path
@@ -76,6 +76,7 @@ class ObsDatasetCum(IterableDataset):
         self.curr_datetime = self.start_datetime + timedelta(hours=self.da_window)
 
         self.only_recent_obs = only_recent_obs
+        self.device = device
 
     # This accumulates the observations that take place within the obs_window up/including the current datetime
     # eg. for obs_window=12hrs and a datetime of (2014,1,1,12) it will accumulate the datetimes (2014,1,1,3),(2014,1,1,6),(2014,1,1,9),(2014,1,1,12)
@@ -219,8 +220,8 @@ class ObsDatasetCum(IterableDataset):
                     obs_latlon[step, j, var_starts[j]:var_starts[j]+len(obs_latlon_data)] = obs_latlon_data
                     var_starts[j] += len(all_obs_data)
 
-            output = (torch.from_numpy(all_obs).to(device), torch.from_numpy(H_idxs).long().to(device), torch.from_numpy(H_obs).to(device),
-                    torch.from_numpy(shapes).long().to(device), obs_latlon)
+            output = (torch.from_numpy(all_obs).to(self.device), torch.from_numpy(H_idxs).long().to(self.device), torch.from_numpy(H_obs).to(self.device),
+                    torch.from_numpy(shapes).long().to(self.device), obs_latlon)
             return output
 
     def __iter__(self):

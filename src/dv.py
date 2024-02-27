@@ -2,8 +2,6 @@ import torch
 import numpy as np
 import h5py
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 def make_take(ndims, slice_dim):
     """Generate a take function to index in a particular dimension."""
     def take(indexer):
@@ -124,8 +122,13 @@ def divergence_vorticity(uwind, vwind, delta_x, delta_y, parallel_scale, meridio
     return d, v
 
 class DivergenceVorticity(torch.nn.Module):
-    def __init__(self, vars, var_means, var_stds, dv_parameter_file):
+    def __init__(self, vars, var_means, var_stds, dv_parameter_file, device=None):
         super().__init__()
+
+        device = device
+        if not device:
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.uwind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if 'u_component_of_wind' in var],
                                                     dtype = 'int32')).long().to(device)
         self.vwind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if 'v_component_of_wind' in var],
