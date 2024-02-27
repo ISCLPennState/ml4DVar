@@ -333,7 +333,7 @@ class FourDVar():
         #
         # Obs are (b, time_step, vars, num_obs)
 
-        se_obs = torch.zeros(1).to(device)
+        se_obs = torch.zeros(1).to(self.device)
         for var in range(len(self.vars)):
             # x[var] - (128, 256)
             # H_idx - (1, obs_steps, num_vars, 4*num_obs)
