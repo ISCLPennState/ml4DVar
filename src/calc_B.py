@@ -4,11 +4,13 @@ import numpy as np
 import os 
 import h5py
 import glob
+import sys
 
+sys.path.append('/eagle/MDClimSim/mjp5595/ml4dvar/')
 from stormer.varsStormer import varsStormer
 from stormer.stormer_utils_pangu import StormerWrapperPangu
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def get_forecast_h5(file,hour_diff,prefix=''):
     mode = 'r'
@@ -73,7 +75,7 @@ if __name__ == '__main__':
 
             diff_norm = preds_36_norm - preds_12_norm
             diff_norm = torch.from_numpy(diff_norm)
-            diff_raw_norm = norm(preds_36_norm,stormer_wrapper) - norm(preds_12_norm,stormer_wrapper)
+            diff_raw_norm = norm(preds_36_raw,stormer_wrapper) - norm(preds_12_raw,stormer_wrapper)
 
             sh_diff_norm = sht(diff_norm)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
