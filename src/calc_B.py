@@ -12,12 +12,12 @@ from stormer.stormer_utils_pangu import StormerWrapperPangu
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def get_forecast_h5(file,hour_diff,prefix=''):
+def get_forecast_h5(file,hour_diff):
     mode = 'r'
     print('file',file)
     f = h5py.File(file, mode)
     preds_12 = np.array(f['12'][:],dtype=np.double)
-    preds_36 = np.array(f[str(12+hour_diff)][:],dtype=np.double)
+    preds_36 = np.array(f[str(int(12)+int(hour_diff))][:],dtype=np.double)
     f.close()
     return preds_12, preds_36 
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     files_raw = files_raw[0:-1:4]
 
     #files = files[0:-1:4]
-    hour_diffs = [24,72,144,192]
+    hour_diffs = [12,24,72,144,192]
 
     for hour_diff in hour_diffs:
         print('hour_diff :',hour_diff)
@@ -64,8 +64,8 @@ if __name__ == '__main__':
         for i in range(len(files_norm)):
             print('i :',i)
             try:
-                preds_12_norm, preds_36_norm = get_forecast_h5(files_norm[i],hour_diff=hour_diff,prefix='norm_')
-                preds_12_raw, preds_36_raw = get_forecast_h5(files_raw[i],hour_diff=hour_diff,prefix='raw_')
+                preds_12_norm, preds_36_norm = get_forecast_h5(files_norm[i],hour_diff=hour_diff)
+                preds_12_raw, preds_36_raw = get_forecast_h5(files_raw[i],hour_diff=hour_diff)
             except:
                 print('skipping file due to h5 error',files_norm[i])
                 print('skipping file due to h5 error',files_raw[i])
@@ -75,9 +75,11 @@ if __name__ == '__main__':
 
             diff_norm = preds_36_norm - preds_12_norm
             diff_norm = torch.from_numpy(diff_norm)
+            a = norm(preds_36_raw,stormer_wrapper)
             diff_raw_norm = norm(preds_36_raw,stormer_wrapper) - norm(preds_12_raw,stormer_wrapper)
 
             sh_diff_norm = sht(diff_norm)
+            print('sh_diff_norm.shape :',sh_diff_norm.shape)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
             sh_coeffs_norm[i] = np.real(sh_diff_norm[:, :, 0].cpu().numpy())
             hf_diff_norm[i] = diff_hf_norm.cpu().numpy()

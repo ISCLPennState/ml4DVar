@@ -23,14 +23,11 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_forecasts_2017_norm'
+    save_dir_name = 'stormer_forecasts_2020_val'
 
     save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-
-    means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
-    stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
 
     from varsStormer import varsStormer
     vars_stormer = varsStormer().vars_stormer
@@ -91,12 +88,14 @@ if __name__ == '__main__':
     ########################################################################################################################
 
     data_test = ERA5MultiLeadtimeDataset(
-        root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','train'),
+        #root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','train'),
+        root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','test'),
         variables=vars_stormer,
         list_lead_times=[6],
         transform=stormer_wrapper.inp_transform,
         data_freq=6,
-        year_list=[2017]
+        year_list=[2020]
+        #year_list=[2017]
         #year_list=[2014]
         #year_list=[1979]
     )
