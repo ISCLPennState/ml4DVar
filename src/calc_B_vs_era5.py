@@ -64,18 +64,14 @@ if __name__ == '__main__':
     inv_sht = th.InverseRealSHT(128, 256, grid = 'equiangular').to(device)
 
     files_norm = glob.glob(forecast_dir+'norm_????.h5')
-    files_norm = files_norm[0:-1:4]
-    num_files = len(files_norm)
 
-    #files = files[0:-1:4]
     hour_diffs = [6,12,24,72,192]
 
     for hour_diff in hour_diffs:
 
-        sh_coeffs_norm = np.zeros((len(files_norm), len(vars_stormer), 128))
-        hf_diff_norm = np.zeros((len(files_norm), len(vars_stormer), 128, 256))
-
-        for i in range(0,int(num_files-(hour_diff//2)),4):
+        sh_coeffs_norm = []
+        hf_diff_norm = []
+        for i in range(0,len(files_norm),4):
             print('hour_diff, i :',hour_diff,i)
             try:
                 preds = get_forecast_h5(forecast_dir,i,hour_diff=hour_diff)
@@ -92,9 +88,11 @@ if __name__ == '__main__':
             #print('sh_diff_norm.shape :',sh_diff_norm.shape)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
             # TODO why only take the first index here??
-            sh_coeffs_norm[i] = np.real(sh_diff_norm[:, :, 0].cpu().numpy())
-            hf_diff_norm[i] = diff_hf_norm.cpu().numpy()
+            sh_coeffs_norm.append(np.real(sh_diff_norm[:, :, 0].cpu().numpy()))
+            hf_diff_norm.append(diff_hf_norm.cpu().numpy())
 
+        sh_coeffs_norm = np.array(sh_coeffs_norm)
+        hf_diff_norm = np.array(hf_diff_norm)
         sh_var_norm = np.var(sh_coeffs_norm[:], axis = 0)
         hf_var_norm = np.var(hf_diff_norm[:], axis = 0)
         np.save(os.path.join(save_dir,'sh_{}hr_stormer_vs_era5.npy'.format(hour_diff)), sh_var_norm)
