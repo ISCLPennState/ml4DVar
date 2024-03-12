@@ -85,7 +85,7 @@ if __name__ == '__main__':
             diff_norm = torch.from_numpy(diff_norm)
 
             sh_diff_norm = sht(diff_norm)
-            #print('sh_diff_norm.shape :',sh_diff_norm.shape)
+            print('sh_diff_norm.shape :',sh_diff_norm.shape)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
             # TODO why only take the first index here??
             sh_coeffs_norm.append(np.real(sh_diff_norm[:, :, 0].cpu().numpy()))

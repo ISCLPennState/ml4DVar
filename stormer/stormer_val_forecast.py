@@ -106,12 +106,12 @@ if __name__ == '__main__':
         #print('idx, device_set, gpu_num, device_count, mod :',idx,device_set,gpu_num,torch.cuda.device_count(),idx%torch.cuda.device_count())
 
         # Generate init_background for DA
-        #if idx == 0:
-        #    np.save('background_init_stormer_norm',input_norm)
-        #    np.save('background_init_stormer_raw',input_raw)
-        #    break
-        #else:
-        #    continue
+        if idx < 2:
+            continue
+        if idx == 2:
+            np.save('background_init_stormer_norm_hr12',input_norm)
+            np.save('background_init_stormer_raw_hr12',input_raw)
+            break
 
         # Run forecast from init background for comparison w/ analysis
         #input_norm = torch.from_numpy(np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm.npy'))
