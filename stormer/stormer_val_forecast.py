@@ -23,7 +23,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_forecasts_2020_val'
+    save_dir_name = 'stormer_init_12hr_forecast'
 
     save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
@@ -108,14 +108,14 @@ if __name__ == '__main__':
         # Generate init_background for DA
         if idx < 2:
             continue
-        if idx == 2:
-            np.save('background_init_stormer_norm_hr12',input_norm)
-            np.save('background_init_stormer_raw_hr12',input_raw)
-            break
+        #if idx == 2:
+        #    np.save('background_init_stormer_norm_hr12',input_norm)
+        #    np.save('background_init_stormer_raw_hr12',input_raw)
+        #    break
 
         # Run forecast from init background for comparison w/ analysis
-        #input_norm = torch.from_numpy(np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm.npy'))
-        #input_raw = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_raw.npy')
+        input_norm = torch.from_numpy(np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy'))
+        input_raw = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_raw_hr12.npy')
 
         if (device_set == True):
             if (int(idx % torch.cuda.device_count()) != int(gpu_num)):
