@@ -46,8 +46,10 @@ if __name__ == '__main__':
 
     obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
 
-    means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
-    stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
+    means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
+    stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
+    means = np.load(means_file)
+    stds = np.load(stds_file)
     dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
 
 
@@ -58,18 +60,26 @@ if __name__ == '__main__':
     background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_vs_era5.npy'
     background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
     if device_set:
-        if gpu2use == 0:
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5.npy' #B (grid space (HF))
-        if gpu2use == 1:
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_vs_era5.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
-        if gpu2use == 2:
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_vs_era5.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_vs_era5.npy' #B (grid space (HF))
-        if gpu2use == 3:
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_vs_era5.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_vs_era5.npy' #B (grid space (HF))
+        if int(gpu2use) == 0:
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_norm.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_norm.npy' #B (grid space (HF))
+        if int(gpu2use) == 1:
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_norm.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_norm.npy' #B (grid space (HF))
+        if int(gpu2use) == 2:
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_vs_era5.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_norm.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_norm.npy' #B (grid space (HF))
+        if int(gpu2use) == 3:
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_vs_era5.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_norm.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_norm.npy' #B (grid space (HF))
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
@@ -103,9 +113,23 @@ if __name__ == '__main__':
                         filemode='w')
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+
+    logger.info('')
+    logger.info('')
+    logger.info('da_type :',da_type)
+    logger.info('save_dir_name :',save_dir_name)
+    logger.info('')
+    logger.info('b_inflation : {}'.format(b_inflation))
+    logger.info('Using checkpoint pth : {}'.format(ckpt_pth))
+    logger.info('obs_filepath : {}'.format(obs_filepath))
+    logger.info('means_file :',means_file)
+    logger.info('stds_file :',stds_file)
+    logger.info('dv_param file : {}'.format(dv_param_file))
+    logger.info('')
     logger.info('Using background_err_file : {}'.format(background_err_file))
     logger.info('Using background_err_hf_file : {}'.format(background_err_hf_file))
     logger.info('Starting with analysis file : {}'.format(background_file_np))
+    logger.info('')
 
     from stormer.varsStormer import varsStormer
     vars_stormer = varsStormer().vars_stormer
