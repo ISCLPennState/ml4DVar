@@ -21,6 +21,7 @@ analysis_start_date = datetime(2014, 1, 1, hour=12)
 base_dir = '/eagle/MDClimSim/mjp5595/data/stormer/'
 if len(sys.argv) > 1:
     exp_dir = os.path.join(base_dir,sys.argv[1])
+    #exp_dir = os.path.join(base_dir,'var3d_BhrDiff_gpu1')
 else:
     exp_dir = os.path.join(base_dir,'stormer3d')
 
@@ -78,6 +79,9 @@ forecasts = ForecastData(analysis_start_date,
                          lon = lon)
 print('forecasts.forecasts.shape :',forecasts.forecasts.shape)
 
+ana_dir = os.path.join(plot_dir,'analysis')
+if not os.path.exists(ana_dir):
+    os.makedirs(ana_dir)
 plot_stuff = plot_analysis(era5,
                           analysis,
                           obs,
@@ -88,11 +92,14 @@ plot_stuff = plot_analysis(era5,
                           #window_idxs = [0],
                           save = True,
                           show = False,
-                          save_dir = plot_dir,
+                          save_dir = ana_dir,
                           return_error = True)
 era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background = plot_stuff
 print('Done with plot_analysis')
 
+bg_vs_ana_dir = os.path.join(plot_dir,'bg_vs_ana')
+if not os.path.exists(bg_vs_ana_dir):
+    os.makedirs(bg_vs_ana_dir)
 _ = plot_background_vs_analysis(era5,
                                 analysis,
                                 obs,
@@ -103,9 +110,13 @@ _ = plot_background_vs_analysis(era5,
                                 #window_idxs = [0],
                                 save = True,
                                 show = False,
-                                save_dir = plot_dir,
+                                save_dir = bg_vs_ana_dir,
                                 return_error = True)
+###################################################################################################################
 
+innovation_dir = os.path.join(plot_dir,'innovation')
+if not os.path.exists(innovation_dir):
+    os.makedirs(innovation_dir)
 _ = plot_analysis_innovation(era5,
                              analysis,
                              obs,
@@ -114,7 +125,7 @@ _ = plot_analysis_innovation(era5,
                              window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                              save = True,
                              show = False,
-                             save_dir = plot_dir,
+                             save_dir = innovation_dir,
                              return_error = False,
                              plot_obs = True)
 
@@ -126,7 +137,7 @@ _ = plot_analysis_innovation(era5,
                              window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                              save = True,
                              show = False,
-                             save_dir = plot_dir,
+                             save_dir = innovation_dir,
                              return_error = False,
                              plot_obs = False)
 
@@ -162,3 +173,5 @@ plt.plot(rmse_era,label='ERA5')
 plt.legend()
 plt.show()
 '''
+
+# %%
