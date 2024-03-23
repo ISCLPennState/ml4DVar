@@ -91,17 +91,16 @@ if __name__ == '__main__':
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
     background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
-    analyses = os.listdir(save_dir)
-    analysis_files = analyses
-    start_idx = -1
-    if len(analyses) > 1:
-        for analysis_file in analysis_files:
-            if 'analysis' in analysis_file:
-                analysis_num = int(analysis_file.split('_')[1])
-                if analysis_num > start_idx:
-                    start_idx = analysis_num
-                    background_file_np = os.path.join(save_dir,analysis_file)
-    print('Starting with analysis file :',background_file_np)
+    backgrounds = os.listdir(save_dir)
+    start_idx = 0
+    if len(backgrounds) > 1:
+        for background_file in backgrounds:
+            if 'background' in background_file:
+                background_num = int(background_file.split('_')[1])
+                if background_num > start_idx:
+                    start_idx = background_num
+                    background_file_np = os.path.join(save_dir,background_file)
+    print('Starting with background file : {}'.format(background_file_np))
     ####################################################################################################################################
 
     log_dir = os.path.join(exp_dir,'logs')
@@ -116,19 +115,19 @@ if __name__ == '__main__':
 
     logger.info('')
     logger.info('')
-    logger.info('da_type :',da_type)
-    logger.info('save_dir_name :',save_dir_name)
+    logger.info('da_type : {}'.format(da_type))
+    logger.info('save_dir_name : {}'.format(save_dir_name))
     logger.info('')
     logger.info('b_inflation : {}'.format(b_inflation))
     logger.info('Using checkpoint pth : {}'.format(ckpt_pth))
     logger.info('obs_filepath : {}'.format(obs_filepath))
-    logger.info('means_file :',means_file)
-    logger.info('stds_file :',stds_file)
+    logger.info('means_file : {}'.format(means_file))
+    logger.info('stds_file : {}'.format(stds_file))
     logger.info('dv_param file : {}'.format(dv_param_file))
     logger.info('')
     logger.info('Using background_err_file : {}'.format(background_err_file))
     logger.info('Using background_err_hf_file : {}'.format(background_err_hf_file))
-    logger.info('Starting with analysis file : {}'.format(background_file_np))
+    logger.info('Starting with background file : {}'.format(background_file_np))
     logger.info('')
 
     from stormer.varsStormer import varsStormer
@@ -186,7 +185,7 @@ if __name__ == '__main__':
         obs_steps = da_window // model_step
     obs_dataset = ObsDatasetCum(obs_filepath, start_date, end_date, vars_stormer, 
                                 obs_freq=obs_freq, da_window=da_window, 
-                                obs_start_idx=start_idx+1, obs_steps=obs_steps,
+                                obs_start_idx=start_idx, obs_steps=obs_steps,
                                 only_recent_obs=use_only_recent_obs, logger=logger,
                                 device=device)
     obs_loader = DataLoader(obs_dataset, batch_size=1, num_workers=0)
@@ -226,7 +225,11 @@ if __name__ == '__main__':
 
     print('background_file_np :',background_file_np)
     logger.info('background_file_np : {}'.format(background_file_np))
+    #if '.npy' in background_file_np:
     background_f = np.load(background_file_np, 'r')
+    #elif '.h5' in background_file_np:
+    #    background_f = h5py.File(background_file_np, 'r')[str(forecast_hrs)][:]
+    #    background_f = np.expand_dims(background_f,axis=0)
     if 'rand' in save_dir:
         #background_f = np.zeros_like(background_f)
         print('using random background')
@@ -245,7 +248,7 @@ if __name__ == '__main__':
                         max_iter=700,
                         savedir=save_dir,
                         device=device,
-                        save_idx=start_idx+1,
+                        save_idx=start_idx,
                         logger=logger,
                         )
     fourd_da.cycleDataAssimilation(forecast=True)
