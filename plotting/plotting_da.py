@@ -31,7 +31,8 @@ plot_dir = os.path.join(exp_dir,'plots')
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 da_window = 12
-max_steps_to_plot = 30
+#max_steps_to_plot = 20
+max_steps_to_plot = 60
 
 era5_dir = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/train/'
 
@@ -69,15 +70,15 @@ obs = ObsData(obs_start_date,
               lon = lon)
 print('obs.obs :',len(obs.obs))
 
-forecasts = ForecastData(analysis_start_date,
-                         12,
-                         vars,
-                         dir=save_dir,
-                         means = means,
-                         stds = stds,
-                         lat = lat,
-                         lon = lon)
-print('forecasts.forecasts.shape :',forecasts.forecasts.shape)
+#forecasts = ForecastData(analysis_start_date,
+#                         12,
+#                         vars,
+#                         dir=save_dir,
+#                         means = means,
+#                         stds = stds,
+#                         lat = lat,
+#                         lon = lon)
+#print('forecasts.forecasts.shape :',forecasts.forecasts.shape)
 
 ana_dir = os.path.join(plot_dir,'analysis')
 if not os.path.exists(ana_dir):
@@ -141,6 +142,9 @@ _ = plot_analysis_innovation(era5,
                              return_error = False,
                              plot_obs = False)
 
+mse_dir = os.path.join(plot_dir,'mse')
+if not os.path.exists(mse_dir):
+    os.makedirs(mse_dir)
 plot_analysis_global_rmse(era5_minus_analysis,
                           era5_minus_background,
                           analysis,
@@ -154,7 +158,7 @@ plot_analysis_global_rmse(era5_minus_analysis,
                           lats = lat,
                           save = True,
                           show = False,
-                          save_dir = plot_dir,
+                          save_dir = mse_dir,
                           return_error = False)
 
 #_ = plot_analysis_innovation(era5, analysis, obs, var_units, var_idxs = [3], itr_idxs = np.arange(30), save = True, show = False, save_dir='/eagle/MDClimSim/troyarcomano/ml4dvar/plots/',return_error=False)
@@ -173,5 +177,3 @@ plt.plot(rmse_era,label='ERA5')
 plt.legend()
 plt.show()
 '''
-
-# %%

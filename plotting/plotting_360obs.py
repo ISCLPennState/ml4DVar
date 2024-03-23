@@ -716,8 +716,8 @@ def plot_analysis_global_rmse(era5_minus_analysis,
             #print('era5_minus_analysis.shape :',era5_minus_analysis.shape)
             length = np.shape(era5_minus_analysis)[0]
             #length = np.shape(era5_minus_analysis)[var_idx]
-            rmse = np.zeros((length))
-            rmse_background = np.zeros((length))
+            rmse = np.zeros((len(window_idxs)))
+            rmse_background = np.zeros(len(window_idxs))
 
             if lat_weighted and lats is not None:
                 #print(len(lats),np.shape(era5_minus_analysis)[-2])
@@ -738,8 +738,8 @@ def plot_analysis_global_rmse(era5_minus_analysis,
             fig, axs = plt.subplots(1, 1, figsize = figsize)
 
             #print(rmse)
-            plt.plot(rmse,label='Analysis')
-            plt.plot(rmse_background,label='Background')
+            plt.plot(window_idxs,rmse,label='Analysis')
+            plt.plot(window_idxs,rmse_background,label='Background')
             if lat_weighted:
                 title = 'Lat-weighted Global Analysis RMSE For {}'.format(var_names[var_idx])
             else:
@@ -866,8 +866,8 @@ def plot_analysis(era5,
 
             increment_limit_max = 0
             for itr in window_idxs:
-                increment = era5_minus_analysis[itr,var_idx]
-                increment_limit_max = max(increment_limit_max,np.max(np.abs(increment)))
+                increment_limit_max = max(increment_limit_max,np.max(np.abs(era5_minus_analysis[itr,var_idx])))
+
 
             for itr in window_idxs:
 
@@ -928,10 +928,8 @@ def plot_analysis(era5,
                 print(title_str)
                 obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
                 obs_lat_plot = obs_latlon[:, 0]
-                #obs_lon_plot = (obs_latlon[:, 1] + 360) % 360
                 obs_lon_plot = (obs_latlon[:, 1])
                 fig, axs = plt.subplots(2, 3, sharex = True, sharey = True, figsize = figsize)
-                #fig, axs = plt.subplots(2, 3, sharex = False, sharey = False, figsize = figsize)
 
                 pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
                                                vmax = vmax, cmap = 'viridis')
@@ -1212,20 +1210,20 @@ def plot_background_vs_analysis(era5,
                 width = 0.25  # the width of the bars
                 multiplier = 0
 
+                axs[1,3].set_yscale('log')
+                axs[1,3].set_ylim(0, bar_plot_mse_max)
                 for attribute, measurement in bar_plot_errs.items():
                     #print('attribute, measurement :',attribute,measurement)
                     offset = width * multiplier
                     rects = axs[1,3].bar(bp_x + offset, measurement, width, label=attribute)
                     #axs[1,3].bar_label(rects, padding=3, label_type='center')
                     multiplier += 1
-
                 axs[1,3].axhline(era5_obs_mse_val,c='k',linestyle='--')
                 # Add some text for labels, title and custom x-axis tick labels, etc.
                 axs[1,3].set_ylabel('MSE ({})'.format(units[var_idx]))
                 axs[1,3].set_title('Weather State and Observation Errors')
                 axs[1,3].set_xticks(bp_x + width, err_types)
                 axs[1,3].legend(loc='upper left')
-                axs[1,3].set_ylim(0, bar_plot_mse_max)
 
                 axs[0, 0].set_ylabel('Lat')
                 axs[1, 0].set_ylabel('Lat')
