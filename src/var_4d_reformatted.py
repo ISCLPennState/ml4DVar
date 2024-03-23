@@ -80,6 +80,10 @@ class FourDVar():
 
     def cycle(self, itr, forecast):
 
+        if self.save_analysis:
+            np.save(os.path.join(self.save_dir, 'background_%d_%s.npy' % (itr+self.save_idx, self.savestr)),
+                    self.background.detach().cpu().numpy())
+
         self.step = 0
         def cost_J():
             self.optim.zero_grad()
@@ -94,10 +98,6 @@ class FourDVar():
             loss.backward(retain_graph=False)
 
             return loss
-
-        if self.save_analysis:
-            np.save(os.path.join(self.save_dir, 'background_%d_%s.npy' % (itr+self.save_idx, self.savestr)),
-                    self.background.detach().cpu().numpy())
 
         # This optimizes x_analysis given the observations (data assimilation occurs) x -> x_analysis
         tic = time.perf_counter()
