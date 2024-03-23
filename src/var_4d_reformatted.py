@@ -141,7 +141,7 @@ class FourDVar():
         #with torch.inference_mode():
         print('Running forecast for next background (forecast_time : {})'.format(forecast_time))
         if self.logger:
-            self.logger.info('Running forecast for next background (forecast_time : {})'.format(forecast_time))
+            self.logger.info('Running forecast for next background (forecast_time : {} hrs)'.format(forecast_time))
         self.background,_,_ = self.run_forecast(self.x_analysis,
                                                 forecast_time=forecast_time,
                                                 #lead_time=None,
