@@ -1,18 +1,18 @@
 import os, sys
-#sys.path.append("/eagle/MDClimSim/mjp5595/ClimaX-v2/src/climax")
 from torch.utils.data import IterableDataset, DataLoader
 import torch
 import h5py
 from datetime import datetime, timedelta
 import numpy as np
+
+sys.path.append("/eagle/MDClimSim/mjp5595/ml4dvar")
 from src.dv import *
 from src.obs_cummulative import ObsDatasetCum, ObsError 
-from ml4dvar.stormer.stormer_utils import StormerWrapper
+from stormer.stormer_utils_pangu import StormerWrapperPangu
 
 #from src.era5_iterative_dataset import ERA5OneStepRandomizedDataset, ERA5MultiLeadtimeDataset
 from stormer.models.hub.vit_adaln import ViTAdaLN
 from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
-from ml4dvar.stormer.stormer_utils import StormerWrapper
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #device = "cpu"
@@ -22,44 +22,28 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_perturb_forecasts'
+    save_dir_name = 'stormer_few_perturbs'
 
-    start_date = datetime(2014, 1, 1, hour=0)
+    start_date = datetime(2014, 1, 1, hour=12)
     end_date = datetime(2015, 12, 31, hour=12)
     da_window = 12
     model_step = 6
     obs_freq = 3
 
-    save_dir = '/eagle/MDClimSim/mjp5595/data/{}/'.format(save_dir_name)
+    save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/igra_141520_stormer_obs_standardized_360_2.hdf5"
+    filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
 
     means = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz')
     stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz')
 
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/background_init_stormer_norm.npy' # This is just to initialize the model background
+    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy' # This is just to initialize the model background
 
-    from ml4dvar.stormer.varsStormer import varsStormer
+    from stormer.varsStormer import varsStormer
     vars_stormer = varsStormer().vars_stormer
 
-    var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
-    var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
-    obs_perc_err = [False, False, False, False, False, False]
-    obs_err = ObsError(vars_stormer, var_types, var_obs_err, obs_perc_err, stds)
-
-    # 3d var
-    # (2014,1,1,1,0)->(2014,1,1,12,0)
-
-    # 4d var
-    # make analysis @ because we need the prev 12 hrs
-    # (2014,1,1,12,0)
-    # se_obs0 - (2014,1,1,1,0)->(2014,1,1,6,0)
-    # se_obs1 - (2014,1,1,7,0)->(2014,1,1,12,0)
-
-    # in 3d var se_obs makes the assumption that all the obs happen at the analysis time
-    # 4d var we optimizing trajectory instead of point in time
     obs_steps = 1
     obs_dataset = ObsDatasetCum(filepath, start_date, end_date, vars_stormer, 
                                 obs_freq=obs_freq, da_window=da_window, 
@@ -81,19 +65,14 @@ if __name__ == '__main__':
     )
     net.to(device)
     net.eval()
-    stormer_wrapper = StormerWrapper(
+    stormer_wrapper = StormerWrapperPangu(
         root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
         variables=vars_stormer,
         net=net,
-        list_lead_time=[6],
+        base_lead_time=6,
         ckpt=ckpt_pth,
         device=device,
     )
-
-    #pytorch_total_params = sum(p.numel() for p in stormer_wrapper.net.parameters())
-    #pytorch_trainable_params = sum(p.numel() for p in stormer_wrapper.net.parameters() if p.requires_grad)
-    #print('Total model parameters : {}'.format(pytorch_total_params))
-    #print('Trainable model parameters : {}'.format(pytorch_trainable_params))
 
     print('background_file_np :',background_file_np)
     background_f = np.load(background_file_np, 'r')
@@ -105,24 +84,37 @@ if __name__ == '__main__':
 
     ########################################################################################################
     ########################################################################################################
-    def run_forecast(x,
-                    num_model_steps,
-                    stormer_wrapper=stormer_wrapper,
-                    vars_stormer=vars_stormer,
-                    device=device
-                    ):
-        if len(x.shape) < 4:
-            x = x.unsqueeze(0)
-        norm_preds,_,_ = stormer_wrapper.eval_multi_step(
-            x.to(device),
-            vars_stormer,
-            num_model_steps)
-        norm_preds = norm_preds[-1]
-        return norm_preds
+    #def run_forecast(x,
+    #                num_model_steps,
+    #                stormer_wrapper=stormer_wrapper,
+    #                vars_stormer=vars_stormer,
+    #                device=device
+    #                ):
+    #    if len(x.shape) < 4:
+    #        x = x.unsqueeze(0)
+    #    norm_preds,_,_ = stormer_wrapper.eval_multi_step(
+    #        x.to(device),
+    #        vars_stormer,
+    #        num_model_steps)
+    #    norm_preds = norm_preds[-1]
+    #    return norm_preds
+
+    #def run_forecast(x, stormer_wrapper, forecast_time, lead_time=None, print_steps=True):
+    #    # norm_preds: [(num_vars,lat,lon)]*num_steps -> [(63,128,256)]*num_steps
+    #    with torch.inference_mode():
+    #        norm_preds, raw_preds, lead_time_combos = stormer_wrapper.eval_to_forecast_time_with_lead_time(
+    #            x.to(device),
+    #            forecast_time=forecast_time,
+    #            lead_time=lead_time,
+    #            print_steps=print_steps,
+    #            )
+    #    return norm_preds, raw_preds, lead_time_combos
 
     def run_forecasts(x,
                     noise_level=0.00,
-                    forecast_steps=2,
+                    forecast_time=244,
+                    lead_time=6,
+                    print_steps=True,
                     save_dir=save_dir,
                     stormer_wrapper=stormer_wrapper,
                     vars_stormer=vars_stormer,
@@ -131,21 +123,31 @@ if __name__ == '__main__':
 
         if len(x.shape) < 4:
             x = x.unsqueeze(0)
-        norm_preds,raw_preds = stormer_wrapper.eval_multi_step(
-            x.to(device),
-            vars_stormer,
-            steps=forecast_steps)
+    
+        with torch.inference_mode():
+            norm_preds, raw_preds, lead_time_combos = stormer_wrapper.eval_to_forecast_time_with_lead_time(
+                x.to(device),
+                forecast_time=forecast_time,
+                lead_time=lead_time,
+                print_steps=print_steps,
+                )
 
         hf_n = h5py.File(os.path.join(save_dir, 'norm_forecast_noise{}.h5'.format(noise_level)),'w')
         hf_r = h5py.File(os.path.join(save_dir, 'raw_forecast_noise{}.h5'.format(noise_level)),'w')
+        hf_n.create_dataset(str(0), data=x[0].detach().cpu().numpy())
+        hf_r.create_dataset(str(0), data=stormer_wrapper.reverse_inp_transform(x)[0].detach().cpu().numpy())
         # forecasts [#forecasts,(vars,lat,lon)]
+        forecast_time = 0
         for i in range(len(norm_preds)):
-            hf_n.create_dataset(str(i), data=norm_preds[i].detach().cpu().numpy())
-            hf_r.create_dataset(str(i), data=raw_preds[i].detach().cpu().numpy())
+            hf_n.create_dataset(str(forecast_time+lead_time_combos[i]), data=norm_preds[i].detach().cpu().numpy())
+            hf_r.create_dataset(str(forecast_time+lead_time_combos[i]), data=raw_preds[i].detach().cpu().numpy())
+            forecast_time += lead_time_combos[i]
         return
 
     def gen_diffs(diffs, all_obs, H_idxs_unraveled_r, H_idxs_unraveled_c, vars_stormer):
         for v in range(len(vars_stormer)):
+            if v != 0 and v != 3 and v != 11:
+                continue
             #print('all_obs[0,0,v,:] :',all_obs[0,0,v,:])
             #print('all_obs[0,0,v,:].shape :',all_obs[0,0,v,:].shape)
             print('min/max all_obs[0,0,{},:] : {}/{}'.format(v,np.min(all_obs[0,0,v,:]),np.max(all_obs[0,0,v,:])))
@@ -158,15 +160,20 @@ if __name__ == '__main__':
                 #############################################
                 # for random locations
                 #############################################
-                #else:
-                #    r = np.random.randint(0,128)
-                #    c = np.random.randint(0,256)
+                if idx >= 5:
+                    continue
+                else:
+                    r = np.random.randint(3,125)
+                    c = np.random.randint(3,253)
                 #############################################
                 #############################################
 
                 #print('r,c :',r,c)
                 # Increases observation size to center + surrounding pixels (9pixels total)
-                directions = [[0,0],[-1,-1],[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1]]
+                #directions = [[0,0],[-1,-1],[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1]]
+                directions = [[0,0],[-1,-1],[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],
+                              [-2,0],[-2,1],[-2,2],[-1,2],[0,2],[1,2],[2,2],[2,1],[2,0],
+                              [2,-1],[2,-2],[1,-2],[0,-2],[-1,-2],[-2,-2],[-2,-1]]
                 diff = 1
                 if all_obs[0,0,v,idx] < 0:
                     diff = -1
@@ -214,7 +221,7 @@ if __name__ == '__main__':
         with torch.inference_mode():
             run_forecasts(background_perturbed,
                           noise_level=noise_level,
-                          forecast_steps=40,
+                          forecast_time=240,
                           save_dir=save_dir,
                           stormer_wrapper=stormer_wrapper,
                           vars_stormer=vars_stormer,
