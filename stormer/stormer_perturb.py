@@ -22,7 +22,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_few_perturbs'
+    save_dir_name = 'stormer_few_perturbs2'
 
     start_date = datetime(2014, 1, 1, hour=12)
     end_date = datetime(2015, 12, 31, hour=12)
