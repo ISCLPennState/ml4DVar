@@ -84,32 +84,6 @@ if __name__ == '__main__':
 
     ########################################################################################################
     ########################################################################################################
-    #def run_forecast(x,
-    #                num_model_steps,
-    #                stormer_wrapper=stormer_wrapper,
-    #                vars_stormer=vars_stormer,
-    #                device=device
-    #                ):
-    #    if len(x.shape) < 4:
-    #        x = x.unsqueeze(0)
-    #    norm_preds,_,_ = stormer_wrapper.eval_multi_step(
-    #        x.to(device),
-    #        vars_stormer,
-    #        num_model_steps)
-    #    norm_preds = norm_preds[-1]
-    #    return norm_preds
-
-    #def run_forecast(x, stormer_wrapper, forecast_time, lead_time=None, print_steps=True):
-    #    # norm_preds: [(num_vars,lat,lon)]*num_steps -> [(63,128,256)]*num_steps
-    #    with torch.inference_mode():
-    #        norm_preds, raw_preds, lead_time_combos = stormer_wrapper.eval_to_forecast_time_with_lead_time(
-    #            x.to(device),
-    #            forecast_time=forecast_time,
-    #            lead_time=lead_time,
-    #            print_steps=print_steps,
-    #            )
-    #    return norm_preds, raw_preds, lead_time_combos
-
     def run_forecasts(x,
                     noise_level=0.00,
                     forecast_time=244,
