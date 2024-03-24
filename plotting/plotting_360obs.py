@@ -902,6 +902,9 @@ def plot_analysis(era5,
                 increment_limit_max = max(increment_limit_max,np.max(np.abs(era5_minus_analysis[itr,var_idx])))
                 inc_mse_max = max(inc_mse_max,np.mean(np.square(era5_minus_analysis[itr,var_idx])))
 
+            era5_vmin = np.min(era5_data[window_idxs,var_idx]) 
+            era5_vmax = np.max(era5_data[window_idxs,var_idx]) 
+
             mse_x = []
             mse_y = []
             for itr in window_idxs:
@@ -966,8 +969,8 @@ def plot_analysis(era5,
                 obs_lon_plot = (obs_latlon[:, 1])
                 fig, axs = plt.subplots(2, 3, sharex = True, sharey = False, figsize = figsize)
 
-                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
-                                               vmax = vmax, cmap = 'viridis')
+                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = era5_vmin,
+                                               vmax = era5_vmax, cmap = 'viridis')
                 plt.colorbar(pc_era5, ax = axs[0,0], label=units[var_idx])
                 axs[0, 0].set_title('ERA5')
                 axs[0, 0].set_xticks(np.linspace(0,360,9))
@@ -1122,6 +1125,9 @@ def plot_background_vs_analysis(era5,
                 increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
                 increment_limit_max = max(increment_limit_max,np.max(np.abs(increment)))
 
+            era5_vmin = np.min(era5_data[window_idxs,var_idx]) 
+            era5_vmax = np.max(era5_data[window_idxs,var_idx]) 
+
             for itr in window_idxs:
 
                 ###################################################################################################################################
@@ -1186,8 +1192,8 @@ def plot_background_vs_analysis(era5,
                 obs_lon_plot = (obs_latlon[:, 1])
                 fig, axs = plt.subplots(2, 4, sharex = False, sharey = False, figsize = figsize)
 
-                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
-                                               vmax = vmax, cmap = 'viridis')
+                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = era5_vmin,
+                                               vmax = era5_vmax, cmap = 'viridis')
                 plt.colorbar(pc_era5, ax = axs[0,0], label=units[var_idx])
                 axs[0, 0].set_xticks(np.linspace(0,360,9),'')
                 axs[0, 0].set_title('ERA5')
