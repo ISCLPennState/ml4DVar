@@ -33,6 +33,7 @@ if not os.path.exists(plot_dir):
 da_window = 12
 #max_steps_to_plot = 20
 max_steps_to_plot = 60
+#max_steps_to_plot = 10
 
 era5_dir = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/train/'
 

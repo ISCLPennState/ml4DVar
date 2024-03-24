@@ -619,6 +619,18 @@ def plot_analysis_innovation(era5,
     if save or show:
         for var_idx, var in [(idx, analysis.vars[idx]) for idx in var_idxs]:
             gif_files = []
+
+            increment_limit_max = 0
+            inc_mse_max = 0
+            mse_err_max = 0
+            for itr in window_idxs:
+                increment_limit_max = max(increment_limit_max,np.max(np.abs(era5_minus_analysis[itr,var_idx])))
+                inc_mse_max = max(inc_mse_max,np.mean(np.square(analysis_increment[itr,var_idx])))
+                mse_err_max = max(mse_err_max,np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+
+            mse_x = []
+            mse_y_inc = []
+            mse_y_err = []
             for itr in window_idxs:
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
                 title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}'
@@ -630,19 +642,39 @@ def plot_analysis_innovation(era5,
                 fig, axs = plt.subplots(1, 1, figsize = figsize)
 
                 #print('axs',axs)
-                max_val = np.max(abs(analysis_increment[:,var_idx]))
-                pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, analysis_increment[itr, var_idx], vmin = -1*max_val,
-                                               vmax = max_val, cmap = 'seismic')
-
+                pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, analysis_increment[itr, var_idx],
+                                         cmap = 'seismic',
+                                         norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                         )
                 if plot_obs:
-                    #print(' innovation[itr, var_idx]', innovation[itr, var_idx])
                     ra_obs = axs.scatter(obs_lon_plot, obs_lat_plot, c = innovation[itr, var_idx],
-                                                vmin=-1*max_val, vmax=max_val, cmap='seismic',
+                                                cmap='seismic',
+                                                norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
                                                 edgecolor='k', s=35, linewidth=0.5)
-
                 plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
-                axs.set_title('Analysis Increment')
+                axs.set_title('Analysis Increment - Cycle {}'.format(itr))
                 axs.set_xticks(np.linspace(0,360,9))
+                axs.set_yticks([])
+
+                axs_mses_inc = axs.twinx()
+                axs_mses_inc.tick_params(axis='y',colors='orange')
+                axs_mses_inc.set_ylim(0,inc_mse_max)
+                axs_mses_inc.yaxis.tick_left()
+                axs_mses_inc.yaxis.set_label_position('left')
+                axs_mses_inc.set_ylabel('Mean Squared Increment ({})'.format(units[var_idx]),c='orange')
+                mse_x.append(itr*(359/(len(window_idxs)-1)))
+                mse_y_inc.append(np.mean(np.square(analysis_increment[itr, var_idx])))
+                axs_mses_inc.plot(mse_x,mse_y_inc,c='orange',linewidth=4)
+
+                axs_mses = axs.twinx()
+                axs_mses.tick_params(axis='y',colors='magenta')
+                axs_mses.set_ylim(0,mse_err_max)
+                axs_mses.yaxis.tick_right()
+                axs_mses.yaxis.set_label_position('right')
+                axs_mses.set_ylabel('Mean Squared Error ({})'.format(units[var_idx]),c='magenta')
+                #mse_x.append(itr*(359/(len(window_idxs)-1)))
+                mse_y_err.append(np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                axs_mses.plot(mse_x,mse_y_err,c='magenta',linewidth=4)
 
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
                 fig.suptitle(title_str)
@@ -865,10 +897,13 @@ def plot_analysis(era5,
             #print('era5,analysis,obs min ({}) : {}, {}, {}'.format(var,era5.varmin[var_idx], analysis.varmin[var_idx], obs.varmin[var_idx]))
 
             increment_limit_max = 0
+            inc_mse_max = 0
             for itr in window_idxs:
                 increment_limit_max = max(increment_limit_max,np.max(np.abs(era5_minus_analysis[itr,var_idx])))
+                inc_mse_max = max(inc_mse_max,np.mean(np.square(era5_minus_analysis[itr,var_idx])))
 
-
+            mse_x = []
+            mse_y = []
             for itr in window_idxs:
 
                 ###################################################################################################################################
@@ -924,12 +959,12 @@ def plot_analysis(era5,
 
 
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
-                title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}'
+                title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")} - Cycle {itr}'
                 print(title_str)
                 obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
                 obs_lat_plot = obs_latlon[:, 0]
                 obs_lon_plot = (obs_latlon[:, 1])
-                fig, axs = plt.subplots(2, 3, sharex = True, sharey = True, figsize = figsize)
+                fig, axs = plt.subplots(2, 3, sharex = True, sharey = False, figsize = figsize)
 
                 pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
                                                vmax = vmax, cmap = 'viridis')
@@ -941,12 +976,24 @@ def plot_analysis(era5,
                                                   vmin = vmin, vmax = vmax, cmap = 'viridis')
                 plt.colorbar(pc_analysis, ax = axs[0, 1],label=units[var_idx])
                 axs[0, 1].set_title('Analysis')
+                axs[0, 1].set_yticklabels([])
 
                 pc_error = axs[0, 2].pcolormesh(era5.lon, era5.lat, era5_minus_analysis[itr, var_idx],
-                                                cmap = 'RdYlBu_r',vmin=-increment_limit_max,vmax=increment_limit_max)
-
+                                                cmap = 'RdYlBu_r',
+                                                norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                                )
                 plt.colorbar(pc_error, ax = axs[0, 2], label=units[var_idx])
                 axs[0, 2].set_title('ERA5 - Analysis Difference')
+                axs[0, 2].set_yticks([])
+
+                axs_mses = axs[0, 2].twinx()
+                axs_mses.set_ylim(0,inc_mse_max)
+                axs_mses.yaxis.tick_left()
+                axs_mses.yaxis.set_label_position('left')
+                axs_mses.set_ylabel('Mean Squared Error ({})'.format(units[var_idx]))
+                mse_x.append(itr*(359/(len(window_idxs)-1)))
+                mse_y.append(np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                axs_mses.plot(mse_x,mse_y,c='k')
 
                 sp_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot,
                                           c = obs.obs[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy(),
@@ -961,6 +1008,7 @@ def plot_analysis(era5,
                                               edgecolor='k', s=35, linewidth=0.25)
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_title('Observation Diff (ERA5)')
+                axs[1, 1].set_yticklabels([])
 
                 analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
 
@@ -969,6 +1017,7 @@ def plot_analysis(era5,
                                                     edgecolor='k', s=35, linewidth=0.25)
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_title('Observation Diff (Analysis)')
+                axs[1, 2].set_yticklabels([])
 
                 axs[0, 0].set_ylabel('Lat')
                 axs[1, 0].set_ylabel('Lat')
@@ -1130,7 +1179,7 @@ def plot_background_vs_analysis(era5,
 
 
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
-                title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")}'
+                title_str = f'{var} on {plot_date.strftime("%m/%d/%Y, %H")} - Cycle {itr}'
                 print(title_str)
                 obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
                 obs_lat_plot = obs_latlon[:, 0]
@@ -1159,12 +1208,13 @@ def plot_background_vs_analysis(era5,
 
                 increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
                 ana_inc = axs[0,3].pcolormesh(era5.lon, era5.lat, increment,
-                                               cmap = 'bwr', 
+                                               cmap = 'seismic', 
                                                norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max))
 
                 ra_obs = axs[0,3].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
-                                            vmin=-increment_limit_max, vmax=increment_limit_max, cmap='bwr',
-                                            edgecolor='k', s=20, linewidth=0.25)
+                                          norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                          cmap='seismic', edgecolor='k', s=20, linewidth=0.25,
+                                          )
                 plt.colorbar(ana_inc, ax = axs[0, 3], label=units[var_idx])
                 axs[0, 3].set_xticks(np.linspace(0,360,9))
                 axs[0, 3].get_yaxis().set_ticklabels([])
