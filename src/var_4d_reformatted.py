@@ -93,7 +93,7 @@ class FourDVar():
             #print('mem_info :',torch.cuda.mem_get_info())
 
             if self.logger:
-                self.logger.info('(cost_J) step: {}\tloss: {}'.format(self.step,loss.item()))
+                self.logger.info('(cost_J) step: {}\tloss: {}'.format(itr+self.step,loss.item()))
             self.step += 1
             loss.backward(retain_graph=False)
 
