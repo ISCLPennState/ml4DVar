@@ -73,27 +73,27 @@ if __name__ == '__main__':
                 #f_name = files_full[i*4+1]
                 #preds_12, preds_36 = get_forecast(data_dir+f_name) 
 
-            diff_norm = preds_36_norm - preds_12_norm
-            diff_norm = torch.from_numpy(diff_norm)
-            a = norm(preds_36_raw,stormer_wrapper)
-            diff_raw_norm = norm(preds_36_raw,stormer_wrapper) - norm(preds_12_raw,stormer_wrapper)
 
+            #diff_norm = preds_36_norm - preds_12_norm
+            diff_norm = preds_12_norm - preds_36_norm
+            diff_norm = torch.from_numpy(diff_norm)
             sh_diff_norm = sht(diff_norm)
             print('sh_diff_norm.shape :',sh_diff_norm.shape)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
             sh_coeffs_norm[i] = np.real(sh_diff_norm[:, :, 0].cpu().numpy())
             hf_diff_norm[i] = diff_hf_norm.cpu().numpy()
             #
-            sh_diff_raw_norm = sht(diff_raw_norm)
-            diff_hf_raw_norm = diff_raw_norm - inv_sht(sh_diff_raw_norm)
-            sh_coeffs_raw_norm[i] = np.real(sh_diff_raw_norm[:, :, 0].cpu().numpy())
-            hf_diff_raw_norm[i] = diff_hf_raw_norm.cpu().numpy()
+            #diff_raw_norm = norm(preds_36_raw,stormer_wrapper) - norm(preds_12_raw,stormer_wrapper)
+            #sh_diff_raw_norm = sht(diff_raw_norm)
+            #diff_hf_raw_norm = diff_raw_norm - inv_sht(sh_diff_raw_norm)
+            #sh_coeffs_raw_norm[i] = np.real(sh_diff_raw_norm[:, :, 0].cpu().numpy())
+            #hf_diff_raw_norm[i] = diff_hf_raw_norm.cpu().numpy()
 
         sh_var_norm = np.var(sh_coeffs_norm[:], axis = 0)
         hf_var_norm = np.var(hf_diff_norm[:], axis = 0)
         sh_var_raw_norm = np.var(sh_coeffs_raw_norm[:], axis = 0)
         hf_var_raw_norm = np.var(hf_diff_raw_norm[:], axis = 0)
-        np.save(os.path.join(save_dir,'sh_{}hr_stormer_norm.npy'.format(hour_diff)), sh_var_norm)
-        np.save(os.path.join(save_dir,'hf_{}hr_stormer_norm.npy'.format(hour_diff)), hf_var_norm)
-        np.save(os.path.join(save_dir,'sh_{}hr_stormer_raw_norm.npy'.format(hour_diff)), sh_var_raw_norm)
-        np.save(os.path.join(save_dir,'hf_{}hr_stormer_raw_norm.npy'.format(hour_diff)), hf_var_raw_norm)
+        np.save(os.path.join(save_dir,'sh_{}hr_stormer_norm_NegB.npy'.format(hour_diff)), sh_var_norm)
+        np.save(os.path.join(save_dir,'hf_{}hr_stormer_norm_NegB.npy'.format(hour_diff)), hf_var_norm)
+        #np.save(os.path.join(save_dir,'sh_{}hr_stormer_raw_norm.npy'.format(hour_diff)), sh_var_raw_norm)
+        #np.save(os.path.join(save_dir,'hf_{}hr_stormer_raw_norm.npy'.format(hour_diff)), hf_var_raw_norm)
