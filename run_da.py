@@ -63,23 +63,31 @@ if __name__ == '__main__':
         if int(gpu2use) == 0:
             #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5.npy'
             #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_norm.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_norm.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_norm_NegB.npy' #B (grid space (HF))
         if int(gpu2use) == 1:
             #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_vs_era5.npy'
             #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_norm.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_norm.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_norm_NegB.npy' #B (grid space (HF))
         if int(gpu2use) == 2:
             #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_vs_era5.npy'
             #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_vs_era5.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_norm.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_norm.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_norm_NegB.npy' #B (grid space (HF))
         if int(gpu2use) == 3:
             #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_vs_era5.npy'
             #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_vs_era5.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_norm.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_norm.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_norm_NegB.npy' #B (grid space (HF))
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
@@ -146,6 +154,12 @@ if __name__ == '__main__':
 
     be = np.load(background_err_file)
     bef = np.load(background_err_hf_file)
+
+    # This breaks it... maybe we have to calculate pred12 - pred36 instead of multiplying by -1 in calc_b.py
+    #logger.info('TESTING Negative B!!!')
+    #logger.info('Multiplying B by -1 !!!')
+    #be = -1 * be
+    #logger.info('')
 
     ## This is for converting climaX B -> stormer B
     #be_idxs = np.arange(69)
