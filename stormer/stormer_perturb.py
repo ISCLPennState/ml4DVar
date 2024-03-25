@@ -51,6 +51,11 @@ if __name__ == '__main__':
                                 )
     obs_loader = DataLoader(obs_dataset, batch_size=1, num_workers=0)
     
+    def read_era5(data,vars_stormer):
+        data_np = np.zeros((len(vars_stormer),128,256))
+        for i,var in enumerate(vars_stormer):
+            data_np[i] = data['input/{}'.format(var)][:]
+        return data_np
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
     net = ViTAdaLN(
