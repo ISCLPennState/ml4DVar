@@ -13,7 +13,7 @@ import pickle as p
 
 class FourDVar():
     def __init__(self, stormer_wrapper, obs_dataloader, 
-                 background, background_err_dict, background_err_hf_dict, obs_err, dv_layer,
+                 background, background_err, background_err_hf, obs_err, dv_layer,
                  model_step=6, da_window=12, obs_freq=3, da_type='var4d', vars=None,
                  b_inflation=1, lr=1., max_iter=700, forecast_steps=40, savestr=None,
                  save_analysis=True, savedir=None, device=None, save_idx=0, logger=None,
@@ -25,8 +25,8 @@ class FourDVar():
         self.obs_dataloader = obs_dataloader
 
         self.background = background
-        self.background_err_dict = background_err_dict
-        self.background_err_hf_dict = background_err_hf_dict
+        self.background_err = background_err
+        self.background_err_hf = background_err_hf
         self.obs_err = obs_err 
         self.dv_layer = dv_layer
 
@@ -97,19 +97,6 @@ class FourDVar():
         if self.save_analysis:
             np.save(os.path.join(self.save_dir, 'background_%d_%s.npy' % (itr+self.save_idx, self.savestr)),
                     self.background.detach().cpu().numpy())
-
-        ############################################################################
-        # Set the background_err to use for each cycle
-        ############################################################################
-        bg_hr_key = int(self.savestr[:2])
-        self.background_err = self.background_err_dict[bg_hr_key]
-        self.background_err_hf = self.background_err_hf_dict[bg_hr_key]
-        if self.logger:
-            self.logger.info('self.savestr {}'.format(self.savestr))
-            self.logger.info('Using background_err_dict[{}]'.format(bg_hr_key))
-        ############################################################################
-        # Set the background_err to use for each cycle
-        ############################################################################
 
         # This optimizes x_analysis given the observations (data assimilation occurs) x -> x_analysis
         tic = time.perf_counter()
