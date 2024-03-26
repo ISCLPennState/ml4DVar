@@ -140,14 +140,15 @@ if __name__ == '__main__':
     # from src/dv.py
     dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file, device)
 
-    def make_bgerr_dict(background_err_file_dict):
+    def make_bgerr_dict(bg_err_file_dict):
         bg_err_dict = {}
-        for hr_key in background_err_file_dict.keys():
-            background_err_file = background_err_file_dict[hr_key]
-            be = np.load(background_err_file)
+        for hr_key in bg_err_file_dict.keys():
+            bg_err_file = bg_err_file_dict[hr_key]
+            be = np.load(bg_err_file)
             background_err = torch.from_numpy(be).float().to(device)
             background_err = background_err[torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
-            bg_err_dict[hr_key] = background_err
+            bg_err_dict[int(hr_key)] = background_err
+        return bg_err_dict
 
     background_err_dict = make_bgerr_dict(background_err_file_dict)
     background_err_hf_dict = make_bgerr_dict(background_err_hf_file_dict)
