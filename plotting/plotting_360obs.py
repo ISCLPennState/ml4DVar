@@ -623,10 +623,14 @@ def plot_analysis_innovation(era5,
             increment_limit_max = 0
             inc_mse_max = 0
             mse_err_max = 0
+            rmse_err_min = 0
+            rmse_err_max = 0
             for itr in window_idxs:
                 increment_limit_max = max(increment_limit_max,np.max(np.abs(era5_minus_analysis[itr,var_idx])))
                 inc_mse_max = max(inc_mse_max,np.mean(np.square(analysis_increment[itr,var_idx])))
                 mse_err_max = max(mse_err_max,np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                rmse_err_min = min(rmse_err_min,rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],analysis.lat))
+                rmse_err_max = max(rmse_err_max,rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],analysis.lat))
 
             mse_x = []
             mse_y_inc = []
@@ -668,12 +672,14 @@ def plot_analysis_innovation(era5,
 
                 axs_mses = axs.twinx()
                 axs_mses.tick_params(axis='y',colors='magenta')
-                axs_mses.set_ylim(0,mse_err_max)
+                #axs_mses.set_ylim(0,mse_err_max)
+                axs_mses.set_ylim(0.9*rmse_err_min,1.1*rmse_err_max)
                 axs_mses.yaxis.tick_right()
                 axs_mses.yaxis.set_label_position('right')
-                axs_mses.set_ylabel('Mean Squared Error ({})'.format(units[var_idx]),c='magenta')
+                axs_mses.set_ylabel('Lat-Weighted RMSE ({})'.format(units[var_idx]),c='magenta')
                 #mse_x.append(itr*(359/(len(window_idxs)-1)))
-                mse_y_err.append(np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                #mse_y_err.append(np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                mse_y_err.append(rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],analysis.lat))
                 axs_mses.plot(mse_x,mse_y_err,c='magenta',linewidth=4)
 
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
@@ -898,9 +904,13 @@ def plot_analysis(era5,
 
             increment_limit_max = 0
             inc_mse_max = 0
+            rmse_err_min = np.float('inf')
+            rmse_err_max = -np.float('inf')
             for itr in window_idxs:
                 increment_limit_max = max(increment_limit_max,np.max(np.abs(era5_minus_analysis[itr,var_idx])))
                 inc_mse_max = max(inc_mse_max,np.mean(np.square(era5_minus_analysis[itr,var_idx])))
+                rmse_err_min = min(rmse_err_min,rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],analysis.lat))
+                rmse_err_max = max(rmse_err_max,rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],analysis.lat))
 
             era5_vmin = np.min(era5_data[window_idxs,var_idx]) 
             era5_vmax = np.max(era5_data[window_idxs,var_idx]) 
@@ -990,12 +1000,14 @@ def plot_analysis(era5,
                 axs[0, 2].set_yticks([])
 
                 axs_mses = axs[0, 2].twinx()
-                axs_mses.set_ylim(0,inc_mse_max)
+                #axs_mses.set_ylim(0,inc_mse_max)
+                axs_mses.set_ylim(0.9*rmse_err_min,1.1*rmse_err_max)
                 axs_mses.yaxis.tick_left()
                 axs_mses.yaxis.set_label_position('left')
-                axs_mses.set_ylabel('Mean Squared Error ({})'.format(units[var_idx]))
+                axs_mses.set_ylabel('Lat-Weighted RMSE ({})'.format(units[var_idx]))
                 mse_x.append(itr*(359/(len(window_idxs)-1)))
-                mse_y.append(np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                #mse_y.append(np.mean(np.square(era5_minus_analysis[itr, var_idx])))
+                mse_y.append(rmse_lat_diff(era5_minus_analysis[itr, var_idx],analysis.lat))
                 axs_mses.plot(mse_x,mse_y,c='k')
 
                 sp_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot,
