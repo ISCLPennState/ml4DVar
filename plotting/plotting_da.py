@@ -88,7 +88,8 @@ plot_stuff = plot_analysis(era5,
                           analysis,
                           obs,
                           var_units,
-                          var_idxs = [0,3,11],
+                          #var_idxs = [0,3,11],
+                          var_idxs = [0],
                           #var_idxs = None,
                           window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                           #window_idxs = [0],
@@ -106,7 +107,8 @@ _ = plot_background_vs_analysis(era5,
                                 analysis,
                                 obs,
                                 var_units,
-                                var_idxs = [0,3,11],
+                                #var_idxs = [0,3,11],
+                                var_idxs = [0],
                                 #var_idxs = None,
                                 window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                                 #window_idxs = [0],
@@ -114,7 +116,7 @@ _ = plot_background_vs_analysis(era5,
                                 show = False,
                                 save_dir = bg_vs_ana_dir,
                                 return_error = True)
-###################################################################################################################
+####################################################################################################################
 
 innovation_dir = os.path.join(plot_dir,'innovation')
 if not os.path.exists(innovation_dir):
@@ -123,7 +125,8 @@ _ = plot_analysis_innovation(era5,
                              analysis,
                              obs,
                              var_units,
-                             var_idxs = [0,3,11],
+                             #var_idxs = [0,3,11],
+                             var_idxs = [0],
                              window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                              save = True,
                              show = False,
@@ -135,7 +138,8 @@ _ = plot_analysis_innovation(era5,
                              analysis,
                              obs,
                              var_units,
-                             var_idxs = [0,3,11],
+                             #var_idxs = [0,3,11],
+                             var_idxs = [0],
                              window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                              save = True,
                              show = False,
@@ -161,20 +165,3 @@ plot_analysis_global_rmse(era5_minus_analysis,
                           show = False,
                           save_dir = mse_dir,
                           return_error = False)
-
-#_ = plot_analysis_innovation(era5, analysis, obs, var_units, var_idxs = [3], itr_idxs = np.arange(30), save = True, show = False, save_dir='/eagle/MDClimSim/troyarcomano/ml4dvar/plots/',return_error=False)
-'''
-print(np.shape(analysis_obs_error))
-print(np.shape(analysis_obs_error[:,0]))
-print(np.shape(analysis_obs_error[0,0]))
-rmse = np.zeros((np.shape(analysis_obs_error)[0]))
-rmse_era = np.zeros((np.shape(analysis_obs_error)[0]))
-for i in range(np.shape(analysis_obs_error)[0]):
-    rmse[i] = np.sqrt(np.mean(analysis_obs_error[i,0]**2))
-    rmse_era[i] = np.sqrt(np.mean(era5_obs_error[i,0]**2))
-#print(analysis_obs_error[:,0])
-plt.plot(rmse,label='Analysis')
-plt.plot(rmse_era,label='ERA5')
-plt.legend()
-plt.show()
-'''
