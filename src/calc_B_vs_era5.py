@@ -65,14 +65,18 @@ if __name__ == '__main__':
 
     files_norm = glob.glob(forecast_dir+'norm_????.h5')
 
-    hour_diffs = [6,12,24,72,192]
+    hour_diff = 12
+    pred_start_idxs = [0,2]
 
-    for hour_diff in hour_diffs:
-
+    for psi in pred_start_idxs:
         sh_coeffs_norm = []
         hf_diff_norm = []
-        for i in range(0,len(files_norm),4):
-            print('hour_diff, i :',hour_diff,i)
+        sh_coeffs_norm_rev = []
+        hf_diff_norm_rev = []
+        for i in range(0,len(files_norm)):
+            if i % 4 != psi:
+                continue
+            #print('hour_diff, i :',hour_diff,i)
             try:
                 preds = get_forecast_h5(forecast_dir,i,hour_diff=hour_diff)
                 ground_truth_raw = load_era5(era5_dir,i,hour_diff,2017,vars_stormer)
@@ -82,18 +86,31 @@ if __name__ == '__main__':
                 continue
 
             diff_norm = preds - ground_truth
-            diff_norm = torch.from_numpy(diff_norm)
-
+            diff_norm = torch.from_numpy(diff_norm).to(device)
             sh_diff_norm = sht(diff_norm)
-            print('sh_diff_norm.shape :',sh_diff_norm.shape)
+            #print('sh_diff_norm.shape :',sh_diff_norm.shape)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
             # TODO why only take the first index here??
             sh_coeffs_norm.append(np.real(sh_diff_norm[:, :, 0].cpu().numpy()))
             hf_diff_norm.append(diff_hf_norm.cpu().numpy())
 
+            diff_norm_rev = ground_truth - preds
+            diff_norm_rev = torch.from_numpy(diff_norm_rev).to(device)
+            sh_diff_norm_rev = sht(diff_norm_rev)
+            diff_hf_norm_rev = diff_norm_rev - inv_sht(sh_diff_norm_rev)
+            sh_coeffs_norm_rev.append(np.real(sh_diff_norm_rev[:, :, 0].cpu().numpy()))
+            hf_diff_norm_rev.append(diff_hf_norm_rev.cpu().numpy())
+
         sh_coeffs_norm = np.array(sh_coeffs_norm)
         hf_diff_norm = np.array(hf_diff_norm)
         sh_var_norm = np.var(sh_coeffs_norm[:], axis = 0)
         hf_var_norm = np.var(hf_diff_norm[:], axis = 0)
-        np.save(os.path.join(save_dir,'sh_{}hr_stormer_vs_era5.npy'.format(hour_diff)), sh_var_norm)
-        np.save(os.path.join(save_dir,'hf_{}hr_stormer_vs_era5.npy'.format(hour_diff)), hf_var_norm)
+        np.save(os.path.join(save_dir,'sh_{}hr_stormer_vs_era5_{:0>2d}.npy'.format(hour_diff,6*psi)), sh_var_norm)
+        np.save(os.path.join(save_dir,'hf_{}hr_stormer_vs_era5_{:0>2d}.npy'.format(hour_diff,6*psi)), hf_var_norm)
+
+        sh_coeffs_norm_rev = np.array(sh_coeffs_norm_rev)
+        hf_diff_norm_rev = np.array(hf_diff_norm_rev)
+        sh_var_norm_rev = np.var(sh_coeffs_norm_rev[:], axis = 0)
+        hf_var_norm_rev = np.var(hf_diff_norm_rev[:], axis = 0)
+        np.save(os.path.join(save_dir,'sh_{}hr_stormer_vs_era5_{:0>2d}_rev.npy'.format(hour_diff,6*psi)), sh_var_norm_rev)
+        np.save(os.path.join(save_dir,'hf_{}hr_stormer_vs_era5_{:0>2d}_rev.npy'.format(hour_diff,6*psi)), hf_var_norm_rev)
