@@ -28,7 +28,7 @@ def norm(x_np,stormer_wrapper):
 
 if __name__ == '__main__':
 
-    save_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/'
+    save_dir = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/'
 
     vars_stormer = varsStormer().vars_stormer
     stormer_wrapper = StormerWrapperPangu(

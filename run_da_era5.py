@@ -52,41 +52,32 @@ if __name__ == '__main__':
     stds = np.load(stds_file)
     dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
 
-
-    background_err_file_dict = {}
-    background_err_hf_file_dict = {}
-    if device_set:
-        if int(gpu2use) == 0:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_00.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_12.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_00.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_12.npy'
-        if int(gpu2use) == 1:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_12.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_00.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_12.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_00.npy'
-        if int(gpu2use) == 2:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_00_rev.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_12_rev.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_00_rev.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_12_rev.npy'
-        if int(gpu2use) == 3:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_12_rev.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5_00_rev.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_12_rev.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5_00_rev.npy'
-
-    ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
-
     b_inflation = 1 
     if da_type == 'var4d':
         b_inflation = 1
 
+    background_err_file_dict = {}
+    background_err_hf_file_dict = {}
+    background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
+    background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
+    background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
+    background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+    if device_set:
+        if int(gpu2use) == 0:
+            b_inflation = 10
+        if int(gpu2use) == 1:
+            b_inflation = 100
+        if int(gpu2use) == 2:
+            b_inflation = 1000
+        if int(gpu2use) == 3:
+            b_inflation = 10000
+
+    ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
+
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
+    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
     backgrounds = os.listdir(save_dir)
     start_idx = 0
     if len(backgrounds) > 1:

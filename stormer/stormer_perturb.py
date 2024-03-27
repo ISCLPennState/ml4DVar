@@ -22,7 +22,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_few_perturbs2'
+    save_dir_name = 'stormer_temp_perturbs4'
 
     start_date = datetime(2014, 1, 1, hour=12)
     end_date = datetime(2015, 12, 31, hour=12)
@@ -125,7 +125,8 @@ if __name__ == '__main__':
 
     def gen_diffs(diffs, all_obs, H_idxs_unraveled_r, H_idxs_unraveled_c, vars_stormer):
         for v in range(len(vars_stormer)):
-            if v != 0 and v != 3 and v != 11:
+            #if v != 0 and v != 3 and v != 11:
+            if v != 0:
                 continue
             #print('all_obs[0,0,v,:] :',all_obs[0,0,v,:])
             #print('all_obs[0,0,v,:].shape :',all_obs[0,0,v,:].shape)

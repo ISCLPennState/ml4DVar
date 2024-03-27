@@ -55,39 +55,39 @@ if __name__ == '__main__':
 
     #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/climaX/background_24hr_diff_sh_coeffs_var_climaxv2_standardized_128_uv.npy' #B (spherical harmonics)
     #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/climaX/background_24hr_diff_hf_var_climaxv2_standardized_128_uv.npy' #B (grid space (HF))
-    #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_sh_coeffs_var_stormer_standardized_128_uv.npy' #B (spherical harmonics)
-    #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_24hr_diff_hf_var_stormer_standardized_128_uv.npy' #B (grid space (HF))
-    background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_vs_era5.npy'
-    background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
+    #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_24hr_diff_sh_coeffs_var_stormer_standardized_128_uv.npy' #B (spherical harmonics)
+    #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_24hr_diff_hf_var_stormer_standardized_128_uv.npy' #B (grid space (HF))
+    background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_vs_era5.npy'
+    background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
     if device_set:
         if int(gpu2use) == 0:
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_vs_era5.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_vs_era5.npy' #B (grid space (HF))
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_norm.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_norm.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_12hr_stormer_norm_NegB.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_12hr_stormer_norm_NegB.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm_NegB.npy' #B (grid space (HF))
         if int(gpu2use) == 1:
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_vs_era5.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_norm.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_norm.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_24hr_stormer_norm_NegB.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_24hr_stormer_norm_NegB.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_vs_era5.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm_NegB.npy' #B (grid space (HF))
         if int(gpu2use) == 2:
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_vs_era5.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_vs_era5.npy' #B (grid space (HF))
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_norm.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_norm.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_72hr_stormer_norm_NegB.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_72hr_stormer_norm_NegB.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_72hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_72hr_stormer_vs_era5.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_72hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_72hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_72hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_72hr_stormer_norm_NegB.npy' #B (grid space (HF))
         if int(gpu2use) == 3:
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_vs_era5.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_vs_era5.npy' #B (grid space (HF))
-            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_norm.npy'
-            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_norm.npy' #B (grid space (HF))
-            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/sh_144hr_stormer_norm_NegB.npy'
-            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/hf_144hr_stormer_norm_NegB.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_144hr_stormer_vs_era5.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_144hr_stormer_vs_era5.npy' #B (grid space (HF))
+            #background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_144hr_stormer_norm.npy'
+            #background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_144hr_stormer_norm.npy' #B (grid space (HF))
+            background_err_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_144hr_stormer_norm_NegB.npy'
+            background_err_hf_file = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_144hr_stormer_norm_NegB.npy' #B (grid space (HF))
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
+    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
     backgrounds = os.listdir(save_dir)
     start_idx = 0
     if len(backgrounds) > 1:
