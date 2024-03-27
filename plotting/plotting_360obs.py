@@ -13,6 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_area_auto_adjustable
 import subprocess
 from PIL import Image
+import cv2
 
 # TODO obs cummulative!!!
 #from src.obs import *
@@ -705,6 +706,25 @@ def plot_analysis_innovation(era5,
                     plt.close(fig)
 
             if save:
+                frames_per_second = 6
+                w, h = None, None
+                for j,gif_f in enumerate(gif_files):
+                    frame = cv2.imread(gif_f)
+                    
+                    if w is None:
+                        h, w, _ = frame.shape
+                        fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+                        writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
+                                                 fourcc,
+                                                 frames_per_second,
+                                                 (w,h),
+                                                 )
+                    writer.write(frame)
+                    if j == 0 or j == (len(gif_files)-1):
+                        for _ in range(frames_per_second):
+                            writer.write(frame)
+                writer.release()
+
                 gif_imgs = []
                 for gif_f in gif_files:
                     gif_imgs.append(Image.open(gif_f))
@@ -1058,6 +1078,25 @@ def plot_analysis(era5,
                     plt.close(fig)
 
             if save:
+                frames_per_second = 6
+                w, h = None, None
+                for j,gif_f in enumerate(gif_files):
+                    frame = cv2.imread(gif_f)
+                    
+                    if w is None:
+                        h, w, _ = frame.shape
+                        fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+                        writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
+                                                 fourcc,
+                                                 frames_per_second,
+                                                 (w,h),
+                                                 )
+                    writer.write(frame)
+                    if j == 0 or j == (len(gif_files)-1):
+                        for _ in range(frames_per_second):
+                            writer.write(frame)
+                writer.release()
+
                 gif_imgs = []
                 for gif_f in gif_files:
                     gif_imgs.append(Image.open(gif_f))
@@ -1317,6 +1356,26 @@ def plot_background_vs_analysis(era5,
                     plt.close(fig)
 
             if save:
+
+                frames_per_second = 6
+                w, h = None, None
+                for j,gif_f in enumerate(gif_files):
+                    frame = cv2.imread(gif_f)
+                    
+                    if w is None:
+                        h, w, _ = frame.shape
+                        fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+                        writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
+                                                 fourcc,
+                                                 frames_per_second,
+                                                 (w,h),
+                                                 )
+                    writer.write(frame)
+                    if j == 0 or j == (len(gif_files)-1):
+                        for _ in range(frames_per_second):
+                            writer.write(frame)
+                writer.release()
+
                 gif_imgs = []
                 for gif_f in gif_files:
                     gif_imgs.append(Image.open(gif_f))
