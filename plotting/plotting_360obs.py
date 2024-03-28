@@ -838,8 +838,9 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         for itr in window_idxs:
             for var_idx, var in enumerate(var_names):
                 if lat_weighted and lats is not None:
-                    rmse[itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],lats)
-                    rmse_background[itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:],lats)
+                    # TODO MSEs HERE
+                    rmse[itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.means[var_idx],lats)
+                    rmse_background[itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.means[var_idx],lats)
                 else: 
                     rmse[itr] += rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
                     rmse_background[itr] += rmse_diff(era5_minus_background[itr,var_idx,:,:])
@@ -853,9 +854,9 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         plt.plot(rmse,label='Analysis')
         plt.plot(rmse_background,label='Background')
         if lat_weighted:
-            title = 'Overall Lat-weighted Global Analysis RMSE'
+            title = 'Mean Standardized Lat-weighted Global Analysis RMSE (all Vars)'
         else:
-            title = 'Overall Global Analysis RMSE'
+            title = 'Mean Standardized Global Analysis RMSE (all Vars)'
         print(title)
         plt.title(title,fontsize=18)
         plt.xlabel('Cycle Number',fontsize=18)
@@ -1079,9 +1080,15 @@ def plot_analysis(era5,
 
             if save:
                 frames_per_second = 6
+                max_size = 2048
+                big_side = 2048
                 w, h = None, None
                 for j,gif_f in enumerate(gif_files):
                     frame = cv2.imread(gif_f)
+                    r,c,_ = frame.shape
+                    if max(r,c) > max_size:
+                        big_side = max(r,c)
+                    frame = cv2.resize(frame, (int(r*(max_size/big_side)),int(c*(max_size/big_side))))
                     
                     if w is None:
                         h, w, _ = frame.shape
@@ -1358,9 +1365,15 @@ def plot_background_vs_analysis(era5,
             if save:
 
                 frames_per_second = 6
+                max_size = 2048
+                big_side = 2048
                 w, h = None, None
                 for j,gif_f in enumerate(gif_files):
                     frame = cv2.imread(gif_f)
+                    r,c,_ = frame.shape
+                    if max(r,c) > max_size:
+                        big_side = max(r,c)
+                    frame = cv2.resize(frame, (int(r*(max_size/big_side)),int(c*(max_size/big_side))))
                     
                     if w is None:
                         h, w, _ = frame.shape
