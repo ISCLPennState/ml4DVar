@@ -648,14 +648,16 @@ def plot_analysis_innovation(era5,
 
                 #print('axs',axs)
                 pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, analysis_increment[itr, var_idx],
-                                         cmap = 'seismic',
-                                         norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                         cmap='seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                         #cmap = 'seismic',
+                                         #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
                                          )
                 if plot_obs:
                     ra_obs = axs.scatter(obs_lon_plot, obs_lat_plot, c = innovation[itr, var_idx],
-                                                cmap='seismic',
-                                                norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
-                                                edgecolor='k', s=35, linewidth=0.5)
+                                                cmap='seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                                #cmap='seismic',
+                                                #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                                edgecolor='k', s=35, linewidth=0.25)
                 plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
                 axs.set_title('Analysis Increment - Cycle {}'.format(itr))
                 axs.set_xticks(np.linspace(0,360,9))
