@@ -785,12 +785,12 @@ def plot_analysis_global_rmse(era5_minus_analysis,
                 return
 
             for itr in window_idxs:
-                    if lat_weighted and lats is not None:
-                        rmse[itr] = rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],lats)
-                        rmse_background[itr] = rmse_lat_diff(era5_minus_background[itr,var_idx,:,:],lats)
-                    else: 
-                        rmse[itr] = rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
-                        rmse_background[itr] = rmse_diff(era5_minus_background[itr,var_idx,:,:])
+                if lat_weighted and lats is not None:
+                    rmse[itr] = rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:],lats)
+                    rmse_background[itr] = rmse_lat_diff(era5_minus_background[itr,var_idx,:,:],lats)
+                else: 
+                    rmse[itr] = rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
+                    rmse_background[itr] = rmse_diff(era5_minus_background[itr,var_idx,:,:])
 
 
             fig, axs = plt.subplots(1, 1, figsize = figsize)
@@ -825,8 +825,8 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         ########################################################################################################################
         length = np.shape(era5_minus_analysis)[0]
         #length = np.shape(era5_minus_analysis)[var_idx]
-        rmse = np.zeros((length))
-        rmse_background = np.zeros((length))
+        rmse = np.zeros((len(window_idxs)))
+        rmse_background = np.zeros(len(window_idxs))
 
         if lat_weighted and lats is not None:
             #print(len(lats),np.shape(era5_minus_analysis)[-2])
