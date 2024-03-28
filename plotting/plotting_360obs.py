@@ -955,7 +955,12 @@ def plot_analysis(era5,
                 era5_var_obs_error = era5_obs_error[itr,var_idx]
                 analysis_var_obs_error = analysis_obs_error[itr,var_idx]
 
-                all_obs_error = era5_var_obs_error + analysis_var_obs_error
+                #all_obs_error = era5_var_obs_error + analysis_var_obs_error
+                all_obs_error = []
+                for evoe in era5_var_obs_error:
+                    all_obs_error.append(evoe)
+                for avoe in analysis_var_obs_error:
+                    all_obs_error.append(avoe)
                 all_obs_max_error = np.max(np.abs(all_obs_error))
                 counts_all, bins = np.histogram(all_obs_error, bins=51, range=(-all_obs_max_error,all_obs_max_error))
 
@@ -1015,7 +1020,8 @@ def plot_analysis(era5,
                 axs[0, 1].set_yticklabels([])
 
                 pc_error = axs[0, 2].pcolormesh(era5.lon, era5.lat, era5_minus_analysis[itr, var_idx],
-                                                cmap = 'RdYlBu_r', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                                #cmap = 'RdYlBu_r', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                                cmap = 'RdYlBu_r', vmin=-np.max(np.abs(era5_minus_analysis)), vmax=np.max(np.abs(era5_minus_analysis)),
                                                 #cmap = 'RdYlBu_r',
                                                 #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
                                                 )
@@ -1036,7 +1042,7 @@ def plot_analysis(era5,
 
                 sp_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot,
                                           c = obs.obs[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy(),
-                                          vmin=vmin, vmax=vmax, cmap='viridis',
+                                          vmin=era5_vmin, vmax=era5_vmax, cmap='viridis',
                                           edgecolor = 'k', s= 35, linewidth=0.5)
                 plt.colorbar(sp_obs, ax = axs[1,0], label=units[var_idx])
                 axs[1, 0].set_title('Observations')
@@ -1045,6 +1051,7 @@ def plot_analysis(era5,
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
                                               edgecolor='k', s=35, linewidth=0.25)
+                axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_title('Observation Diff (ERA5)')
                 axs[1, 1].set_yticklabels([])
@@ -1054,6 +1061,7 @@ def plot_analysis(era5,
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
                                                     edgecolor='k', s=35, linewidth=0.25)
+                axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_title('Observation Diff (Analysis)')
                 axs[1, 2].set_yticklabels([])
@@ -1206,7 +1214,15 @@ def plot_background_vs_analysis(era5,
                 background_var_obs_error = background_obs_error[itr,var_idx]
                 analysis_var_obs_error = analysis_obs_error[itr,var_idx]
 
-                all_obs_error = era5_var_obs_error + background_var_obs_error + analysis_var_obs_error
+                #all_obs_error = era5_var_obs_error + background_var_obs_error + analysis_var_obs_error
+                all_obs_error = []
+                for evoe in era5_var_obs_error:
+                    all_obs_error.append(evoe)
+                for bvoe in background_var_obs_error:
+                    all_obs_error.append(bvoe)
+                for avoe in analysis_var_obs_error:
+                    all_obs_error.append(avoe)
+
                 abs_obs_err_max = np.max(np.abs(all_obs_error))
                 counts_all, bins = np.histogram(all_obs_error, bins=51,range=(-abs_obs_err_max,abs_obs_err_max))
                 #print('bins :',bins)
@@ -1275,12 +1291,18 @@ def plot_background_vs_analysis(era5,
 
                 increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
                 ana_inc = axs[0,3].pcolormesh(era5.lon, era5.lat, increment,
-                                               cmap = 'seismic', 
-                                               norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max))
+                                              cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis)), vmax=np.max(np.abs(era5_minus_analysis)),
+                                               #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                               #cmap = 'seismic', 
+                                               #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max)
+                                               )
 
                 ra_obs = axs[0,3].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
-                                          norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
-                                          cmap='seismic', edgecolor='k', s=20, linewidth=0.25,
+                                          cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis)), vmax=np.max(np.abs(era5_minus_analysis)),
+                                          #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                          #cmap='seismic', 
+                                          #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                          edgecolor='k', s=20, linewidth=0.25,
                                           )
                 plt.colorbar(ana_inc, ax = axs[0, 3], label=units[var_idx])
                 axs[0, 3].set_xticks(np.linspace(0,360,9))
@@ -1292,6 +1314,7 @@ def plot_background_vs_analysis(era5,
                 sp_era_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
                                               edgecolor='k', s=35, linewidth=0.25)
+                axs[1, 0].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,0], label=units[var_idx])
                 axs[1, 0].set_xticks(np.linspace(0,360,9))
                 axs[1, 0].set_title('Observation Diff (ERA5)')
@@ -1300,6 +1323,7 @@ def plot_background_vs_analysis(era5,
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
                                               vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
                                               edgecolor='k', s=35, linewidth=0.25)
+                axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(background_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_xticks(np.linspace(0,360,9))
                 axs[1, 1].get_yaxis().set_ticklabels([])
@@ -1309,6 +1333,7 @@ def plot_background_vs_analysis(era5,
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
                                                     edgecolor='k', s=35, linewidth=0.25)
+                axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_xticks(np.linspace(0,360,9))
                 axs[1, 2].get_yaxis().set_ticklabels([])
