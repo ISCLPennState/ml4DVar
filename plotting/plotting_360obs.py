@@ -1013,8 +1013,9 @@ def plot_analysis(era5,
                 axs[0, 1].set_yticklabels([])
 
                 pc_error = axs[0, 2].pcolormesh(era5.lon, era5.lat, era5_minus_analysis[itr, var_idx],
-                                                cmap = 'RdYlBu_r',
-                                                norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                                                cmap = 'RdYlBu_r', vmin=-increment_limit_max, vmax=increment_limit_max,
+                                                #cmap = 'RdYlBu_r',
+                                                #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
                                                 )
                 plt.colorbar(pc_error, ax = axs[0, 2], label=units[var_idx])
                 axs[0, 2].set_title('ERA5 - Analysis Difference')
@@ -1088,7 +1089,7 @@ def plot_analysis(era5,
                     r,c,_ = frame.shape
                     if max(r,c) > max_size:
                         big_side = max(r,c)
-                    frame = cv2.resize(frame, (int(r*(max_size/big_side)),int(c*(max_size/big_side))))
+                    frame = cv2.resize(frame, (int(c*(max_size/big_side)),int(r*(max_size/big_side))))
                     
                     if w is None:
                         h, w, _ = frame.shape
@@ -1373,7 +1374,7 @@ def plot_background_vs_analysis(era5,
                     r,c,_ = frame.shape
                     if max(r,c) > max_size:
                         big_side = max(r,c)
-                    frame = cv2.resize(frame, (int(r*(max_size/big_side)),int(c*(max_size/big_side))))
+                    frame = cv2.resize(frame, (int(c*(max_size/big_side)),int(r*(max_size/big_side))))
                     
                     if w is None:
                         h, w, _ = frame.shape
