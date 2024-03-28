@@ -64,13 +64,29 @@ if __name__ == '__main__':
     background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
     if device_set:
         if int(gpu2use) == 0:
-            b_inflation = 10
+            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
+            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
+            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
+            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+            b_inflation = 1
         if int(gpu2use) == 1:
-            b_inflation = 100
+            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
+            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
+            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
+            b_inflation = 1
         if int(gpu2use) == 2:
-            b_inflation = 1000
+            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
+            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
+            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
+            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
+            b_inflation = 1
         if int(gpu2use) == 3:
-            b_inflation = 10000
+            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
+            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
+            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+            b_inflation = 1
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
