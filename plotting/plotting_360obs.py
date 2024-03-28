@@ -1021,7 +1021,7 @@ def plot_analysis(era5,
 
                 pc_error = axs[0, 2].pcolormesh(era5.lon, era5.lat, era5_minus_analysis[itr, var_idx],
                                                 #cmap = 'RdYlBu_r', vmin=-increment_limit_max, vmax=increment_limit_max,
-                                                cmap = 'RdYlBu_r', vmin=-np.max(np.abs(era5_minus_analysis)), vmax=np.max(np.abs(era5_minus_analysis)),
+                                                cmap = 'RdYlBu_r', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
                                                 #cmap = 'RdYlBu_r',
                                                 #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
                                                 )
@@ -1291,14 +1291,14 @@ def plot_background_vs_analysis(era5,
 
                 increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
                 ana_inc = axs[0,3].pcolormesh(era5.lon, era5.lat, increment,
-                                              cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis)), vmax=np.max(np.abs(era5_minus_analysis)),
+                                              cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
                                                #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                                #cmap = 'seismic', 
                                                #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max)
                                                )
 
                 ra_obs = axs[0,3].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
-                                          cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis)), vmax=np.max(np.abs(era5_minus_analysis)),
+                                          cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
                                           #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                           #cmap='seismic', 
                                           #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
