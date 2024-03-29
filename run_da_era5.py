@@ -29,8 +29,10 @@ if __name__ == '__main__':
     da_type = str(sys.argv[1])
     save_dir_name = str(sys.argv[2])
 
-    start_date = datetime(2014, 1, 1, hour=0)
-    end_date = datetime(2015, 12, 31, hour=12)
+    #start_date = datetime(2014, 1, 1, hour=0)
+    #end_date = datetime(2015, 12, 31, hour=12)
+    start_date = datetime(2015, 1, 1, hour=0)
+    end_date = datetime(2016, 12, 31, hour=12)
     da_window = 12
     model_step = 6
     obs_freq = 3
@@ -246,8 +248,8 @@ if __name__ == '__main__':
                         da_type=da_type,
                         vars=vars_stormer,
                         b_inflation=b_inflation,
-                        #max_iter=700,
-                        max_iter=100,
+                        max_iter=700,
+                        #max_iter=100,
                         savedir=save_dir,
                         device=device,
                         save_idx=start_idx,
