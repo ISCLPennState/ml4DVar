@@ -661,8 +661,8 @@ def plot_analysis_innovation(era5,
                                                 #cmap='seismic',
                                                 #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
                                                 edgecolor='k', s=35, linewidth=0.25)
+                    plt.colorbar(ra_obs, ax = axs, label=units[var_idx], location='left')
                 plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
-                plt.colorbar(ra_obs, ax = axs, label=units[var_idx], location='left')
                 axs.set_title('Analysis Increment - Cycle {}'.format(itr))
                 axs.set_xticks(np.linspace(0,360,9))
                 axs.set_yticks([])
@@ -1307,7 +1307,7 @@ def plot_background_vs_analysis(era5,
                 increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
                 ana_inc = axs[0,3].pcolormesh(era5.lon, era5.lat, increment,
                                               #cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
-                                              cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
+                                              cmap = 'seismic', vmin=-np.max(np.abs(increment)), vmax=np.max(np.abs(increment)),
                                                #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                                #cmap = 'seismic', 
                                                #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max)
@@ -1319,7 +1319,8 @@ def plot_background_vs_analysis(era5,
                                           #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                           #cmap='seismic', 
                                           #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
-                                          edgecolor='k', s=20, linewidth=0.25,
+                                          #edgecolor='k', s=20, linewidth=0.25,
+                                          s=15,
                                           )
                 plt.colorbar(ana_inc, ax = axs[0, 3], label=units[var_idx])
                 axs[0, 3].set_xticks(np.linspace(0,360,9))
