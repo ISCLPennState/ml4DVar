@@ -708,38 +708,46 @@ def plot_analysis_innovation(era5,
                     plt.close(fig)
 
             if save:
-                frames_per_second = 6
-                w, h = None, None
+                frames_per_second = 6.0
+                max_size = 2048
+                big_side = 2048
+                r, c = None, None
                 for j,gif_f in enumerate(gif_files):
                     frame = cv2.imread(gif_f)
-                    
-                    if w is None:
-                        h, w, _ = frame.shape
+
+                    if r is None:
+                        r,c,_ = frame.shape
+                        if max(r,c) > max_size:
+                            big_side = max(r,c)
+                        c = int(c*(max_size/big_side))
+                        r = int(r*(max_size/big_side))
+
                         fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
                         writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
                                                  fourcc,
                                                  frames_per_second,
-                                                 (w,h),
+                                                 (c,r),
                                                  )
-                    writer.write(frame)
+
+                    writer.write(cv2.resize(frame,(c,r)))
                     if j == 0 or j == (len(gif_files)-1):
-                        for _ in range(frames_per_second):
-                            writer.write(frame)
+                        for _ in range(int(frames_per_second)):
+                            writer.write(cv2.resize(frame,(c,r)))
                 writer.release()
 
-                gif_imgs = []
-                for gif_f in gif_files:
-                    gif_imgs.append(Image.open(gif_f))
+                #gif_imgs = []
+                #for gif_f in gif_files:
+                #    gif_imgs.append(Image.open(gif_f))
 
-                # create extra copies of the frist and last frame
-                for x in range(0, 5):
-                    im = gif_imgs[0]
-                    gif_imgs.insert(0,im)
-                    im = gif_imgs[-1]
-                    gif_imgs.append(im)
+                ## create extra copies of the frist and last frame
+                #for x in range(0, 5):
+                #    im = gif_imgs[0]
+                #    gif_imgs.insert(0,im)
+                #    im = gif_imgs[-1]
+                #    gif_imgs.append(im)
 
-                gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
-                            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
+                #gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
+                #            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
 
     if return_error:
         return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error
@@ -1090,44 +1098,46 @@ def plot_analysis(era5,
                     plt.close(fig)
 
             if save:
-                frames_per_second = 6
+                frames_per_second = 6.0
                 max_size = 2048
                 big_side = 2048
-                w, h = None, None
+                r, c = None, None
                 for j,gif_f in enumerate(gif_files):
                     frame = cv2.imread(gif_f)
-                    r,c,_ = frame.shape
-                    if max(r,c) > max_size:
-                        big_side = max(r,c)
-                    frame = cv2.resize(frame, (int(c*(max_size/big_side)),int(r*(max_size/big_side))))
-                    
-                    if w is None:
-                        h, w, _ = frame.shape
+
+                    if r is None:
+                        r,c,_ = frame.shape
+                        if max(r,c) > max_size:
+                            big_side = max(r,c)
+                        c = int(c*(max_size/big_side))
+                        r = int(r*(max_size/big_side))
+
                         fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
                         writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
                                                  fourcc,
                                                  frames_per_second,
-                                                 (w,h),
+                                                 (c,r),
                                                  )
-                    writer.write(frame)
+
+                    writer.write(cv2.resize(frame,(c,r)))
                     if j == 0 or j == (len(gif_files)-1):
-                        for _ in range(frames_per_second):
-                            writer.write(frame)
+                        for _ in range(int(frames_per_second)):
+                            writer.write(cv2.resize(frame,(c,r)))
                 writer.release()
 
-                gif_imgs = []
-                for gif_f in gif_files:
-                    gif_imgs.append(Image.open(gif_f))
+                #gif_imgs = []
+                #for gif_f in gif_files:
+                #    gif_imgs.append(Image.open(gif_f))
 
-                # create extra copies of the frist and last frame
-                for x in range(0, 5):
-                    im = gif_imgs[0]
-                    gif_imgs.insert(0,im)
-                    im = gif_imgs[-1]
-                    gif_imgs.append(im)
+                ## create extra copies of the frist and last frame
+                #for x in range(0, 5):
+                #    im = gif_imgs[0]
+                #    gif_imgs.insert(0,im)
+                #    im = gif_imgs[-1]
+                #    gif_imgs.append(im)
 
-                gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
-                            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
+                #gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
+                #            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
 
     if return_error:
         return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background
@@ -1291,14 +1301,16 @@ def plot_background_vs_analysis(era5,
 
                 increment = analysis.analysis[itr, var_idx]-analysis.background[itr, var_idx]
                 ana_inc = axs[0,3].pcolormesh(era5.lon, era5.lat, increment,
-                                              cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
+                                              #cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
+                                              cmap = 'RdYlBu_r', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
                                                #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                                #cmap = 'seismic', 
                                                #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max)
                                                )
 
                 ra_obs = axs[0,3].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
-                                          cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
+                                          #cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
+                                          cmap = 'seismic', vmin=-np.max(np.abs(background_obs_error[itr,var_idx])), vmax=np.max(np.abs(background_obs_error[itr,var_idx])),
                                           #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                           #cmap='seismic', 
                                           #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
@@ -1316,6 +1328,7 @@ def plot_background_vs_analysis(era5,
                                               edgecolor='k', s=35, linewidth=0.25)
                 axs[1, 0].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,0], label=units[var_idx])
+                axs[1, 0].set_xlim(0,360)
                 axs[1, 0].set_xticks(np.linspace(0,360,9))
                 axs[1, 0].set_title('Observation Diff (ERA5)')
 
@@ -1325,6 +1338,7 @@ def plot_background_vs_analysis(era5,
                                               edgecolor='k', s=35, linewidth=0.25)
                 axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(background_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
+                axs[1, 1].set_xlim(0,360)
                 axs[1, 1].set_xticks(np.linspace(0,360,9))
                 axs[1, 1].get_yaxis().set_ticklabels([])
                 axs[1, 1].set_title('Observation Diff (Background)')
@@ -1335,6 +1349,7 @@ def plot_background_vs_analysis(era5,
                                                     edgecolor='k', s=35, linewidth=0.25)
                 axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
+                axs[1, 2].set_xlim(0,360)
                 axs[1, 2].set_xticks(np.linspace(0,360,9))
                 axs[1, 2].get_yaxis().set_ticklabels([])
                 axs[1, 2].set_title('Observation Diff (Analysis)')
@@ -1392,44 +1407,46 @@ def plot_background_vs_analysis(era5,
 
             if save:
 
-                frames_per_second = 6
+                frames_per_second = 6.0
                 max_size = 2048
                 big_side = 2048
-                w, h = None, None
+                r, c = None, None
                 for j,gif_f in enumerate(gif_files):
                     frame = cv2.imread(gif_f)
-                    r,c,_ = frame.shape
-                    if max(r,c) > max_size:
-                        big_side = max(r,c)
-                    frame = cv2.resize(frame, (int(c*(max_size/big_side)),int(r*(max_size/big_side))))
-                    
-                    if w is None:
-                        h, w, _ = frame.shape
+
+                    if r is None:
+                        r,c,_ = frame.shape
+                        if max(r,c) > max_size:
+                            big_side = max(r,c)
+                        c = int(c*(max_size/big_side))
+                        r = int(r*(max_size/big_side))
+
                         fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
                         writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
                                                  fourcc,
                                                  frames_per_second,
-                                                 (w,h),
+                                                 (c,r),
                                                  )
-                    writer.write(frame)
+
+                    writer.write(cv2.resize(frame,(c,r)))
                     if j == 0 or j == (len(gif_files)-1):
-                        for _ in range(frames_per_second):
-                            writer.write(frame)
+                        for _ in range(int(frames_per_second)):
+                            writer.write(cv2.resize(frame,(c,r)))
                 writer.release()
 
-                gif_imgs = []
-                for gif_f in gif_files:
-                    gif_imgs.append(Image.open(gif_f))
+                #gif_imgs = []
+                #for gif_f in gif_files:
+                #    gif_imgs.append(Image.open(gif_f))
 
-                # create extra copies of the frist and last frame
-                for x in range(0, 5):
-                    im = gif_imgs[0]
-                    gif_imgs.insert(0,im)
-                    im = gif_imgs[-1]
-                    gif_imgs.append(im)
+                ## create extra copies of the frist and last frame
+                #for x in range(0, 5):
+                #    im = gif_imgs[0]
+                #    gif_imgs.insert(0,im)
+                #    im = gif_imgs[-1]
+                #    gif_imgs.append(im)
 
-                gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
-                            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
+                #gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
+                #            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
 
     if return_error:
         return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background
