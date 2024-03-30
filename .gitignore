@@ -168,4 +168,4 @@ figs/
 process-obs/*.png
 *.npy
 calc_B_orig.py
-
+nohug.out
