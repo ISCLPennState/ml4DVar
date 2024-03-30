@@ -158,8 +158,8 @@ class FourDVar():
             self.logger.info('Running forecast for next background (forecast_time : {} hrs)'.format(forecast_time))
         self.background,_,_ = self.run_forecast(self.x_analysis,
                                                 forecast_time=forecast_time,
-                                                #lead_time=None,
-                                                lead_time=self.model_step,
+                                                lead_time=None,
+                                                #lead_time=self.model_step,
                                                 inference=True)
         self.background = self.background[-1].unsqueeze(0)
         # Background is the forecast of previous analysis
