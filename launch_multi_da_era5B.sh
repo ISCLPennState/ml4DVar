@@ -10,4 +10,4 @@ ml conda
 conda activate /eagle/MDClimSim/troyarcomano/.conda/envs/pytorch_2_troy/
 cd /eagle/MDClimSim/mjp5595/ml4dvar/
 #python run_da_era5.py $da_type "${exp_name}_gpu0" 0 & python run_da_era5.py $da_type "${exp_name}_gpu1" 1 & python run_da_era5.py $da_type "${exp_name}_gpu2" 2 & python run_da_era5.py $da_type "${exp_name}_gpu3" 3
-python run_da_era5.py $da_type "var3d_era5B_2015_lt12_gpu0" 0 & python run_da_era5.py $da_type "var3d_era5B_2015_lt12_gpu1" 1 & python run_da_era5.py $da_type "var3d_era5B_2015_lt12_00" 2 & python run_da_era5.py $da_type "var3d_era5B_2015_lt12_12" 3
+python run_da_era5.py $da_type "var3d_era5B_era5Obs_gpu0" 0 & python run_da_era5.py $da_type "var3d_era5B_era5Obs_gpu1" 1 & python run_da_era5.py $da_type "var3d_era5B_era5Obs_00" 2 & python run_da_era5.py $da_type "var3d_era5B_era5Obs_12" 3
