@@ -29,10 +29,8 @@ if __name__ == '__main__':
     da_type = str(sys.argv[1])
     save_dir_name = str(sys.argv[2])
 
-    #start_date = datetime(2014, 1, 1, hour=0)
-    #end_date = datetime(2015, 12, 31, hour=12)
-    start_date = datetime(2015, 1, 1, hour=0)
-    end_date = datetime(2016, 12, 31, hour=12)
+    start_date = datetime(2014, 1, 1, hour=0)
+    end_date = datetime(2015, 12, 31, hour=12)
     da_window = 12
     model_step = 6
     obs_freq = 3
@@ -46,7 +44,8 @@ if __name__ == '__main__':
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
+    #obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
+    obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.hdf5"
 
     means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
     stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
