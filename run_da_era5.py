@@ -45,7 +45,7 @@ if __name__ == '__main__':
         os.makedirs(save_dir)
 
     #obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
-    obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.hdf5"
+    obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.h5"
 
     means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
     stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
