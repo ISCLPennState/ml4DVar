@@ -837,10 +837,13 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         # Plot overall RMSE as well
         ########################################################################################################################
         ########################################################################################################################
+
         length = np.shape(era5_minus_analysis)[0]
         #length = np.shape(era5_minus_analysis)[var_idx]
-        rmse = np.zeros((len(window_idxs)))
-        rmse_background = np.zeros(len(window_idxs))
+        #rmse = np.zeros((len(window_idxs)))
+        rmse = np.zeros((len(var_names),len(window_idxs)))
+        #rmse_background = np.zeros(len(window_idxs))
+        rmse_background = np.zeros((len(var_names),len(window_idxs)))
 
         if lat_weighted and lats is not None:
             #print(len(lats),np.shape(era5_minus_analysis)[-2])
@@ -853,20 +856,22 @@ def plot_analysis_global_rmse(era5_minus_analysis,
             for var_idx, var in enumerate(var_names):
                 if lat_weighted and lats is not None:
                     # TODO MSEs HERE
-                    rmse[itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.means[var_idx],lats)
-                    rmse_background[itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.means[var_idx],lats)
+                    #rmse[itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.means[var_idx],lats)
+                    #rmse_background[itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.means[var_idx],lats)
+                    rmse[var_idx,itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.means[var_idx],lats)
+                    rmse_background[var_idx,itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.means[var_idx],lats)
                 else: 
-                    rmse[itr] += rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
-                    rmse_background[itr] += rmse_diff(era5_minus_background[itr,var_idx,:,:])
-        rmse = rmse / len(var_names)
-        rmse_background = rmse_background / len(var_names)
-
+                    #rmse[itr] += rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
+                    #rmse_background[itr] += rmse_diff(era5_minus_background[itr,var_idx,:,:])
+                    rmse[var_idx,itr] += rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
+                    rmse_background[var_idx,itr] += rmse_diff(era5_minus_background[itr,var_idx,:,:])
+        #rmse = rmse / len(var_names)
+        #rmse_background = rmse_background / len(var_names)
 
         fig, axs = plt.subplots(1, 1, figsize = figsize)
-
         #print(rmse)
-        plt.plot(rmse,label='Analysis')
-        plt.plot(rmse_background,label='Background')
+        plt.plot(np.sum(rmse,axis=0)/len(var_names),label='Analysis')
+        plt.plot(np.sum(rmse_background,axis=0)/len(var_names),label='Background')
         if lat_weighted:
             title = 'Mean Standardized Lat-weighted Global Analysis RMSE (all Vars)'
         else:
@@ -888,6 +893,45 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         else:
             plt.close(fig)
         plt.show()
+
+        var_groups = ['temperature',
+                      'u_component_of_wind',
+                      'v_component_of_wind',
+                      'geopotential',
+                      'specific_humidity',
+                      'mean_sea_level_pressure']
+
+        for var_group in var_groups:
+            fig, axs = plt.subplots(1, 1, figsize = figsize)
+            #print(rmse)
+            for var_idx, var in enumerate(var_names):
+                if var_group not in var:
+                    continue
+                label = var.replace(var_group,'').replace('_','')
+                print('var, label :',var,label)
+                plt.plot(rmse[var_idx,:],label=label)
+                if lat_weighted:
+                    title = 'Standardized Lat-weighted Global Analysis RMSE ({} Group)'.format(var_group)
+                else:
+                    title = 'Standardized Global Analysis RMSE ({} Group)'.format(var_group)
+                print(title)
+                plt.title(title,fontsize=18)
+                plt.xlabel('Cycle Number',fontsize=18)
+                plt.ylabel(f'Standardized RMSE',fontsize=18)
+                plt.legend()
+
+            save_name = analysis.dir.split('/')[-2]
+            if save:
+                #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_{analysis.runstr}_lat_rmse.png'), dpi = 400,
+                #        bbox_inches = 'tight')
+                plt.savefig(os.path.join(save_dir, f'{save_name}_{var_group}_Group_{itr:04}.png'), dpi = 400,
+                        bbox_inches = 'tight')
+            if show:
+                plt.show()
+            else:
+                plt.close(fig)
+            plt.show()
+
         ########################################################################################################################
         ########################################################################################################################
 

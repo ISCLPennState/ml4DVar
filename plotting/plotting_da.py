@@ -101,6 +101,25 @@ plot_stuff = plot_analysis(era5,
 era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background = plot_stuff
 print('Done with plot_analysis')
 
+mse_dir = os.path.join(plot_dir,'mse')
+if not os.path.exists(mse_dir):
+    os.makedirs(mse_dir)
+plot_analysis_global_rmse(era5_minus_analysis,
+                          era5_minus_background,
+                          analysis,
+                          vars,
+                          var_units, 
+                          #var_id = 3, 
+                          var_idxs = [0,3,11],
+                          window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                          #lat_weighted = True, 
+                          lat_weighted = True, 
+                          lats = lat,
+                          save = True,
+                          show = False,
+                          save_dir = mse_dir,
+                          return_error = False)
+
 bg_vs_ana_dir = os.path.join(plot_dir,'bg_vs_ana')
 if not os.path.exists(bg_vs_ana_dir):
     os.makedirs(bg_vs_ana_dir)
@@ -147,22 +166,3 @@ _ = plot_analysis_innovation(era5,
                              save_dir = innovation_dir,
                              return_error = False,
                              plot_obs = False)
-
-mse_dir = os.path.join(plot_dir,'mse')
-if not os.path.exists(mse_dir):
-    os.makedirs(mse_dir)
-plot_analysis_global_rmse(era5_minus_analysis,
-                          era5_minus_background,
-                          analysis,
-                          vars,
-                          var_units, 
-                          #var_id = 3, 
-                          var_idxs = [0,3,11],
-                          window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
-                          #lat_weighted = True, 
-                          lat_weighted = True, 
-                          lats = lat,
-                          save = True,
-                          show = False,
-                          save_dir = mse_dir,
-                          return_error = False)
