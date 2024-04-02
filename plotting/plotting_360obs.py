@@ -858,8 +858,8 @@ def plot_analysis_global_rmse(era5_minus_analysis,
                     # TODO MSEs HERE
                     #rmse[itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.means[var_idx],lats)
                     #rmse_background[itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.means[var_idx],lats)
-                    rmse[var_idx,itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.means[var_idx],lats)
-                    rmse_background[var_idx,itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.means[var_idx],lats)
+                    rmse[var_idx,itr] += rmse_lat_diff(era5_minus_analysis[itr,var_idx,:,:]/analysis.stds[var_idx],lats)
+                    rmse_background[var_idx,itr] += rmse_lat_diff(era5_minus_background[itr,var_idx,:,:]/analysis.stds[var_idx],lats)
                 else: 
                     #rmse[itr] += rmse_diff(era5_minus_analysis[itr,var_idx,:,:])
                     #rmse_background[itr] += rmse_diff(era5_minus_background[itr,var_idx,:,:])
@@ -870,8 +870,8 @@ def plot_analysis_global_rmse(era5_minus_analysis,
 
         fig, axs = plt.subplots(1, 1, figsize = figsize)
         #print(rmse)
-        plt.plot(np.sum(rmse,axis=0)/len(var_names),label='Analysis')
-        plt.plot(np.sum(rmse_background,axis=0)/len(var_names),label='Background')
+        plt.plot(np.mean(rmse,axis=0),label='Analysis')
+        plt.plot(np.mean(rmse_background,axis=0),label='Background')
         if lat_weighted:
             title = 'Mean Standardized Lat-weighted Global Analysis RMSE (all Vars)'
         else:
