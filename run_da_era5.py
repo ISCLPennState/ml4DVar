@@ -29,7 +29,8 @@ if __name__ == '__main__':
     da_type = str(sys.argv[1])
     save_dir_name = str(sys.argv[2])
 
-    start_date = datetime(2014, 1, 1, hour=0)
+    #start_date = datetime(2014, 1, 1, hour=0)
+    start_date = datetime(2014, 1, 15, hour=0)
     end_date = datetime(2015, 12, 31, hour=12)
     da_window = 12
     model_step = 6
@@ -83,11 +84,11 @@ if __name__ == '__main__':
             background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm.npy'
             b_inflation = 1
         if int(gpu2use) == 3:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_norm.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_norm.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm.npy'
-            b_inflation = 10
+            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy'
+            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy'
+            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy'
+            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy'
+            b_inflation = 1
 
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
 
