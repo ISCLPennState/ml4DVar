@@ -29,30 +29,37 @@ if __name__ == '__main__':
     da_type = str(sys.argv[1])
     save_dir_name = str(sys.argv[2])
 
-    #start_date = datetime(2014, 1, 1, hour=0)
-    start_date = datetime(2014, 1, 15, hour=0)
+    start_date = datetime(2014, 1, 1, hour=0)
     end_date = datetime(2015, 12, 31, hour=12)
     da_window = 12
     model_step = 6
     obs_freq = 3
 
-    exp_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}'.format(save_dir_name)
+    #da_root_dir = '/grand/NeuralDE/mjp5595'
+    da_root_dir = '/eagle/MDClimSim/mjp5595'
+    exp_dir = os.path.join(da_root_dir,'data','stormer','{}'.format(save_dir_name))
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
 
-    save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/data/'.format(save_dir_name)
+    save_dir = os.path.join(da_root_dir,'data','stormer','{}'.format(save_dir_name),'data')
     save_dir = os.path.join(exp_dir,'data')
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     #obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
-    obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.h5"
+    #obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.h5"
+    obs_filepath = os.path.join(da_root_dir,'ml4dvar','obs','era5_obs.h5')
 
-    means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
-    stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
+    # TODO copy these files to /obs/...
+    # TODO copy dv_param to /data/...
+    #means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
+    #stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
+    means_file = os.path.join(da_root_dir,'ml4dvar','obs','normalize_mean.npz')
+    stds_file = os.path.join(da_root_dir,'ml4dvar','obs','normalize_std.npz')
     means = np.load(means_file)
     stds = np.load(stds_file)
-    dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
+    #dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
+    dv_param_file = os.path.join(da_root_dir,'ml4dvar','data','dv_params_128_256.hdf5')
 
     b_inflation = 1 
     if da_type == 'var4d':
@@ -60,42 +67,46 @@ if __name__ == '__main__':
 
     background_err_file_dict = {}
     background_err_hf_file_dict = {}
-    background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
-    background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
-    background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
-    background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+    background_err_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_vs_era5_00.npy')
+    background_err_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_vs_era5_12.npy')
+    background_err_hf_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_vs_era5_00.npy')
+    background_err_hf_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_vs_era5_12.npy')
     if device_set:
         if int(gpu2use) == 0:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
+            background_err_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_vs_era5_00.npy')
+            background_err_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_vs_era5_12.npy')
+            background_err_hf_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_vs_era5_00.npy')
+            background_err_hf_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_vs_era5_12.npy')
             b_inflation = 10
         if int(gpu2use) == 1:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy'
+            background_err_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_vs_era5_12.npy')
+            background_err_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_vs_era5_00.npy')
+            background_err_hf_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_vs_era5_12.npy')
+            background_err_hf_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_vs_era5_00.npy')
             b_inflation = 100
         if int(gpu2use) == 2:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_norm.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_norm.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_norm.npy'
+            background_err_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_norm.npy')
+            background_err_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_12hr_stormer_norm.npy')
+            background_err_hf_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_norm.npy')
+            background_err_hf_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_12hr_stormer_norm.npy')
             b_inflation = 1
         if int(gpu2use) == 3:
-            background_err_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy'
-            background_err_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy'
-            background_err_hf_file_dict[0] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy'
-            background_err_hf_file_dict[12] = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy'
+            background_err_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_24hr_stormer_norm.npy')
+            background_err_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','sh_24hr_stormer_norm.npy')
+            background_err_hf_file_dict[0] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_24hr_stormer_norm.npy')
+            background_err_hf_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_24hr_stormer_norm.npy')
             b_inflation = 1
 
+    # TODO cp stormer checkpoint to /stormer/data/
     ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
+    #ckpt_pth = os.path.join(da_root_dir,'ml4dvar','stormer','epoch_015.ckpt')
 
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
-    background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
+    # TODO move to /data instead of /stormer/data
+    #background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
+    background_file_np = os.path.join('ml4dvar','data','background_init_stormer_norm_hr12.npy') # Init with 'random' era5 weather state from 1990
     backgrounds = os.listdir(save_dir)
     start_idx = 0
     if len(backgrounds) > 1:
@@ -208,8 +219,10 @@ if __name__ == '__main__':
     net.to(device)
     net.eval()
 
+    # TODO copy to own data dir
     stormer_wrapper = StormerWrapperPangu(
         root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
+        #root_dir=os.path.join(da_root_dir,'data','wb2','1.40625deg_from_full_res_1_step_6hr_h5df')
         variables=vars_stormer,
         net=net,
         base_lead_time=6,
