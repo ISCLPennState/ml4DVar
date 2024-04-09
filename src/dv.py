@@ -168,12 +168,17 @@ class DivergenceVorticity(torch.nn.Module):
         #print(self.uwind_idxs.get_device)
         #print(self.uwind_stds.get_device)
         #print(self.uwind_means.get_device)
-        uwind_unstand = x[self.uwind_idxs] * self.uwind_stds + self.uwind_means
-        vwind_unstand = x[self.vwind_idxs] * self.vwind_stds + self.vwind_means
-        divergence, vorticity = divergence_vorticity(uwind_unstand, vwind_unstand, self.dx, self.dy,
-                                                     self.parallel_scale, self.meridional_scale, self.dx_correction,
-                                                     self.dy_correction)
-        return torch.concat((x[self.nowind_idxs], divergence, vorticity), axis = 0)
+
+        #uwind_unstand = x[self.uwind_idxs] * self.uwind_stds + self.uwind_means
+        #vwind_unstand = x[self.vwind_idxs] * self.vwind_stds + self.vwind_means
+        #divergence, vorticity = divergence_vorticity(uwind_unstand, vwind_unstand, self.dx, self.dy,
+        #                                             self.parallel_scale, self.meridional_scale, self.dx_correction,
+        #                                             self.dy_correction)
+        #return torch.concat((x[self.nowind_idxs], divergence, vorticity), axis = 0)
+
+        uwind_stand = x[self.uwind_idxs]
+        vwind_stand = x[self.vwind_idxs]
+        return torch.concat((x[self.nowind_idxs], uwind_stand, vwind_stand), axis = 0)
 
 
 
