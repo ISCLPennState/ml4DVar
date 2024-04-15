@@ -179,6 +179,3 @@ class DivergenceVorticity(torch.nn.Module):
         uwind_stand = x[self.uwind_idxs]
         vwind_stand = x[self.vwind_idxs]
         return torch.concat((x[self.nowind_idxs], uwind_stand, vwind_stand), axis = 0)
-
-
-
