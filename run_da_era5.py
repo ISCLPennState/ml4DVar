@@ -50,8 +50,6 @@ if __name__ == '__main__':
     #obs_filepath = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.h5"
     obs_filepath = os.path.join(da_root_dir,'ml4dvar','obs','era5_obs.h5')
 
-    # TODO copy these files to /obs/...
-    # TODO copy dv_param to /data/...
     #means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
     #stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
     means_file = os.path.join(da_root_dir,'ml4dvar','obs','normalize_mean.npz')
@@ -97,16 +95,15 @@ if __name__ == '__main__':
             background_err_hf_file_dict[12] = os.path.join(da_root_dir,'ml4dvar','stormer','data','hf_24hr_stormer_norm.npy')
             b_inflation = 1
 
-    # TODO cp stormer checkpoint to /stormer/data/
-    ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
-    #ckpt_pth = os.path.join(da_root_dir,'ml4dvar','stormer','epoch_015.ckpt')
+    #ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
+    ckpt_pth = os.path.join(da_root_dir,'ml4dvar','stormer','checkpoints','epoch_015.ckpt')
 
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
     # TODO move to /data instead of /stormer/data
     #background_file_np = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/background_init_stormer_norm_hr12.npy' # Init with 'random' era5 weather state from 1990
-    background_file_np = os.path.join('ml4dvar','data','background_init_stormer_norm_hr12.npy') # Init with 'random' era5 weather state from 1990
+    background_file_np = os.path.join(da_root_dir,'ml4dvar','data','background_init_stormer_norm_hr12.npy') # Init with 'random' era5 weather state from 1990
     backgrounds = os.listdir(save_dir)
     start_idx = 0
     if len(backgrounds) > 1:
@@ -262,7 +259,6 @@ if __name__ == '__main__':
                         vars=vars_stormer,
                         b_inflation=b_inflation,
                         max_iter=700,
-                        #max_iter=100,
                         savedir=save_dir,
                         device=device,
                         save_idx=start_idx,
