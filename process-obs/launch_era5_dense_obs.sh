@@ -1,7 +1,7 @@
 #!/bin/bash --login
 #PBS -l select=10:system=polaris
-#PBS -l walltime=4:00:00
-#PBS -q preemptable
+#PBS -l walltime=1:00:00
+#PBS -q debug-scaling
 #PBS -A MDClimSim
 #PBS -l filesystems=home:eagle:grand
 #PBS -m bae
@@ -27,7 +27,8 @@ echo $NNODES
 # Commands to run prior to the Python script for setting up the environment
 PRELOAD="source /etc/profile ; "
 PRELOAD+="ml conda;"
-PRELOAD+="conda activate climaX;"
+#PRELOAD+="conda activate climaX;"
+PRELOAD+="conda activate /eagle/MDClimSim/troyarcomano/.conda/envs/stormer_ace/;"
 PRELOAD+="cd /eagle/MDClimSim/mjp5595/ml4dvar/process-obs/ ;"
 PRELOAD+="export NODES=1; "
 

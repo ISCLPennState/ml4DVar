@@ -37,7 +37,7 @@ stds = np.load('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step
 
 #era5_obs = h5py.File('/eagle/MDClimSim/mjp5595/ml4dvar/data/era5_obs.h5', 'a')
 #with h5py.File('/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_dense_obs.h5', 'w') as era5_obs:
-with h5py.File('/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_dense_obs-{}.h5'.format(int(sys.argv[1])), 'w') as era5_obs:
+with h5py.File('/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_dense_obs{}.h5'.format(int(sys.argv[1])), 'w') as era5_obs:
     for year in ['2014','2015','2020']:
         yr_grp = era5_obs.require_group(year)
         year_hr_idx = 0
@@ -49,7 +49,7 @@ with h5py.File('/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_dense_obs-{}.h5'.forma
                     if int(hour) % 6 != 0:
                         continue
 
-                    print('{}/{}/{}/{} - {:0>4d}'.format(year,month,day,hour,year_hr_idx))
+                    print('[{}] - {}/{}/{}/{} - {:0>4d}'.format(sys.argv[1],year,month,day,hour,year_hr_idx))
                     hr_group = era5_obs['{}/{}/{}'.format(year,month,day)].require_group(hour)
 
                     # load era5
