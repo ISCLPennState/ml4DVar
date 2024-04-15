@@ -1,0 +1,38 @@
+da:
+  b_inflation: 1
+  background_file_np: /eagle/MDClimSim/mjp5595/ml4dvar/data/background_init_stormer_norm_hr12.npy
+  da_root_dir: /eagle/MDClimSim/mjp5595
+  da_type: var3d
+  da_window: 12
+  max_iter: 700
+  save_dir_name: var3d_era5B_denseERA5Obs_uvwind_1
+error_covariance:
+  background_err_file:
+    0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy
+    12: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy
+  background_err_hf_file:
+    0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy
+    12: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy
+model:
+  ckpt_pth: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/checkpoints/epoch_015.ckpt
+  model_name: stormer
+  model_step: 6
+obs:
+  end:
+    day: 31
+    hour: 12
+    month: 12
+    year: 2015
+  obs_filepath: /eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.h5
+  obs_freq: 3
+  obs_steps: 1
+  start:
+    day: 1
+    hour: 0
+    month: 1
+    year: 2014
+  use_only_recent_obs: true
+params:
+  dv_param_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/dv_params_128_256.hdf5
+  means_file: /eagle/MDClimSim/mjp5595/ml4dvar/obs/normalize_mean.npz
+  stds_file: /eagle/MDClimSim/mjp5595/ml4dvar/obs/normalize_std.npz
