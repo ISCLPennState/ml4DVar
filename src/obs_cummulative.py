@@ -167,55 +167,16 @@ class ObsDatasetCum(IterableDataset):
                     H_idxs[step, j, 4*var_starts[j]:4*var_starts[j]+len(H_idxs_data)] = H_idxs_data
                     H_obs_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var + '_H'][:, 1]
                     H_obs[step, j, 4*var_starts[j]:4*var_starts[j]+len(H_obs_data)] = H_obs_data
-                    #obs_latlon_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, :2]
 
-                    #################################################################################################
-                    ## This is the original block, but it expects obs to be 0 -> 360
-                    #################################################################################################
-                    ## temp fix
-                    #obs_lat_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 0:1]
-                    #obs_lon_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 1:2]
-                    #if len(obs_lon_data) > 0:
-                    #    print('min/max(obs_lon_data) :',min(obs_lon_data),max(obs_lon_data))
-                    #obs_lon_data = np.where(obs_lon_data > 180.0, obs_lon_data-360.0, obs_lon_data)
-                    ##print('obs_lat_data.shape :',obs_lat_data.shape)
-                    ##print('obs_lon_data.shape :',obs_lon_data.shape)
-                    #obs_latlon_data = np.concatenate((obs_lat_data,obs_lon_data),axis=1)
-                    ##print('obs_latlon_data.shape :',obs_latlon_data.shape)
-                    #################################################################################################
-                    #################################################################################################
+                    # H_idx is the flattened index for each of the observation coordinates 
+                    # The actual coordinates can be found with np.unravel_index(H_idx.astype('int'),(128,256)) 
+                    # H_vals is the coefficient of the value at each coordinate to take, summing to 1 (np.sum(H_vals[:4]) == 1);
 
-                    #################################################################################################
-                    ## This is the original block, but it expects obs to be -180 -> 180 
-                    ## ERA5 lon is different than IRGA lon
-                    #################################################################################################
-                    ## temp fix
-                    #obs_lat_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 0:1]
-                    #obs_lon_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 1:2]
-                    #if len(obs_lon_data) > 0:
-                    #    print('min/max(obs_lon_data) (0):',min(obs_lon_data),max(obs_lon_data))
-                    #    obs_lon_data = obs_lon_data + 180
-                    #    print('min/max(obs_lon_data) (1):',min(obs_lon_data),max(obs_lon_data))
-                    #    obs_lon_data = np.where(obs_lon_data > 180.0, obs_lon_data-360.0, obs_lon_data)
-                    #    print('min/max(obs_lon_data) (2):',min(obs_lon_data),max(obs_lon_data))
-                    ##print('obs_lat_data.shape :',obs_lat_data.shape)
-                    ##print('obs_lon_data.shape :',obs_lon_data.shape)
-                    #obs_latlon_data = np.concatenate((obs_lat_data,obs_lon_data),axis=1)
-                    ##print('obs_latlon_data.shape :',obs_latlon_data.shape)
-                    #################################################################################################
-                    #################################################################################################
-
-                    ################################################################################################
-                    # This is an empty block
-                    ################################################################################################
-                    # temp fix
                     obs_lat_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 0:1]
                     obs_lon_data = f[obs_datetime.strftime("%Y/%m/%d/%H") + '/' + var][:, 1:2]
                     #if len(obs_lon_data) > 0:
                     #    print('min/max(obs_lon_data) :',min(obs_lon_data),max(obs_lon_data))
                     obs_latlon_data = np.concatenate((obs_lat_data,obs_lon_data),axis=1)
-                    ################################################################################################
-                    ################################################################################################
 
                     obs_latlon[step, j, var_starts[j]:var_starts[j]+len(obs_latlon_data)] = obs_latlon_data
                     var_starts[j] += len(all_obs_data)
