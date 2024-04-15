@@ -6,17 +6,21 @@ import numpy as np
 from src.dv import *
 from src.obs_cummulative import ObsDatasetCum, ObsError 
 from src.var_4d_reformatted import FourDVar
+import shutil
 
 from stormer.models.hub.vit_adaln import ViTAdaLN
 from stormer.stormer_utils import StormerWrapper
 from stormer.stormer_utils_pangu import StormerWrapperPangu
 import yaml
 
+print('sys.argv :',sys.argv)
+print('torch.cuda.is_available() :',torch.cuda.is_available())
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device_set = False
 gpu2use = 0
 if len(sys.argv) > 2:
-    gpu2use = sys.argv[2]
+    gpu2use = int(sys.argv[2])
     device = torch.device("cuda:{}".format(gpu2use) if torch.cuda.is_available() else "cpu")
     device_set = True
 print('USING DEVICE :',device)
@@ -31,16 +35,16 @@ if __name__ == '__main__':
         config = yaml.load(config_file, Loader=yaml.FullLoader)
 
     da_type = config['da']['da_type']
-    save_dir_name = config['save_dir_name']
+    save_dir_name = config['da']['save_dir_name']
 
     start_date = datetime(config['obs']['start']['year'],
                           config['obs']['start']['month'],
                           config['obs']['start']['day'],
-                          hour=config['obs']['start']['day'])
+                          hour=config['obs']['start']['hour'])
     end_date = datetime(config['obs']['end']['year'],
                           config['obs']['end']['month'],
                           config['obs']['end']['day'],
-                          hour=config['obs']['end']['day'])
+                          hour=config['obs']['end']['hour'])
     da_window = config['da']['da_window'] 
     model_step = config['model']['model_step']
     obs_freq = config['obs']['obs_freq']
@@ -51,6 +55,7 @@ if __name__ == '__main__':
     exp_dir = os.path.join(da_root_dir,'data',model_name,'{}'.format(save_dir_name))
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
+    shutil.copyfile(config_pth,os.path.join(exp_dir,os.path.basename(config_pth)))
 
     save_dir = os.path.join(da_root_dir,'data',model_name,'{}'.format(save_dir_name),'data')
     save_dir = os.path.join(exp_dir,'data')
@@ -59,11 +64,11 @@ if __name__ == '__main__':
 
     obs_filepath = config['obs']['obs_filepath']
 
-    means_file = config['params']['means_file']
-    stds_file = config['params']['stds_file']
+    means_file = config['data']['means_file']
+    stds_file = config['data']['stds_file']
     means = np.load(means_file)
     stds = np.load(stds_file)
-    dv_param_file = config['params']['dv_param_file']
+    dv_param_file = config['data']['dv_param_file']
 
     b_inflation = config['da']['b_inflation'] 
 
@@ -79,7 +84,7 @@ if __name__ == '__main__':
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
-    background_file_np = config['da']['background_file_np']
+    background_file_np = config['data']['background_file_np']
     backgrounds = os.listdir(save_dir)
     start_idx = 0
     if len(backgrounds) > 1:

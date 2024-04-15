@@ -52,12 +52,12 @@ if __name__ == '__main__':
 
     #means_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_mean.npz'
     #stds_file = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/normalize_std.npz'
-    means_file = os.path.join(da_root_dir,'ml4dvar','obs','normalize_mean.npz')
-    stds_file = os.path.join(da_root_dir,'ml4dvar','obs','normalize_std.npz')
+    means_file = os.path.join(da_root_dir,'ml4dvar','params','normalize_mean.npz')
+    stds_file = os.path.join(da_root_dir,'ml4dvar','params','normalize_std.npz')
     means = np.load(means_file)
     stds = np.load(stds_file)
     #dv_param_file = '/eagle/MDClimSim/awikner/dv_params_128_256.hdf5'
-    dv_param_file = os.path.join(da_root_dir,'ml4dvar','data','dv_params_128_256.hdf5')
+    dv_param_file = os.path.join(da_root_dir,'ml4dvar','params','dv_params_128_256.hdf5')
 
     b_inflation = 1 
     if da_type == 'var4d':

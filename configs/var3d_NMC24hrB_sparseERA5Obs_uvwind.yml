@@ -4,14 +4,14 @@ da:
   da_type: var3d
   da_window: 12
   max_iter: 700
-  save_dir_name: var3d_era5B_denseERA5Obs_uvwind_1
+  save_dir_name: var3d_NMC24hrB_sparseERA5Obs_uvwind
 error_covariance:
   background_err_file:
-    0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_12.npy
-    12: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy
+    0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy
+    12: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_24hr_stormer_norm.npy
   background_err_hf_file:
-    0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_12.npy
-    12: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_12hr_stormer_vs_era5_00.npy
+    0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy
+    12: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/hf_24hr_stormer_norm.npy
 model:
   ckpt_pth: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/checkpoints/epoch_015.ckpt
   model_name: stormer
@@ -22,7 +22,7 @@ obs:
     hour: 12
     month: 12
     year: 2015
-  obs_filepath: /eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_dense.h5
+  obs_filepath: /eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_sparse.h5
   obs_freq: 3
   obs_steps: 1
   start:
