@@ -353,6 +353,10 @@ class FourDVar():
             # H_idx - (1, obs_steps, num_vars, 4*num_obs)
             # H_obs - (1, obs_steps, num_vars, 4*num_obs)
             # all_obs - (1, obs_steps, num_vars, num_obs)
+
+            # H_Vals is the value of each of the four coordinates to take;
+            # H_idx is the actual value at each of the four coords
+            # set H_val to (1,0,0,0) and H_idx to (1,0,0,0) ???
             x_obs = observe_linear(x[var].reshape(-1, 1),
                                 self.H_idxs[0, obs_step, var, :4*self.n_obs[0,  obs_step, var]].reshape(-1, 4).T,
                                 self.H_obs[0, obs_step, var, :4*self.n_obs[0, obs_step, var]].reshape(-1, 4),
