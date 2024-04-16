@@ -22,7 +22,7 @@ obs:
     hour: 12
     month: 12
     year: 2015
-  obs_filepath: /eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs.h5
+  obs_filepath: /eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_dense_2014.h5
   obs_freq: 3
   obs_steps: 1
   start:

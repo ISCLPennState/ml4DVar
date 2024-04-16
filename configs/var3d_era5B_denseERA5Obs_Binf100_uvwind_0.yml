@@ -1,10 +1,15 @@
 da:
-  b_inflation: 1
+  b_inflation: 100
   da_root_dir: /eagle/MDClimSim/mjp5595
   da_type: var3d
   da_window: 12
   max_iter: 700
-  save_dir_name: var3d_era5B_denseERA5Obs_uvwind_0
+  save_dir_name: var3d_era5B_denseERA5Obs_Binf100_uvwind_0
+data:
+  background_file_np: /eagle/MDClimSim/mjp5595/ml4dvar/data/background_init_norm_hr12.npy
+  dv_param_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/dv_params_128_256.hdf5
+  means_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_mean.npz
+  stds_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_std.npz
 error_covariance:
   background_err_file:
     0: /eagle/MDClimSim/mjp5595/ml4dvar/stormer/data/sh_12hr_stormer_vs_era5_00.npy
@@ -31,8 +36,3 @@ obs:
     month: 1
     year: 2014
   use_only_recent_obs: true
-data:
-  dv_param_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/dv_params_128_256.hdf5
-  means_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_mean.npz
-  stds_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_std.npz
-  background_file_np: /eagle/MDClimSim/mjp5595/ml4dvar/data/background_init_norm_hr12.npy
