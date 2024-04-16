@@ -1,7 +1,7 @@
 #!/bin/bash --login
-#PBS -l select=10:system=polaris
+#PBS -l select=2:system=polaris
 #PBS -l walltime=1:00:00
-#PBS -q debug-scaling
+#PBS -q debug
 #PBS -A MDClimSim
 #PBS -l filesystems=home:eagle:grand
 #PBS -m bae
@@ -36,7 +36,7 @@ PRELOAD+="export NODES=1; "
 TIMER="timeout 718m "
 
 # Launch the pytorch processes on each worker (use ssh for remote nodes)
-RANK=0
+RANK=56
 for NODE in $RANKS; do 
     for ((lNODE=1;lNODE<=$RUNSPERNODE;lNODE++)); do
         echo $lNODE
