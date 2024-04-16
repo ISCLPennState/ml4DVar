@@ -259,7 +259,9 @@ class AnalysisData:
         if not self.dir:
             self.dir = '/eagle/MDClimSim/awikner/ml4dvar/data/climaX'
         self.analysis, self.background = self.load_data()
+        print('analysis data loaded')
         self.analysis, self.background = self.unstandardize()
+        print('analysis data unstandardized')
         self.varmax = np.maximum(np.max(self.analysis, axis=(0, 2, 3)), np.max(self.background, axis=(0, 2, 3)))
         self.varmin = np.minimum(np.min(self.analysis, axis=(0, 2, 3)), np.min(self.background, axis=(0, 2, 3)))
 
@@ -291,10 +293,12 @@ class AnalysisData:
         background = np.zeros((len(self.analysis_files), len(self.vars), self.nlat, self.nlon))
         for i, file in enumerate(self.analysis_files):
             print('analysis_file {} : {}'.format(i,file))
+            #print('shape :',np.shape(analysis[i]))
             analysis[i] = np.load(file)[0]
         for i, file in enumerate(self.background_files):
             background[i] = np.load(file)[0]
             print('background_file {} : {}'.format(i,file))
+            #print('shape :',np.shape(background[i]))
 
         return analysis, background
 
