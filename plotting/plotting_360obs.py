@@ -188,6 +188,7 @@ class ERA5Data:
         dt_diff_hours = (start_date - start_date_year).total_seconds() // 3600
         era5_start_idx = dt_diff_hours // data_freq
 
+        self.era5_files = []
         if calendar.isleap(self.start_date.year):
             raise ValueError('Date range cannot contain a leap year.')
         data = np.zeros((0, len(self.vars), self.nlat, self.nlon))
@@ -195,6 +196,7 @@ class ERA5Data:
             shard = int(era5_start_idx + win_num*(da_window//data_freq))
             print('era5 file {} : {}_{:04d}.h5'.format(win_num,self.start_date.year,shard))
             h5file = h5py.File(os.path.join(self.dir, '{}_{:04d}.h5'.format(self.start_date.year,shard)))
+            self.era5_files.append(os.path.join(self.dir, '{}_{:04d}.h5'.format(self.start_date.year,shard)))
             data_f = []
             for var in self.vars:
                 data_f.append(h5file['input'][var])
@@ -371,7 +373,7 @@ class ObsData():
             self.file = "/eagle/MDClimSim/awikner/irga_1415_test1_obs.hdf5"
         #obs_dataset = ObsDataset(self.file, self.start_date, self.end_date, 0, self.time_step, self.time_step,
         #                         self.vars)
-        obs_dataset = ObsDatasetCum(self.file, self.start_date, self.end_date, vars)
+        obs_dataset = ObsDatasetCum(self.file, self.start_date, self.end_date, vars, only_recent_obs=True)
 
         #class ObsDataset(IterableDataset):
         #    def __init__(self, file_path, start_datetime, end_datetime, window_len, window_step, model_step, vars, obs_start_idx=0, obs_steps=1):
@@ -917,13 +919,13 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         for var_group in var_groups:
             fig, axs = plt.subplots(1, 1, figsize = figsize)
             #print(rmse)
-            vars_plotted_in_group = 0
+            vars_plotted_in_group = -1
             for var_idx, var in enumerate(var_names):
                 if var_group not in var:
                     continue
+                vars_plotted_in_group += 1
                 if vars_plotted_in_group % 2 != 0:
                     continue
-                vars_plotted_in_group += 1
 
                 label = var.replace(var_group,'').replace('_','')
                 print('var, label :',var,label)
@@ -1017,6 +1019,7 @@ def plot_analysis(era5,
             for itr in window_idxs:
 
                 ###################################################################################################################################
+                print('ERA5 File : {},\tAnalysis File : {},\tObs Times : '.format(era5.era5_files[itr],analysis.analysis_files[itr]))
                 ###################################################################################################################################
                 era5_var_data = era5_data[itr,var_idx]
                 analysis_data = analysis.analysis[itr,var_idx]
@@ -1081,8 +1084,10 @@ def plot_analysis(era5,
                 obs_lon_plot = (obs_latlon[:, 1])
                 fig, axs = plt.subplots(2, 3, sharex = True, sharey = False, figsize = figsize)
 
-                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = era5_vmin,
-                                               vmax = era5_vmax, cmap = 'viridis')
+                #pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = era5_vmin,
+                #                               vmax = era5_vmax, cmap = 'viridis')
+                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
+                                               vmax = vmax, cmap = 'viridis')
                 plt.colorbar(pc_era5, ax = axs[0,0], label=units[var_idx])
                 axs[0, 0].set_title('ERA5')
                 axs[0, 0].set_xticks(np.linspace(0,360,9))
@@ -1117,7 +1122,8 @@ def plot_analysis(era5,
 
                 sp_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot,
                                           c = obs.obs[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy(),
-                                          vmin=era5_vmin, vmax=era5_vmax, cmap='viridis',
+                                          #vmin=era5_vmin, vmax=era5_vmax, cmap='viridis',
+                                          vmin=vmin, vmax=vmax, cmap='viridis',
                                           #edgecolor = 'k', s= 35, linewidth=0.25)
                                           edgecolor = 'k', s= 35, linewidth=0)
                 plt.colorbar(sp_obs, ax = axs[1,0], label=units[var_idx])
@@ -1348,8 +1354,10 @@ def plot_background_vs_analysis(era5,
                 obs_lon_plot = (obs_latlon[:, 1])
                 fig, axs = plt.subplots(2, 4, sharex = False, sharey = False, figsize = figsize)
 
-                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = era5_vmin,
-                                               vmax = era5_vmax, cmap = 'viridis')
+                #pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = era5_vmin,
+                #                               vmax = era5_vmax, cmap = 'viridis')
+                pc_era5 = axs[0, 0].pcolormesh(era5.lon, era5.lat, era5_data[itr, var_idx], vmin = vmin,
+                                               vmax = vmax, cmap = 'viridis')
                 plt.colorbar(pc_era5, ax = axs[0,0], label=units[var_idx])
                 axs[0, 0].set_xticks(np.linspace(0,360,9),'')
                 axs[0, 0].set_title('ERA5')
