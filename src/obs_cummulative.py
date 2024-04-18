@@ -64,13 +64,15 @@ class ObsDatasetCum(IterableDataset):
 
         datetime_diff = self.end_datetime - self.start_datetime
         hour_diff = datetime_diff.days*24 + datetime_diff.seconds // 3600
-        self.num_cycles = int(hour_diff/obs_freq) - da_window
+        #self.num_cycles = int(hour_diff/obs_freq) - da_window
 
+        # I think we can set obs_freq to 1 and simplify other code
         self.vars = vars
-        self.obs_freq = obs_freq
+        #self.obs_freq = obs_freq
+        #self.obs_freq = 1
         self.da_window = da_window 
         self.obs_start_idx = obs_start_idx
-        self.obs_steps = obs_steps
+        self.obs_steps = obs_steps # number of 'steps' of obs to return (batch,obs_steps,obs_data...)
 
         self.start_datetime = self.start_datetime + timedelta(hours=self.da_window*self.obs_start_idx)
         self.curr_datetime = self.start_datetime + timedelta(hours=self.da_window)
@@ -86,8 +88,15 @@ class ObsDatasetCum(IterableDataset):
         with h5py.File(self.file_path, 'r') as f:
             # shapes -> (steps,vars) -> holds max number of observations per var
             shapes = np.zeros((self.obs_steps, len(self.vars)), dtype = int)
-            obs_datetimes = [self.start_datetime + timedelta(hours=int((i+1)*self.obs_freq)) for i in range(int(self.da_window/self.obs_freq))]
-            obs_per_step = self.da_window // (self.obs_freq*self.obs_steps)
+            #obs_datetimes = [self.start_datetime + timedelta(hours=int((i+1)*self.obs_freq)) for i in range(int(self.da_window/self.obs_freq))]
+            obs_datetimes = [self.start_datetime + timedelta(hours=int(i+1)) for i in range(int(self.da_window))]
+            # TODO what is obs_per_step vs obs_freq vs obs_steps... be more clear
+            #obs_per_step = self.da_window // (self.obs_freq*self.obs_steps)
+            obs_per_step = self.da_window // self.obs_steps
+
+            print('checking datetimes : {}'.format(obs_datetimes))
+            if self.logger:
+                self.logger.info('checking datetimes : {}'.format(obs_datetimes))
 
             if self.only_recent_obs:
                 obs_datetimes = [obs_datetimes[-1]]
@@ -190,12 +199,12 @@ class ObsDatasetCum(IterableDataset):
 
     def __next__(self):
         if self.curr_datetime <= self.end_datetime:
-            obs_cumulative = self.read_file()
+            obs_cum = self.read_file()
             self.start_datetime = self.start_datetime + timedelta(hours=self.da_window)
             self.curr_datetime = self.curr_datetime + timedelta(hours=self.da_window)
             #self.end_datetime = self.end_datetime + timedelta(hours=self.da_window)
             self.end_datetime = self.end_datetime
-            return obs_cumulative
+            return obs_cum
         else:
             raise StopIteration
 

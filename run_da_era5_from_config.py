@@ -47,7 +47,7 @@ if __name__ == '__main__':
                           hour=config['obs']['end']['hour'])
     da_window = config['da']['da_window'] 
     model_step = config['model']['model_step']
-    obs_freq = config['obs']['obs_freq']
+    #obs_freq = config['obs']['obs_freq']
 
     da_root_dir = config['da']['da_root_dir']
     model_name = config['model']['model_name']
@@ -174,7 +174,8 @@ if __name__ == '__main__':
     use_only_recent_obs = config['obs']['use_only_recent_obs']
     obs_steps = config['obs']['obs_steps']
     obs_dataset = ObsDatasetCum(obs_filepath, start_date, end_date, vars_stormer, 
-                                obs_freq=obs_freq, da_window=da_window, 
+                                #obs_freq=obs_freq, da_window=da_window, 
+                                da_window=da_window, 
                                 obs_start_idx=start_idx, obs_steps=obs_steps,
                                 only_recent_obs=use_only_recent_obs, logger=logger,
                                 device=device)
