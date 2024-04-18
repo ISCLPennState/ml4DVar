@@ -259,18 +259,26 @@ class AnalysisData:
         if not self.dir:
             self.dir = '/eagle/MDClimSim/awikner/ml4dvar/data/climaX'
         self.analysis, self.background = self.load_data()
-        print('analysis data loaded')
+        #print('analysis data loaded')
         self.analysis, self.background = self.unstandardize()
-        print('analysis data unstandardized')
+        #print('self.analysis.shape :',self.analysis.shape)
+        #print('self.background.shape :',self.background.shape)
+        #print('analysis data unstandardized')
         self.varmax = np.maximum(np.max(self.analysis, axis=(0, 2, 3)), np.max(self.background, axis=(0, 2, 3)))
         self.varmin = np.minimum(np.min(self.analysis, axis=(0, 2, 3)), np.min(self.background, axis=(0, 2, 3)))
 
     def load_data(self):
+        #print('self.dir :',self.dir)
+        #print('self.end_date :',self.end_date)
         if not self.end_date:
+            #print('here (LD)')
             #self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_{self.runstr}.npy')))
             #self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_{self.runstr}.npy')))
             self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_*.npy')))
             self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_*.npy')))
+            #print('searching :',os.path.join(self.dir, f'analysis_*_*.npy'))
+            #print('self.analysis_files (LD0):',self.analysis_files)
+            #print('self.background_files (LD0):',self.background_files)
             min_num_files = min(len(self.analysis_files), len(self.background_files))
             self.analysis_files = self.analysis_files[:min_num_files]
             self.background_files = self.background_files[:min_num_files]
@@ -289,6 +297,7 @@ class AnalysisData:
                 print('Not all analysis or background files were found. Trying older formatting...')
                 self.analysis_files = [os.path.join(self.dir, f'analysis_{n}_{self.runstr}.npy') for n in range(cycles)]
                 self.background_files = [os.path.join(self.dir, f'background_{n}_{self.runstr}.npy') for n in range(cycles)]
+        #print('self.analysis_files :',self.analysis_files)
         analysis = np.zeros((len(self.analysis_files), len(self.vars), self.nlat, self.nlon))
         background = np.zeros((len(self.analysis_files), len(self.vars), self.nlat, self.nlon))
         for i, file in enumerate(self.analysis_files):
@@ -908,9 +917,14 @@ def plot_analysis_global_rmse(era5_minus_analysis,
         for var_group in var_groups:
             fig, axs = plt.subplots(1, 1, figsize = figsize)
             #print(rmse)
+            vars_plotted_in_group = 0
             for var_idx, var in enumerate(var_names):
                 if var_group not in var:
                     continue
+                if vars_plotted_in_group % 2 != 0:
+                    continue
+                vars_plotted_in_group += 1
+
                 label = var.replace(var_group,'').replace('_','')
                 print('var, label :',var,label)
                 plt.plot(rmse[var_idx,:],label=label)
@@ -1104,24 +1118,26 @@ def plot_analysis(era5,
                 sp_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot,
                                           c = obs.obs[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy(),
                                           vmin=era5_vmin, vmax=era5_vmax, cmap='viridis',
-                                          edgecolor = 'k', s= 35, linewidth=0.5)
+                                          #edgecolor = 'k', s= 35, linewidth=0.25)
+                                          edgecolor = 'k', s= 35, linewidth=0)
                 plt.colorbar(sp_obs, ax = axs[1,0], label=units[var_idx])
                 axs[1, 0].set_title('Observations')
 
-                era_err_obs = axs[1,1].bar(scaled_bins[:-1],scaled_era5_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
-                                              edgecolor='k', s=35, linewidth=0.25)
+                                              #edgecolor='k', s=35, linewidth=0.25)
+                                              edgecolor='k', s=35, linewidth=0)
+                era_err_obs = axs[1,1].bar(scaled_bins[:-1],scaled_era5_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_title('Observation Diff (ERA5)')
                 axs[1, 1].set_yticklabels([])
 
-                analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
-
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
-                                                    edgecolor='k', s=35, linewidth=0.25)
+                                                    #edgecolor='k', s=35, linewidth=0.25)
+                                                    edgecolor='k', s=35, linewidth=0)
+                analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_title('Observation Diff (Analysis)')
@@ -1376,20 +1392,22 @@ def plot_background_vs_analysis(era5,
                 axs[0, 3].set_title('Analysis - Background Increment')
 
                 
-                era5_err_obs = axs[1,0].bar(scaled_bins[:-1],scaled_era5_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 sp_era_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
-                                              edgecolor='k', s=35, linewidth=0.25)
+                                              #edgecolor='k', s=35, linewidth=0.25)
+                                              edgecolor='k', s=35, linewidth=0)
+                era5_err_obs = axs[1,0].bar(scaled_bins[:-1],scaled_era5_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 0].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,0], label=units[var_idx])
                 axs[1, 0].set_xlim(0,360)
                 axs[1, 0].set_xticks(np.linspace(0,360,9))
                 axs[1, 0].set_title('Observation Diff (ERA5)')
 
-                bg_err_obs = axs[1,1].bar(scaled_bins[:-1],scaled_background_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
                                               vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
-                                              edgecolor='k', s=35, linewidth=0.25)
+                                              #edgecolor='k', s=35, linewidth=0.25)
+                                              edgecolor='k', s=35, linewidth=0)
+                bg_err_obs = axs[1,1].bar(scaled_bins[:-1],scaled_background_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(background_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_xlim(0,360)
@@ -1397,10 +1415,11 @@ def plot_background_vs_analysis(era5,
                 axs[1, 1].get_yaxis().set_ticklabels([])
                 axs[1, 1].set_title('Observation Diff (Background)')
 
-                analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
-                                                    edgecolor='k', s=35, linewidth=0.25)
+                                                    #edgecolor='k', s=35, linewidth=0.25)
+                                                    edgecolor='k', s=35, linewidth=0)
+                analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_xlim(0,360)
