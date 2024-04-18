@@ -15,7 +15,7 @@ class FourDVar():
     def __init__(self, stormer_wrapper, obs_dataloader, 
                  background, background_err_dict, background_err_hf_dict, obs_err, dv_layer,
                  model_step=6, da_window=12, obs_freq=3, da_type='var4d', vars=None,
-                 b_inflation=1, lr=1., max_iter=700, forecast_steps=40, savestr=None,
+                 b_inflation=1, b_hf_inflation=1, lr=1., max_iter=700, forecast_steps=40, savestr=None,
                  save_analysis=True, savedir=None, device=None, save_idx=0, logger=None,
                  ):
         super(FourDVar).__init__()
@@ -32,7 +32,7 @@ class FourDVar():
 
         for hr_key in self.background_err_dict.keys():
             self.background_err_dict[hr_key] = self.background_err_dict[hr_key] * b_inflation
-            self.background_err_hf_dict[hr_key] = self.background_err_hf_dict[hr_key] * b_inflation
+            self.background_err_hf_dict[hr_key] = self.background_err_hf_dict[hr_key] * b_hf_inflation
 
         self.model_step = model_step
         self.da_window = da_window

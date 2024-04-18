@@ -71,6 +71,7 @@ if __name__ == '__main__':
     dv_param_file = config['data']['dv_param_file']
 
     b_inflation = config['da']['b_inflation'] 
+    b_hf_inflation = config['da']['b_hf_inflation'] 
 
     background_err_file_dict = {}
     background_err_hf_file_dict = {}
@@ -231,6 +232,7 @@ if __name__ == '__main__':
                         da_type=da_type,
                         vars=vars_stormer,
                         b_inflation=b_inflation,
+                        b_hf_inflation=b_hf_inflation,
                         max_iter=max_iter,
                         savedir=save_dir,
                         device=device,
