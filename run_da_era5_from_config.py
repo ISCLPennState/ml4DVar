@@ -229,7 +229,7 @@ if __name__ == '__main__':
                         obs_err, dv_layer, 
                         model_step=model_step,
                         da_window=da_window,
-                        obs_freq=obs_freq,
+                        #obs_freq=obs_freq,
                         da_type=da_type,
                         vars=vars_stormer,
                         b_inflation=b_inflation,
