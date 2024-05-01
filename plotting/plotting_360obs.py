@@ -274,8 +274,8 @@ class AnalysisData:
         #print('self.end_date :',self.end_date)
         if not self.end_date:
             #print('here (LD)')
-            #self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_{self.runstr}.npy')))
-            #self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_{self.runstr}.npy')))
+            self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_{self.runstr}.npy')))
+            self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_{self.runstr}.npy')))
             self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_*.npy')))
             self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_*.npy')))
             #print('searching :',os.path.join(self.dir, f'analysis_*_*.npy'))
@@ -1128,6 +1128,7 @@ def plot_analysis(era5,
                                           edgecolor = 'k', s= 35, linewidth=0)
                 plt.colorbar(sp_obs, ax = axs[1,0], label=units[var_idx])
                 axs[1, 0].set_title('Observations')
+                axs[1, 0].set_ylim(-90,90)
 
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
@@ -1138,6 +1139,7 @@ def plot_analysis(era5,
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_title('Observation Diff (ERA5)')
                 axs[1, 1].set_yticklabels([])
+                axs[1, 1].set_ylim(-90,90)
 
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
@@ -1148,6 +1150,7 @@ def plot_analysis(era5,
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_title('Observation Diff (Analysis)')
                 axs[1, 2].set_yticklabels([])
+                axs[1, 2].set_ylim(-90,90)
 
                 axs[0, 0].set_ylabel('Lat')
                 axs[1, 0].set_ylabel('Lat')
@@ -1396,6 +1399,7 @@ def plot_background_vs_analysis(era5,
                                           )
                 plt.colorbar(ana_inc, ax = axs[0, 3], label=units[var_idx])
                 axs[0, 3].set_xticks(np.linspace(0,360,9))
+                axs[0, 3].set_ylim(-90,90)
                 axs[0, 3].get_yaxis().set_ticklabels([])
                 axs[0, 3].set_title('Analysis - Background Increment')
 
@@ -1409,6 +1413,7 @@ def plot_background_vs_analysis(era5,
                 plt.colorbar(sp_era_obs, ax=axs[1,0], label=units[var_idx])
                 axs[1, 0].set_xlim(0,360)
                 axs[1, 0].set_xticks(np.linspace(0,360,9))
+                axs[1, 0].set_ylim(-90,90)
                 axs[1, 0].set_title('Observation Diff (ERA5)')
 
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
@@ -1420,6 +1425,7 @@ def plot_background_vs_analysis(era5,
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
                 axs[1, 1].set_xlim(0,360)
                 axs[1, 1].set_xticks(np.linspace(0,360,9))
+                axs[1, 1].set_ylim(-90,90)
                 axs[1, 1].get_yaxis().set_ticklabels([])
                 axs[1, 1].set_title('Observation Diff (Background)')
 
@@ -1432,6 +1438,7 @@ def plot_background_vs_analysis(era5,
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
                 axs[1, 2].set_xlim(0,360)
                 axs[1, 2].set_xticks(np.linspace(0,360,9))
+                axs[1, 2].set_ylim(-90,90)
                 axs[1, 2].get_yaxis().set_ticklabels([])
                 axs[1, 2].set_title('Observation Diff (Analysis)')
 
