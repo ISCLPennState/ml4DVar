@@ -296,12 +296,14 @@ class FourDVar():
             self.optim.zero_grad()
             print('Cycle loss %d: %0.2f' % (itr, cycle_loss))
             print('{} / {}'.format(itr,self.obs_dataloader.dataset.num_cycles))
+            #print('{} / {}'.format(itr,len(self.obs_dataloader)))
             if self.logger:
                 self.logger.info('Cycle loss {:d}: {:0.2f}'.format(itr, cycle_loss.item()))
                 self.logger.info('{} / {}'.format(itr,self.obs_dataloader.dataset.num_cycles))
+                #self.logger.info('{} / {}'.format(itr,len(self.obs_dataloader)))
 
     def calc_background_err(self, x, print_loss, save_loss_comps):
-        # Compute background error with identity background error covariance
+        # Compute background error  
         dvx = self.dv_layer(x).to(self.device)
         dvb = self.dv_layer(self.background[0].to(self.device)).to(self.device)
         diff = dvx - dvb
