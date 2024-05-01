@@ -64,7 +64,7 @@ class ObsDatasetCum(IterableDataset):
 
         datetime_diff = self.end_datetime - self.start_datetime
         hour_diff = datetime_diff.days*24 + datetime_diff.seconds // 3600
-        #self.num_cycles = int(hour_diff/obs_freq) - da_window
+        self.num_cycles = hour_diff // da_window
 
         # I think we can set obs_freq to 1 and simplify other code
         self.vars = vars
