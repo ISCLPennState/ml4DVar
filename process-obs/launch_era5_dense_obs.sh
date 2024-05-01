@@ -36,7 +36,7 @@ PRELOAD+="export NODES=1; "
 TIMER="timeout 718m "
 
 # Launch the pytorch processes on each worker (use ssh for remote nodes)
-RANK=56
+RANK=0
 for NODE in $RANKS; do 
     for ((lNODE=1;lNODE<=$RUNSPERNODE;lNODE++)); do
         echo $lNODE
