@@ -5,7 +5,7 @@ da:
   da_type: var3d
   da_window: 12
   max_iter: 700
-  save_dir_name: var3d_era5B_denseERA5Obs_BINF
+  save_dir_name: var3d_denseERA5Obs_BINF
 data:
   background_file_np: /eagle/MDClimSim/mjp5595/ml4dvar/data/background_init_norm_hr12.npy
   dv_param_file: /eagle/MDClimSim/mjp5595/ml4dvar/data/dv_params_128_256.hdf5
