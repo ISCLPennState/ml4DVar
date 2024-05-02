@@ -13,10 +13,11 @@ var_units = varsStormer().var_units
 means = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_mean.npz')
 stds = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_std.npz')
 #obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/igra_141520_stormer_obs_standardized_360_3.hdf5"
-obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_dense_2014.h5"
+#obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_grid_2014.h5"
 
-#lat = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lat.npy')
-#lon = np.load('/eagle/MDClimSim/troyarcomano/1.40625deg_npz_40shards/lon.npy')
+#obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_dense_grid_2014.h5"
+obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_sparse.h5"
+
 lat = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/lat.npy')
 lon = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/lon.npy')
 
@@ -49,7 +50,8 @@ analysis = AnalysisData(analysis_start_date,
                         means=means, 
                         stds=stds, 
                         lat=lat, 
-                        lon=lon)
+                        lon=lon,
+                        num_windows=max_steps_to_plot)
 num_windows,_,_,_ = analysis.analysis.shape
 print('analysis.shape :',analysis.analysis.shape)
 
@@ -86,6 +88,33 @@ print('obs.obs :',len(obs.obs))
 #                         lon = lon)
 #print('forecasts.forecasts.shape :',forecasts.forecasts.shape)
 
+cum_innovation_dir = os.path.join(plot_dir,'cummulative_innovation')
+if not os.path.exists(cum_innovation_dir):
+    os.makedirs(cum_innovation_dir)
+plot_cummulative_increment(analysis,
+                               obs,
+                               var_units,
+                               var_idxs = [0,3,11,37],
+                               #var_idxs = [37],
+                               window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+                               save = True,
+                               show = False,
+                               save_dir = cum_innovation_dir,
+                               return_error = False,
+                               plot_obs = True)
+#plot_cummulative_increment(analysis,
+#                               obs,
+#                               var_units,
+#                               var_idxs = [0,37],
+#                               #var_idxs = [37],
+#                               window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+#                               save = True,
+#                               show = False,
+#                               save_dir = cum_innovation_dir,
+#                               return_error = False,
+#                               plot_obs = False)
+
+
 ana_dir = os.path.join(plot_dir,'analysis')
 if not os.path.exists(ana_dir):
     os.makedirs(ana_dir)
@@ -93,8 +122,8 @@ plot_stuff = plot_analysis(era5,
                           analysis,
                           obs,
                           var_units,
-                          #var_idxs = [0,3,11],
-                          var_idxs = [0,11],
+                          var_idxs = [0,37],
+                          #var_idxs = [37],
                           #var_idxs = None,
                           window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                           #window_idxs = [0],
@@ -114,7 +143,7 @@ plot_analysis_global_rmse(era5_minus_analysis,
                           vars,
                           var_units, 
                           #var_id = 3, 
-                          var_idxs = [0,3,11],
+                          var_idxs = [0,3,11,37],
                           window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                           #lat_weighted = True, 
                           lat_weighted = True, 
@@ -131,8 +160,8 @@ _ = plot_background_vs_analysis(era5,
                                 analysis,
                                 obs,
                                 var_units,
-                                #var_idxs = [0,3,11],
-                                var_idxs = [0,11],
+                                var_idxs = [0,37],
+                                #var_idxs = [37],
                                 #var_idxs = None,
                                 window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                                 #window_idxs = [0],
@@ -142,28 +171,28 @@ _ = plot_background_vs_analysis(era5,
                                 return_error = True)
 ####################################################################################################################
 
-innovation_dir = os.path.join(plot_dir,'innovation')
-if not os.path.exists(innovation_dir):
-    os.makedirs(innovation_dir)
-_ = plot_analysis_innovation(era5,
-                             analysis,
-                             obs,
-                             var_units,
-                             #var_idxs = [0,3,11],
-                             var_idxs = [0,11],
-                             window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
-                             save = True,
-                             show = False,
-                             save_dir = innovation_dir,
-                             return_error = False,
-                             plot_obs = True)
+#innovation_dir = os.path.join(plot_dir,'innovation')
+#if not os.path.exists(innovation_dir):
+#    os.makedirs(innovation_dir)
+#_ = plot_analysis_innovation(era5,
+#                             analysis,
+#                             obs,
+#                             var_units,
+#                             var_idxs = [0,37],
+#                             #var_idxs = [37],
+#                             window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
+#                             save = True,
+#                             show = False,
+#                             save_dir = innovation_dir,
+#                             return_error = False,
+#                             plot_obs = True)
 
 _ = plot_analysis_innovation(era5,
                              analysis,
                              obs,
                              var_units,
-                             #var_idxs = [0,3,11],
-                             var_idxs = [0,11],
+                             var_idxs = [0,37],
+                             #var_idxs = [37],
                              window_idxs = np.arange(min(max_steps_to_plot,num_windows)),
                              save = True,
                              show = False,

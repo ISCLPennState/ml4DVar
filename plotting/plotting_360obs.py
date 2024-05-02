@@ -236,7 +236,8 @@ class ERA5Data:
 
 class AnalysisData:
     def __init__(self, start_date, time_step, vars, dir = None, means = None,
-                 stds = None, lat = None, lon = None, runstr = None, end_date = None):
+                 stds = None, lat = None, lon = None, runstr = None, end_date = None,
+                 num_windows = 10):
         self.save_hyperparameters()
         if lat is not None:
             self.nlat = lat.size
@@ -260,7 +261,7 @@ class AnalysisData:
             self.runstr = "%dhr_%s" % (self.time_step, start_date.strftime("%m%d%Y"))
         if not self.dir:
             self.dir = '/eagle/MDClimSim/awikner/ml4dvar/data/climaX'
-        self.analysis, self.background = self.load_data()
+        self.analysis, self.background = self.load_data(num_windows)
         #print('analysis data loaded')
         self.analysis, self.background = self.unstandardize()
         #print('self.analysis.shape :',self.analysis.shape)
@@ -269,19 +270,15 @@ class AnalysisData:
         self.varmax = np.maximum(np.max(self.analysis, axis=(0, 2, 3)), np.max(self.background, axis=(0, 2, 3)))
         self.varmin = np.minimum(np.min(self.analysis, axis=(0, 2, 3)), np.min(self.background, axis=(0, 2, 3)))
 
-    def load_data(self):
+    def load_data(self, num_windows):
         #print('self.dir :',self.dir)
         #print('self.end_date :',self.end_date)
         if not self.end_date:
-            #print('here (LD)')
             self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_{self.runstr}.npy')))
             self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_{self.runstr}.npy')))
             self.analysis_files = natsorted(glob.glob(os.path.join(self.dir, f'analysis_*_*.npy')))
             self.background_files = natsorted(glob.glob(os.path.join(self.dir, f'background_*_*.npy')))
-            #print('searching :',os.path.join(self.dir, f'analysis_*_*.npy'))
-            #print('self.analysis_files (LD0):',self.analysis_files)
-            #print('self.background_files (LD0):',self.background_files)
-            min_num_files = min(len(self.analysis_files), len(self.background_files))
+            min_num_files = min(len(self.analysis_files), len(self.background_files),num_windows)
             self.analysis_files = self.analysis_files[:min_num_files]
             self.background_files = self.background_files[:min_num_files]
             self.end_date = self.start_date + timedelta(hours = self.time_step * (min_num_files-1))
@@ -714,13 +711,13 @@ def plot_analysis_innovation(era5,
                     #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
                     #        bbox_inches = 'tight')
                     if plot_obs:
-                        plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
+                        plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_innovation_{analysis.runstr}.png'), dpi = 200,
                                 bbox_inches = 'tight')
-                        gif_files.append(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}.png'))
+                        gif_files.append(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_innovation_{analysis.runstr}.png'))
                     else:
-                        plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}_noObs.png'), dpi = 200,
+                        plt.savefig(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_innovation_{analysis.runstr}_noObs.png'), dpi = 200,
                                 bbox_inches = 'tight')
-                        gif_files.append(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_analysis_increment{analysis.runstr}_noObs.png'))
+                        gif_files.append(os.path.join(save_dir, f'{save_name}_{var}_{itr:04}_innovation_{analysis.runstr}_noObs.png'))
                 if show:
                     plt.show()
                 else:
@@ -753,20 +750,6 @@ def plot_analysis_innovation(era5,
                         for _ in range(int(frames_per_second)):
                             writer.write(cv2.resize(frame,(c,r)))
                 writer.release()
-
-                #gif_imgs = []
-                #for gif_f in gif_files:
-                #    gif_imgs.append(Image.open(gif_f))
-
-                ## create extra copies of the frist and last frame
-                #for x in range(0, 5):
-                #    im = gif_imgs[0]
-                #    gif_imgs.insert(0,im)
-                #    im = gif_imgs[-1]
-                #    gif_imgs.append(im)
-
-                #gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
-                #            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
 
     if return_error:
         return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error
@@ -1203,20 +1186,6 @@ def plot_analysis(era5,
                             writer.write(cv2.resize(frame,(c,r)))
                 writer.release()
 
-                #gif_imgs = []
-                #for gif_f in gif_files:
-                #    gif_imgs.append(Image.open(gif_f))
-
-                ## create extra copies of the frist and last frame
-                #for x in range(0, 5):
-                #    im = gif_imgs[0]
-                #    gif_imgs.insert(0,im)
-                #    im = gif_imgs[-1]
-                #    gif_imgs.append(im)
-
-                #gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
-                #            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
-
     if return_error:
         return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background
     else:
@@ -1522,21 +1491,320 @@ def plot_background_vs_analysis(era5,
                             writer.write(cv2.resize(frame,(c,r)))
                 writer.release()
 
-                #gif_imgs = []
-                #for gif_f in gif_files:
-                #    gif_imgs.append(Image.open(gif_f))
-
-                ## create extra copies of the frist and last frame
-                #for x in range(0, 5):
-                #    im = gif_imgs[0]
-                #    gif_imgs.insert(0,im)
-                #    im = gif_imgs[-1]
-                #    gif_imgs.append(im)
-
-                #gif_imgs[0].save(gif_files[-1].replace('.png','.gif'),
-                #            save_all=True, append_images=gif_imgs[1:], optimize=False, duration=500, loop=0)
-
     if return_error:
         return era5_minus_analysis, era5_obs, era5_obs_error, analysis_obs, analysis_obs_error, era5_minus_background
     else:
         return
+
+
+def plot_cummulative_increment(analysis,
+                             obs,
+                             units,
+                             var_idxs = None,
+                             window_idxs = None,
+                             save = False,
+                             show = True,
+                             figsize = (15, 7),
+                             err_var_lim = None,
+                             save_dir = None,
+                             zero_center_error = True,
+                             return_error = False,
+                             plot_obs=True):
+    if not save and not show and not return_error:
+        print('Function does not return anything, aborting...')
+        return
+    if save and not save_dir:
+        save_dir = os.path.join(os.getcwd(), 'plots')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+    if var_idxs is None:
+        var_idxs = np.arange(analysis.analysis.shape[1], dtype = int)
+    if window_idxs is None:
+        window_idxs = np.arange(analysis.analysis.shape[0])
+        
+    analysis_increment = analysis.analysis - analysis.background 
+    if save or show:
+        #bar_cm = plt.cm.get_cmap('RdYlBu_r')
+        bar_cm = plt.cm.get_cmap('hot_r')
+
+        #for var_idx, var in [(idx, analysis.vars[idx]) for idx in var_idxs]:
+        for var_idx in var_idxs:
+            gif_files = []
+
+            cum_inc = np.zeros(analysis_increment[0,var_idx].shape)
+            cum_inc = np.expand_dims(cum_inc,0)
+            for itr in window_idxs:
+                new_cum_inc = cum_inc[itr]+np.abs(analysis_increment[itr,var_idx])
+                cum_inc = np.concatenate((cum_inc,np.expand_dims(new_cum_inc,0)),axis=0)
+            #max_cum_increment = np.max(cum_inc)
+
+
+            total_obs_locs = None
+            min_cum_inc_x = []
+            min_cum_inc_y = []
+            for itr in window_idxs:
+
+                all_cum_incs = cum_inc[itr+1].reshape(-1)
+
+                cum_incs_max = np.max(all_cum_incs)
+                cum_incs_min = 0
+
+                counts_all, bins = np.histogram(all_cum_incs, bins=51,range=(cum_incs_min,cum_incs_max))
+
+                bar_span = cum_incs_max - cum_incs_min
+                # Gets color for each bin
+                bar_CM = [bar_cm((b-cum_incs_min)/bar_span) for b in bins]
+                # scale bins to lon
+                scaled_bins = np.linspace(0,360,52)
+                counts_max = max(counts_all)
+                lat_range = max(analysis.lat)-min(analysis.lat)
+                lat_min = min(analysis.lat)
+                scaled_counts = (counts_all/counts_max) * lat_range * 1.0 
+
+                plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+                title_str = 'Cummulative Absolute Increment - Cycle {} - ({})'.format(itr,analysis.vars[var_idx])
+                print(title_str)
+
+                fig, axs = plt.subplots(1, 1, figsize = figsize)
+
+                pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, cum_inc[itr+1],
+                                         cmap='hot_r', #vmin=0, vmax=np.max(cum_inc[itr+1]),
+                                         norm=colors.SymLogNorm(linthresh=1,vmin=0,vmax=np.max(cum_inc[itr+1])),
+                                         )
+
+                analysis_err_obs = axs.bar(scaled_bins[:-1],
+                                           scaled_counts,color=bar_CM,
+                                           width=scaled_bins[1]-scaled_bins[0],
+                                           bottom=lat_min,
+                                           linewidth=0.25,
+                                           edgecolor='k',
+                                           align='edge',
+                                           alpha=0.6,
+                                           )
+                if plot_obs:
+                    obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
+                    try:
+                        total_obs_locs = np.concatenate((total_obs_locs,obs_latlon),axis=0)
+                        total_obs_locs = np.unique(total_obs_locs, axis=0)
+                    except:
+                        total_obs_locs = obs_latlon
+
+                    ra_obs = axs.scatter(total_obs_locs[:,1], total_obs_locs[:,0],
+                                         color='b')
+                                         #color='k', edgecolor='k', s=35, linewidth=0.25)
+                plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
+                axs.set_title(title_str)
+                axs.set_xlim(0,360)
+                x_tick_labels = ['{:.3f}'.format((x+360/50)*cum_incs_max/360) for x in np.linspace(0,(360-360/50),11)]
+                axs.set_xticks(np.linspace(360/50,360,11))
+                axs.set_xticklabels(x_tick_labels)
+                axs.set_yticks([])
+                axs.set_xlabel(units[var_idx])
+
+                #axs_mses_inc = axs.twinx()
+                #axs_mses_inc.tick_params(axis='y',colors='green')
+                #axs_mses_inc.set_ylim(0,np.min(cum_inc[-1]))
+                #axs_mses_inc.yaxis.tick_left()
+                #axs_mses_inc.yaxis.set_label_position('left')
+                #axs_mses_inc.set_ylabel('Min Cummulative Increment ({})'.format(units[var_idx]),c='green')
+                #min_cum_inc_x.append(itr*(359/(len(window_idxs)-1)))
+                #min_cum_inc_y.append(np.min(cum_inc[itr+1]))
+                #axs_mses_inc.plot(min_cum_inc_x,min_cum_inc_y,c='green',linewidth=4)
+
+                plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+                #fig.suptitle(title_str)
+                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+                #plt.tight_layout()
+
+                save_name = analysis.dir.split('/')[-2]
+                if save:
+                    #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
+                    #        bbox_inches = 'tight')
+                    if plot_obs:
+                        plt.savefig(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}.png'), dpi = 200,
+                                bbox_inches = 'tight')
+                        gif_files.append(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}.png'))
+                    else:
+                        plt.savefig(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'), dpi = 200,
+                                bbox_inches = 'tight')
+                        gif_files.append(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'))
+                if show:
+                    plt.show()
+                else:
+                    plt.close(fig)
+
+            if save:
+                frames_per_second = 6.0
+                max_size = 2048
+                big_side = 2048
+                r, c = None, None
+                for j,gif_f in enumerate(gif_files):
+                    frame = cv2.imread(gif_f)
+
+                    if r is None:
+                        r,c,_ = frame.shape
+                        if max(r,c) > max_size:
+                            big_side = max(r,c)
+                        c = int(c*(max_size/big_side))
+                        r = int(r*(max_size/big_side))
+
+                        fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+                        writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
+                                                 fourcc,
+                                                 frames_per_second,
+                                                 (c,r),
+                                                 )
+
+                    writer.write(cv2.resize(frame,(c,r)))
+                    if j == 0 or j == (len(gif_files)-1):
+                        for _ in range(int(frames_per_second)):
+                            writer.write(cv2.resize(frame,(c,r)))
+                writer.release()
+
+        ###################################################################################################
+        ###################################################################################################
+        # Also plot overall cummulative increment
+        ###################################################################################################
+        ###################################################################################################
+        #
+        gif_files = []
+        cum_inc_allVars = np.zeros(analysis_increment[itr].shape) # (69,128,256)
+        cum_inc_allVars = np.expand_dims(cum_inc_allVars,0) # (1,69,128,256)
+        for itr in window_idxs:
+            # get all vars in a cum_inc_var
+            # add cum_inc_var to cum_inc_allVars
+            new_cum_inc_allVars = np.zeros(analysis_increment[itr].shape) # (69,128,256)
+            #new_cum_inc_allVars = np.expand_dims(new_cum_inc_allVars,0) # 1,69,128,256
+            for var_idx in range(analysis.analysis.shape[1]):
+                new_var_cum_inc = cum_inc_allVars[itr,var_idx]+np.abs(analysis_increment[itr,var_idx])
+                new_cum_inc_allVars[var_idx,:,:] = new_var_cum_inc
+            cum_inc_allVars = np.concatenate((cum_inc_allVars,np.expand_dims(new_cum_inc_allVars,0)),axis=0)
+
+        min_combined_inc_y = np.min(np.sum(cum_inc_allVars[-1] / analysis.stds.reshape(-1,1,1), axis=0))
+
+        total_obs_locs = None
+        min_cum_inc_x = []
+        min_cum_inc_y = []
+        for itr in window_idxs:
+
+            combined_inc_std = np.sum(cum_inc_allVars[itr+1] / analysis.stds.reshape(-1,1,1), axis=0)
+
+            all_cum_incs = combined_inc_std.reshape(-1)
+
+            cum_incs_max = np.max(all_cum_incs)
+            cum_incs_min = 0
+
+            counts_all, bins = np.histogram(all_cum_incs, bins=51,range=(cum_incs_min,cum_incs_max))
+
+            bar_span = cum_incs_max - cum_incs_min
+            # Gets color for each bin
+            bar_CM = [bar_cm((b-cum_incs_min)/bar_span) for b in bins]
+            # scale bins to lon
+            scaled_bins = np.linspace(0,360,52)
+            counts_max = max(counts_all)
+            lat_range = max(analysis.lat)-min(analysis.lat)
+            lat_min = min(analysis.lat)
+            scaled_counts = (counts_all/counts_max) * lat_range * 1.0 
+
+            if plot_obs:
+                for var_idx in range(analysis.analysis.shape[1]):
+                    obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
+                    try:
+                        total_obs_locs = np.concatenate((total_obs_locs,obs_latlon),axis=0)
+                        total_obs_locs = np.unique(total_obs_locs, axis=0)
+                    except:
+                        total_obs_locs = obs_latlon
+
+            plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+            title_str = 'Cummulative Absolute Increment - Cycle {} - (Overall)'.format(itr)
+            print(title_str)
+
+            fig, axs = plt.subplots(1, 1, figsize = figsize)
+
+            #combined_inc_std = np.sum(cum_inc_allVars[itr+1] / analysis.stds.reshape(-1,1,1), axis=0)
+            pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, combined_inc_std,
+                                        cmap='hot_r', #vmin=0, vmax=np.max(cum_inc[itr+1]),
+                                        norm=colors.SymLogNorm(linthresh=1,vmin=0,vmax=np.max(combined_inc_std)),
+                                        )
+
+            analysis_err_obs = axs.bar(scaled_bins[:-1],
+                                        scaled_counts,color=bar_CM,
+                                        width=scaled_bins[1]-scaled_bins[0],
+                                        bottom=lat_min,
+                                        linewidth=0.25,
+                                        edgecolor='k',
+                                        align='edge',
+                                        alpha=0.6,
+                                        )
+            if plot_obs:
+                ra_obs = axs.scatter(total_obs_locs[:,1], total_obs_locs[:,0],
+                                        color='b')
+                                        #color='b', edgecolor='k', s=35, linewidth=0.25)
+
+            plt.colorbar(pc_era5, ax = axs)
+            axs.set_title(title_str)
+            axs.set_xlim(0,360)
+            x_tick_labels = ['{:.3f}'.format((x+360/50)*cum_incs_max/360) for x in np.linspace(0,(360-360/50),11)]
+            axs.set_xticks(np.linspace(360/50,360,11))
+            axs.set_xticklabels(x_tick_labels)
+            axs.set_yticks([])
+
+            #axs_mses_inc = axs.twinx()
+            #axs_mses_inc.tick_params(axis='y',colors='green')
+            #axs_mses_inc.set_ylim(0,min_combined_inc_y)
+            #axs_mses_inc.yaxis.tick_left()
+            #axs_mses_inc.yaxis.set_label_position('left')
+            #axs_mses_inc.set_ylabel('Min Cummulative Increment',c='green')
+            #min_cum_inc_x.append(itr*(359/(len(window_idxs)-1)))
+            #min_cum_inc_y.append(np.min(combined_inc_std))
+            #axs_mses_inc.plot(min_cum_inc_x,min_cum_inc_y,c='green',linewidth=4)
+
+            plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
+            #fig.suptitle(title_str)
+            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+            #plt.tight_layout()
+
+            save_name = analysis.dir.split('/')[-2]
+            if save:
+                #plt.savefig(os.path.join(save_dir, f'{var}_{itr:04}_analysis_increment{analysis.runstr}.png'), dpi = 200,
+                #        bbox_inches = 'tight')
+                if plot_obs:
+                    plt.savefig(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}.png'), dpi = 200,
+                            bbox_inches = 'tight')
+                    gif_files.append(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}.png'))
+                else:
+                    plt.savefig(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'), dpi = 200,
+                            bbox_inches = 'tight')
+                    gif_files.append(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'))
+            if show:
+                plt.show()
+            else:
+                plt.close(fig)
+
+        if save:
+            frames_per_second = 6.0
+            max_size = 2048
+            big_side = 2048
+            r, c = None, None
+            for j,gif_f in enumerate(gif_files):
+                frame = cv2.imread(gif_f)
+
+                if r is None:
+                    r,c,_ = frame.shape
+                    if max(r,c) > max_size:
+                        big_side = max(r,c)
+                    c = int(c*(max_size/big_side))
+                    r = int(r*(max_size/big_side))
+
+                    fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+                    writer = cv2.VideoWriter(gif_files[-1].replace('.png','.mp4'),
+                                                fourcc,
+                                                frames_per_second,
+                                                (c,r),
+                                                )
+
+                writer.write(cv2.resize(frame,(c,r)))
+                if j == 0 or j == (len(gif_files)-1):
+                    for _ in range(int(frames_per_second)):
+                        writer.write(cv2.resize(frame,(c,r)))
+            writer.release()
