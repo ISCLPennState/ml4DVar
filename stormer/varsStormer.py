@@ -142,3 +142,8 @@ class varsStormer():
             'kg/kg',
             'kg/kg',
             ]
+        self.uwind_idxs = [i for i, var in enumerate(self.vars_stormer) if 'u_component_of_wind' in var]
+        self.vwind_idxs = [i for i, var in enumerate(self.vars_stormer) if 'v_component_of_wind' in var]
+        self.nowind_idxs = [i for i, var in enumerate(self.vars_stormer) if \
+                                                      'u_component_of_wind' not in var and \
+                                                      'v_component_of_wind' not in var]

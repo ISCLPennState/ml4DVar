@@ -82,6 +82,7 @@ if __name__ == '__main__':
     ckpt_pth = config['model']['ckpt_pth']
     max_iter = config['da']['max_iter']
 
+
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
     ####################################################################################################################################
@@ -97,6 +98,33 @@ if __name__ == '__main__':
                     background_file_np = os.path.join(save_dir,background_file)
     print('Starting with background file : {}'.format(background_file_np))
     ####################################################################################################################################
+
+    print('background_file_np :',background_file_np)
+    background_f = np.load(background_file_np, 'r')
+    if 'rand' in save_dir:
+        print('using random background')
+        background_f = np.random.randn(*background_f.shape)
+    background = torch.from_numpy(background_f.copy())
+
+    from stormer.varsStormer import varsStormer
+    vars_stormer = varsStormer().vars_stormer
+    uwind_idxs = varsStormer().uwind_idxs
+    vwind_idxs = varsStormer().vwind_idxs
+    nowind_idxs = varsStormer().nowind_idxs
+    # from src/dv.py
+
+    wind_type = None
+    try:
+        wind_type = config['da']['wind_type']
+        if wind_type == 'vector':
+            wind_layer = UVWwind(background_f, vars_stormer, device)
+        elif wind_type == 'scalar':
+            wind_layer = DivergenceVorticity(background_f, vars_stormer, means, stds, dv_param_file, device)
+    except:
+        pass
+    if wind_type is None:
+        wind_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file, device)
+        wind_type = 'scalar'
 
     log_dir = os.path.join(exp_dir,'logs')
     if not os.path.exists(log_dir):
@@ -118,16 +146,15 @@ if __name__ == '__main__':
     logger.info('obs_filepath : {}'.format(obs_filepath))
     logger.info('means_file : {}'.format(means_file))
     logger.info('stds_file : {}'.format(stds_file))
-    logger.info('dv_param file : {}'.format(dv_param_file))
     logger.info('max_iter : {}'.format(max_iter))
+    logger.info('')
+    logger.info('using wind type : {}'.format(wind_type))
+    logger.info('dv_param file : {}'.format(dv_param_file))
     logger.info('')
     logger.info('Using background_err_file_dict : {}'.format(background_err_file_dict))
     logger.info('Using background_err_hf_file_dict : {}'.format(background_err_hf_file_dict))
     logger.info('Starting with background file : {}'.format(background_file_np))
     logger.info('')
-
-    from stormer.varsStormer import varsStormer
-    vars_stormer = varsStormer().vars_stormer
 
     var_types = ['geopotential', 'temperature', 'specific_humidity', 'u_component_of_wind', 'v_component_of_wind', 'pressure']
     var_obs_err = [100., 1.0, 1e-4, 1.0, 1.0, 100.]
@@ -137,8 +164,6 @@ if __name__ == '__main__':
     if logger:
         logger.info('obs_err : {}'.format(obs_err.obs_err))
 
-    # from src/dv.py
-    dv_layer = DivergenceVorticity(vars_stormer, means, stds, dv_param_file, device)
 
     def make_bgerr_dict(bg_err_file_dict):
         bg_err_dict = {}
@@ -146,7 +171,7 @@ if __name__ == '__main__':
             bg_err_file = bg_err_file_dict[hr_key]
             be = np.load(bg_err_file)
             background_err = torch.from_numpy(be).float().to(device)
-            background_err = background_err[torch.concat((dv_layer.nowind_idxs, dv_layer.uwind_idxs, dv_layer.vwind_idxs))]
+            background_err = background_err[torch.concat(nowind_idxs, uwind_idxs, vwind_idxs)]
             bg_err_dict[int(hr_key)] = background_err
         return bg_err_dict
 
@@ -216,17 +241,10 @@ if __name__ == '__main__':
     logger.info('Total model parameters : {}'.format(pytorch_total_params))
     logger.info('Trainable model parameters : {}'.format(pytorch_trainable_params))
 
-    print('background_file_np :',background_file_np)
-    logger.info('background_file_np : {}'.format(background_file_np))
-    background_f = np.load(background_file_np, 'r')
-    if 'rand' in save_dir:
-        print('using random background')
-        background_f = np.random.randn(*background_f.shape)
-    background = torch.from_numpy(background_f.copy())
-
     fourd_da = FourDVar(stormer_wrapper, obs_loader,
                         background, background_err_dict, background_err_hf_dict,
-                        obs_err, dv_layer, 
+                        obs_err, wind_layer, 
+                        wind_type=wind_type,
                         model_step=model_step,
                         da_window=da_window,
                         #obs_freq=obs_freq,

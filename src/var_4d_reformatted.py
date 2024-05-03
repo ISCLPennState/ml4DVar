@@ -13,8 +13,8 @@ import pickle as p
 
 class FourDVar():
     def __init__(self, stormer_wrapper, obs_dataloader, 
-                 background, background_err_dict, background_err_hf_dict, obs_err, dv_layer,
-                 model_step=6, da_window=12, obs_freq=3, da_type='var4d', vars=None,
+                 background, background_err_dict, background_err_hf_dict, obs_err, wind_layer,
+                 wind_type='scalar', model_step=6, da_window=12, obs_freq=3, da_type='var4d', vars=None,
                  b_inflation=1, b_hf_inflation=1, lr=1., max_iter=700, forecast_steps=40, savestr=None,
                  save_analysis=True, savedir=None, device=None, save_idx=0, logger=None,
                  ):
@@ -28,7 +28,8 @@ class FourDVar():
         self.background_err_dict = background_err_dict
         self.background_err_hf_dict = background_err_hf_dict
         self.obs_err = obs_err 
-        self.dv_layer = dv_layer
+        self.wind_layer = wind_layer
+        self.wind_type = wind_type
 
         for hr_key in self.background_err_dict.keys():
             self.background_err_dict[hr_key] = self.background_err_dict[hr_key] * b_inflation
@@ -47,9 +48,9 @@ class FourDVar():
         self.save_idx = save_idx 
         self.logger = logger
 
-        self.sht = th.RealSHT(background.shape[2], background.shape[3], grid="equiangular").to(device).float()
-        self.inv_sht = th.InverseRealSHT(background.shape[2], background.shape[3], grid="equiangular").to(device).float()
-        self.sht_scaler = torch.from_numpy(np.append(1., np.ones(self.sht.mmax - 1)*2)).reshape(1, 1, -1).to(device)
+        #self.sht = th.RealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(device).float()
+        #self.inv_sht = th.InverseRealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(device).float()
+        #self.sht_scaler = torch.from_numpy(np.append(1., np.ones(self.sht.mmax - 1)*2)).reshape(1, 1, -1).to(device)
         self.save_dir = savedir
         if not self.save_dir:
             self.save_dir = os.path.join(os.getcwd(), 'data')
@@ -304,15 +305,15 @@ class FourDVar():
 
     def calc_background_err(self, x, print_loss, save_loss_comps):
         # Compute background error  
-        dvx = self.dv_layer(x).to(self.device)
-        dvb = self.dv_layer(self.background[0].to(self.device)).to(self.device)
+        dvx = self.wind_layer(x).to(self.device)
+        dvb = self.wind_layer(self.background[0].to(self.device)).to(self.device)
         diff = dvx - dvb
-        sht_diff = self.sht(diff)
+        sht_diff = self.wind_layer.diffSHT(diff)
 
         se_background_comps_unscaled = torch.abs(sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device)))
 
         # TODO check sht_scaler
-        se_background_comps = torch.sum(se_background_comps_unscaled / torch.unsqueeze(self.background_err.to(self.device), 2) * self.sht_scaler, (1,2))
+        se_background_comps = torch.sum(se_background_comps_unscaled / torch.unsqueeze(self.background_err.to(self.device), 2) * self.wind_layer.sht_scaler, (1,2))
 
         se_background = torch.sum(se_background_comps)
         if print_loss:
@@ -327,7 +328,8 @@ class FourDVar():
         return se_background, diff, sht_diff, save_array
 
     def calc_hf_err(self, diff, sht_diff, print_loss, save_array):
-        hf_diff = diff - self.inv_sht(sht_diff)
+        inv_sht = self.wind_layer.diffInvSHT(sht_diff)
+        hf_diff = diff - inv_sht
         se_background_hf_comps = torch.sum(torch.abs(hf_diff)**2.0 / self.background_err_hf.to(self.device), (1,2))
         se_background_hf = torch.sum(se_background_hf_comps)
         if print_loss:

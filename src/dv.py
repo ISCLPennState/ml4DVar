@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import h5py
+import torch_harmonics as th
 
 def make_take(ndims, slice_dim):
     """Generate a take function to index in a particular dimension."""
@@ -122,7 +123,7 @@ def divergence_vorticity(uwind, vwind, delta_x, delta_y, parallel_scale, meridio
     return d, v
 
 class DivergenceVorticity(torch.nn.Module):
-    def __init__(self, vars, var_means, var_stds, dv_parameter_file, device=None):
+    def __init__(self, background, vars, var_means, var_stds, dv_parameter_file, device=None):
         super().__init__()
 
         device = device
@@ -163,19 +164,103 @@ class DivergenceVorticity(torch.nn.Module):
         self.dy_correction = torch.unsqueeze(torch.from_numpy(dv_f['dy_correction'][:]).float(), 0).to(device)
         dv_f.close()
 
-    def forward(self, x):
+        self.sht = th.RealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(device).float()
+        self.inv_sht = th.InverseRealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(device).float()
+        self.sht_scaler = torch.from_numpy(np.append(1., np.ones(self.sht.mmax - 1)*2)).reshape(1, 1, -1).to(device)
+
+    def forward(self, x, y):
         #print(x.get_device)
         #print(self.uwind_idxs.get_device)
         #print(self.uwind_stds.get_device)
         #print(self.uwind_means.get_device)
 
-        #uwind_unstand = x[self.uwind_idxs] * self.uwind_stds + self.uwind_means
-        #vwind_unstand = x[self.vwind_idxs] * self.vwind_stds + self.vwind_means
-        #divergence, vorticity = divergence_vorticity(uwind_unstand, vwind_unstand, self.dx, self.dy,
-        #                                             self.parallel_scale, self.meridional_scale, self.dx_correction,
-        #                                             self.dy_correction)
-        #return torch.concat((x[self.nowind_idxs], divergence, vorticity), axis = 0)
+        uwind_unstand = x[self.uwind_idxs] * self.uwind_stds + self.uwind_means
+        vwind_unstand = x[self.vwind_idxs] * self.vwind_stds + self.vwind_means
+        divergence, vorticity = divergence_vorticity(uwind_unstand, vwind_unstand, self.dx, self.dy,
+                                                     self.parallel_scale, self.meridional_scale, self.dx_correction,
+                                                     self.dy_correction)
+        return torch.concat((x[self.nowind_idxs], divergence, vorticity), axis = 0)
 
+        #uwind_stand = x[self.uwind_idxs]
+        #vwind_stand = x[self.vwind_idxs]
+        #return torch.concat((x[self.nowind_idxs], uwind_stand, vwind_stand), axis = 0)
+
+    def diffSHT(self, diff):
+        sh_diff = self.sht(diff.to(self.device))
+        return sh_diff
+
+    def diffInvSHT(self, sht_diff):
+        inv_sht_diff = self.inv_sht(sht_diff)
+        return inv_sht_diff
+
+class UVWwind(torch.nn.Module):
+    def __init__(self, background, vars, device=None):
+        super().__init__()
+
+        self.device = device
+        if not device:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.uwind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if 'u_component_of_wind' in var],
+                                                    dtype = 'int32')).long().to(self.device)
+        self.vwind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if 'v_component_of_wind' in var],
+                                                    dtype='int32')).long().to(self.device)
+        self.nowind_idxs = torch.from_numpy(np.array([i for i, var in enumerate(vars) if \
+                                                      'u_component_of_wind' not in var and \
+                                                      'v_component_of_wind' not in var],
+                                                    dtype='int32')).long().to(self.device)
+        self.nowind_num = len(self.nowind_idxs)
+        self.uwind_num = len(self.uwind_idxs)
+        self.vwind_num = len(self.vwind_idxs)
+
+
+        self.sht = th.RealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(self.device).float()
+        self.vec_sht = th.RealVectorSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(self.device).float()
+        self.inv_sht = th.InverseRealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(self.device).float()
+        self.inv_vec_sht = th.InverseRealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(self.device).float()
+        self.sht_scaler = torch.from_numpy(np.append(1., np.ones(self.sht.mmax - 1)*2)).reshape(1, 1, -1).to(self.device)
+
+    def forward(self, x):
         uwind_stand = x[self.uwind_idxs]
         vwind_stand = x[self.vwind_idxs]
         return torch.concat((x[self.nowind_idxs], uwind_stand, vwind_stand), axis = 0)
+    
+    def diffSHT(self, diff):
+
+        diff_scalar = diff[:self.nowind_num]
+        diff_uwind = diff[self.nowind_num:self.nowind_num+self.uwind_num]
+        diff_vwind = diff[-self.vwind_num:]
+
+        diff_vector = torch.stack((diff_uwind,diff_vwind),dim=1)
+
+        sht_diff_scalar = self.sht(diff_scalar.to(self.device))
+        sht_diff_vector = self.vec_sht(diff_vector.to(self.device))
+
+        sht_diff_uwind = sht_diff_vector[:,0]
+        sht_diff_vwind = sht_diff_vector[:,1]
+        sht_diff = torch.concatenate((sht_diff_scalar,
+                                            sht_diff_uwind,
+                                            sht_diff_vwind
+                                            ),
+                                            axis=0)
+        return sht_diff
+    
+    def diffInvSHT(self, sht_diff):
+
+        sht_diff_scalar = sht_diff[:self.nowind_num]
+        sht_diff_uwind = sht_diff[self.nowind_num:self.nowind_num+self.uwind_num]
+        sht_diff_vwind = sht_diff[-self.vwind_num:]
+
+        sht_diff_vector = torch.stack((sht_diff_uwind,sht_diff_vwind),dim=1)
+
+        inv_sht_diff_scalar = self.inv_sht(sht_diff_scalar)
+        inv_sht_diff_vector = self.inv_vec_sht(sht_diff_vector)
+
+        inv_sht_diff_uwind = inv_sht_diff_vector[:,0]
+        inv_sht_diff_vwind = inv_sht_diff_vector[:,1]
+        inv_sht_diff = torch.concatenate((inv_sht_diff_scalar,
+                                            inv_sht_diff_uwind,
+                                            inv_sht_diff_vwind
+                                            ),
+                                            axis=0)
+        return inv_sht_diff
