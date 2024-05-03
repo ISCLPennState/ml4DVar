@@ -1,3 +1,5 @@
+import numpy as np
+
 class varsStormer():
     def __init__(self,):
         self.vars_stormer = [
@@ -142,8 +144,9 @@ class varsStormer():
             'kg/kg',
             'kg/kg',
             ]
-        self.uwind_idxs = [i for i, var in enumerate(self.vars_stormer) if 'u_component_of_wind' in var]
-        self.vwind_idxs = [i for i, var in enumerate(self.vars_stormer) if 'v_component_of_wind' in var]
-        self.nowind_idxs = [i for i, var in enumerate(self.vars_stormer) if \
+        self.uwind_idxs = np.array([i for i, var in enumerate(self.vars_stormer) if 'u_component_of_wind' in var], dtype='int32')
+        self.vwind_idxs = np.array([i for i, var in enumerate(self.vars_stormer) if 'v_component_of_wind' in var], dtype='int32')
+        self.nowind_idxs = np.array([i for i, var in enumerate(self.vars_stormer) if \
                                                       'u_component_of_wind' not in var and \
-                                                      'v_component_of_wind' not in var]
+                                                      'v_component_of_wind' not in var],
+                                                      dtype='int32')
