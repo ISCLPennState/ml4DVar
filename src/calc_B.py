@@ -80,7 +80,7 @@ if __name__ == '__main__':
             sh_diff_norm = sht(diff_norm)
             print('sh_diff_norm.shape :',sh_diff_norm.shape)
             diff_hf_norm = diff_norm - inv_sht(sh_diff_norm)
-            sh_coeffs_norm[i] = np.real(sh_diff_norm[:, :, 0].cpu().numpy())
+            sh_coeffs_norm[i] = np.real(sh_diff_norm[:, :, 0].cpu().numpy()) # (69,128,129)
             hf_diff_norm[i] = diff_hf_norm.cpu().numpy()
             #
             #diff_raw_norm = norm(preds_36_raw,stormer_wrapper) - norm(preds_12_raw,stormer_wrapper)
