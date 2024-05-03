@@ -171,7 +171,11 @@ if __name__ == '__main__':
             bg_err_file = bg_err_file_dict[hr_key]
             be = np.load(bg_err_file)
             background_err = torch.from_numpy(be).float().to(device)
-            background_err = background_err[torch.concat(nowind_idxs, uwind_idxs, vwind_idxs)]
+            background_err = background_err[torch.concat((torch.Tensor(nowind_idxs).long().to(device),
+                                                         torch.Tensor(uwind_idxs).long().to(device),
+                                                         torch.Tensor(vwind_idxs).long().to(device)
+                                                         )
+                                                         )]
             bg_err_dict[int(hr_key)] = background_err
         return bg_err_dict
 
