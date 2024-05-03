@@ -300,7 +300,7 @@ class FourDVar():
             #print('{} / {}'.format(itr,len(self.obs_dataloader)))
             if self.logger:
                 self.logger.info('Cycle loss {:d}: {:0.2f}'.format(itr, cycle_loss.item()))
-                self.logger.info('{} / {}'.format(itr,self.obs_dataloader.dataset.num_cycles))
+                self.logger.info('{} / {}'.format(itr+self.save_idx,self.obs_dataloader.dataset.num_cycles))
                 #self.logger.info('{} / {}'.format(itr,len(self.obs_dataloader)))
 
     def calc_background_err(self, x, print_loss, save_loss_comps):
@@ -309,11 +309,43 @@ class FourDVar():
         dvb = self.wind_layer(self.background[0].to(self.device)).to(self.device)
         diff = dvx - dvb
         sht_diff = self.wind_layer.diffSHT(diff)
+        #if self.logger:
+        #    self.logger.info('dvx.shape min/max : {},{},{}'.format(dvx.shape,torch.min(dvx),torch.max(dvx)))
+        #    self.logger.info('dvb.shape min/max : {},{},{}'.format(dvb.shape,torch.min(dvb),torch.max(dvb)))
+        #    self.logger.info('diff.shape min/max/nan/complex : {},{},{},{},{}'.format(diff.shape,
+        #                                                                              torch.min(diff),
+        #                                                                              torch.max(diff),
+        #                                                                              torch.isnan(diff).any(),
+        #                                                                              torch.is_complex(diff)
+        #                                                                              ))
+        #    self.logger.info('sht_diff.shape min/max/nan/complex : {},{},{},{},{}'.format(sht_diff.shape,
+        #                                                                   torch.min(torch.real(sht_diff)),
+        #                                                                   torch.max(torch.real(sht_diff)),
+        #                                                                   torch.isnan(sht_diff).any(),
+        #                                                                   torch.is_complex(sht_diff)
+        #                                                                   ))
 
-        se_background_comps_unscaled = torch.abs(sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device)))
+        #se_background_comps_unscaled = torch.abs(sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device)))
+        se_background_comps_unscaled = sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device))
+        se_background_comps_unscaled = torch.real(se_background_comps_unscaled)
+        #if self.logger:
+        #    self.logger.info('se_background_comps_unscaled.shape min/max/nan/complex : {},{},{},{},{}'.format(se_background_comps_unscaled.shape,
+        #                                                                                       torch.min(torch.real(se_background_comps_unscaled)),
+        #                                                                                       torch.max(torch.real(se_background_comps_unscaled)),
+        #                                                                                       torch.isnan(se_background_comps_unscaled).any(),
+        #                                                                                       torch.is_complex(se_background_comps_unscaled)
+        #                                                                                       ))
 
         # TODO check sht_scaler
-        se_background_comps = torch.sum(se_background_comps_unscaled / torch.unsqueeze(self.background_err.to(self.device), 2) * self.wind_layer.sht_scaler, (1,2))
+        epsilon = 1e-9
+        se_background_comps = torch.sum(se_background_comps_unscaled / (torch.unsqueeze(self.background_err.to(self.device), 2) + epsilon) * self.wind_layer.sht_scaler, (1,2))
+        #if self.logger:
+        #    self.logger.info('se_background_comps.shape min/max/nan/complex : {},{},{},{},{}'.format(se_background_comps.shape,
+        #                                                                   torch.min(torch.real(se_background_comps)),
+        #                                                                   torch.max(torch.real(se_background_comps)),
+        #                                                                   torch.isnan(se_background_comps).any(),
+        #                                                                   torch.is_complex(se_background_comps)
+        #                                                                   ))
 
         se_background = torch.sum(se_background_comps)
         if print_loss:
@@ -332,6 +364,13 @@ class FourDVar():
         hf_diff = diff - inv_sht
         se_background_hf_comps = torch.sum(torch.abs(hf_diff)**2.0 / self.background_err_hf.to(self.device), (1,2))
         se_background_hf = torch.sum(se_background_hf_comps)
+
+        #if self.logger:
+        #    self.logger.info('inv_sht.shape min/max : {},{},{},{}'.format(inv_sht.shape,torch.min(inv_sht),torch.max(inv_sht),torch.is_complex(inv_sht)))
+        #    self.logger.info('hf_diff.shape min/max : {},{},{},{}'.format(hf_diff.shape,torch.min(hf_diff),torch.max(hf_diff),torch.is_complex(hf_diff)))
+        #    self.logger.info('se_background_hf_comps.shape min/max : {},{},{},{}'.format(se_background_hf_comps.shape,torch.min(se_background_hf_comps),torch.max(se_background_hf_comps),torch.is_complex(se_background_hf_comps)))
+        #    self.logger.info('se_background_hf.shape min/max : {},{},{},{}'.format(se_background_hf.shape,torch.min(se_background_hf),torch.max(se_background_hf),torch.is_complex(se_background_hf)))
+
         if print_loss:
             print('\tBackground HF:',se_background_hf.item())
             if self.logger:
@@ -389,6 +428,11 @@ class FourDVar():
         se_background, diff, sht_diff, save_array = self.calc_background_err(x, print_loss, save_loss_comps)
         se_background_hf, save_array = self.calc_hf_err(diff, sht_diff, print_loss, save_array)
         se_obs, save_array = self.calc_obs_err(x, print_loss, save_array, obs_step=0)
+
+        #if self.logger:
+        #    self.logger.info('se_background val,complex : {},{}'.format(se_background,torch.is_complex(se_background)))
+        #    self.logger.info('se_background_hf val,complex : {},{}'.format(se_background_hf,torch.is_complex(se_background_hf)))
+        #    self.logger.info('se_obs val,complex : {},{}'.format(se_obs.shape,torch.is_complex(se_obs)))
 
         if save_loss_comps:
             return se_background + se_background_hf + se_obs, save_array
