@@ -41,6 +41,7 @@ class StormerWrapperPangu:
         normalize_std = dict(np.load(os.path.join(root_dir, "normalize_std.npz")))
         normalize_std = np.concatenate([normalize_std[v] for v in variables], axis=0)
         self.inp_transform = transforms.Normalize(normalize_mean, normalize_std)
+        self.normalize_std = normalize_std
         
         self.diff_transforms = {}
         #for l in list_train_lead_time:

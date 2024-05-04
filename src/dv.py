@@ -194,7 +194,7 @@ class DivergenceVorticity(torch.nn.Module):
         return inv_sht_diff
 
 class UVWwind(torch.nn.Module):
-    def __init__(self, background, vars, device=None):
+    def __init__(self, background, vars, var_stds, device=None):
         super().__init__()
 
         self.device = device
@@ -209,6 +209,15 @@ class UVWwind(torch.nn.Module):
                                                       'u_component_of_wind' not in var and \
                                                       'v_component_of_wind' not in var],
                                                     dtype='int32')).long().to(self.device)
+        self.uwind_stds = torch.from_numpy(
+            np.array([var_stds[var][0] for var in vars if 'u_component_of_wind' in var],
+                     dtype='f4')).to(device)
+        self.uwind_stds = self.uwind_stds.reshape(-1, 1, 1)
+        self.vwind_stds = torch.from_numpy(
+            np.array([var_stds[var][0] for var in vars if 'v_component_of_wind' in var],
+                     dtype='f4')).to(device)
+        self.vwind_stds = self.vwind_stds.reshape(-1, 1, 1)
+
         self.nowind_num = len(self.nowind_idxs)
         self.uwind_num = len(self.uwind_idxs)
         self.vwind_num = len(self.vwind_idxs)
@@ -228,19 +237,23 @@ class UVWwind(torch.nn.Module):
     def diffSHT(self, diff):
 
         diff_scalar = diff[:self.nowind_num]
-        diff_uwind = diff[self.nowind_num:self.nowind_num+self.uwind_num]
-        diff_vwind = diff[-self.vwind_num:]
+        diff_uwind_std = diff[self.nowind_num:self.nowind_num+self.uwind_num]
+        diff_vwind_std = diff[-self.vwind_num:]
 
-        diff_vector = torch.stack((diff_uwind,diff_vwind),dim=1)
+        diff_uwind_unstd = diff_uwind_std * self.uwind_stds
+        diff_vwind_unstd = diff_vwind_std * self.uwind_stds
+
+        #diff_vector = torch.stack((diff_uwind,diff_vwind),dim=1)
+        diff_vector_unstd = torch.stack((diff_uwind_unstd,diff_vwind_unstd),dim=1)
 
         sht_diff_scalar = self.sht(diff_scalar.to(self.device))
-        sht_diff_vector = self.vec_sht(diff_vector.to(self.device))
+        sht_diff_vector = self.vec_sht(diff_vector_unstd.to(self.device))
 
-        sht_diff_uwind = sht_diff_vector[:,0]
-        sht_diff_vwind = sht_diff_vector[:,1]
+        sht_diff_uwind_unstd = sht_diff_vector[:,0]
+        sht_diff_vwind_unstd = sht_diff_vector[:,1]
         sht_diff = torch.concatenate((sht_diff_scalar,
-                                            sht_diff_uwind,
-                                            sht_diff_vwind
+                                            sht_diff_uwind_unstd,
+                                            sht_diff_vwind_unstd,
                                             ),
                                             axis=0)
         return sht_diff
@@ -248,19 +261,24 @@ class UVWwind(torch.nn.Module):
     def diffInvSHT(self, sht_diff):
 
         sht_diff_scalar = sht_diff[:self.nowind_num]
-        sht_diff_uwind = sht_diff[self.nowind_num:self.nowind_num+self.uwind_num]
-        sht_diff_vwind = sht_diff[-self.vwind_num:]
+        sht_diff_uwind_unstd = sht_diff[self.nowind_num:self.nowind_num+self.uwind_num]
+        sht_diff_vwind_unstd = sht_diff[-self.vwind_num:]
 
-        sht_diff_vector = torch.stack((sht_diff_uwind,sht_diff_vwind),dim=1)
+        sht_diff_vector_unstd = torch.stack((sht_diff_uwind_unstd,sht_diff_vwind_unstd),dim=1)
 
         inv_sht_diff_scalar = self.inv_sht(sht_diff_scalar)
-        inv_sht_diff_vector = self.inv_vec_sht(sht_diff_vector)
+        inv_sht_diff_vector = self.inv_vec_sht(sht_diff_vector_unstd)
 
-        inv_sht_diff_uwind = inv_sht_diff_vector[:,0]
-        inv_sht_diff_vwind = inv_sht_diff_vector[:,1]
+        inv_sht_diff_uwind_unstd = inv_sht_diff_vector[:,0]
+        inv_sht_diff_vwind_unstd = inv_sht_diff_vector[:,1]
+
+        inv_sht_diff_uwind_std = inv_sht_diff_uwind_unstd / self.uwind_stds
+        inv_sht_diff_vwind_std = inv_sht_diff_vwind_unstd / self.vwind_stds
+
+        # This should be restandardized
         inv_sht_diff = torch.concatenate((inv_sht_diff_scalar,
-                                            inv_sht_diff_uwind,
-                                            inv_sht_diff_vwind
+                                            inv_sht_diff_uwind_std,
+                                            inv_sht_diff_vwind_std
                                             ),
                                             axis=0)
         return inv_sht_diff

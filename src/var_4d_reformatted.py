@@ -11,6 +11,8 @@ from src.obs_cummulative import *
 import time
 import pickle as p
 
+torch.autograd.set_detect_anomaly(True)
+
 class FourDVar():
     def __init__(self, stormer_wrapper, obs_dataloader, 
                  background, background_err_dict, background_err_hf_dict, obs_err, wind_layer,
@@ -327,7 +329,8 @@ class FourDVar():
 
         #se_background_comps_unscaled = torch.abs(sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device)))
         se_background_comps_unscaled = sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device))
-        se_background_comps_unscaled = torch.real(se_background_comps_unscaled)
+        #se_background_comps_unscaled = torch.real(se_background_comps_unscaled)
+        se_background_comps_unscaled = torch.real(torch.abs(se_background_comps_unscaled))
         #if self.logger:
         #    self.logger.info('se_background_comps_unscaled.shape min/max/nan/complex : {},{},{},{},{}'.format(se_background_comps_unscaled.shape,
         #                                                                                       torch.min(torch.real(se_background_comps_unscaled)),
@@ -335,10 +338,44 @@ class FourDVar():
         #                                                                                       torch.isnan(se_background_comps_unscaled).any(),
         #                                                                                       torch.is_complex(se_background_comps_unscaled)
         #                                                                                       ))
+        #if self.logger:
+        #    self.logger.info('background_err.shape min/max/nan/complex : {},{},{},{},{}'.format(self.background_err.shape,
+        #                                                                                       torch.min(torch.real(self.background_err)),
+        #                                                                                       torch.max(torch.real(self.background_err)),
+        #                                                                                       torch.isnan(self.background_err).any(),
+        #                                                                                       torch.is_complex(self.background_err)
+        #                                                                                       ))
 
         # TODO check sht_scaler
-        epsilon = 1e-9
-        se_background_comps = torch.sum(se_background_comps_unscaled / (torch.unsqueeze(self.background_err.to(self.device), 2) + epsilon) * self.wind_layer.sht_scaler, (1,2))
+        #se_background_comps = torch.sum(se_background_comps_unscaled / torch.unsqueeze(self.background_err.to(self.device), 2) * self.wind_layer.sht_scaler, (1,2))
+        divisor = torch.unsqueeze(self.background_err.to(self.device), 2)
+        divisor_nonzero = divisor.clone()
+        divisor_nonzero[divisor_nonzero==0] = 1
+        se_background_comps_overB = se_background_comps_unscaled / divisor_nonzero
+        divisor_broadcasted = divisor.expand(-1,-1,se_background_comps_overB.shape[-1])
+        se_background_comps_overB[divisor_broadcasted==0] = 0
+
+        #if self.logger:
+        #    self.logger.info('se_background_comps_overB.shape min/max/nan/complex : {},{},{},{},{}'.format(se_background_comps_overB.shape,
+        #                                                                   torch.min(torch.real(se_background_comps_overB)),
+        #                                                                   torch.max(torch.real(se_background_comps_overB)),
+        #                                                                   torch.isnan(se_background_comps_overB).any(),
+        #                                                                   torch.is_complex(se_background_comps_overB)
+        #                                                                   ))
+        ##if self.wind_type == 'vector':
+        ##    se_background_comps_overB = torch.nan_to_num(se_background_comps_overB, nan=0)
+        ##    #num_tot_wind_idxs = self.wind_layer.uwind_num + self.wind_layer.vwind_num
+        ##    #se_background_comps_overB[-num_tot_wind_idxs:,0,:] = 0
+
+        #if self.logger:
+        #    self.logger.info('se_background_comps_overB.shape min/max/nan/complex : {},{},{},{},{}'.format(se_background_comps_overB.shape,
+        #                                                                   torch.min(torch.real(se_background_comps_overB)),
+        #                                                                   torch.max(torch.real(se_background_comps_overB)),
+        #                                                                   torch.isnan(se_background_comps_overB).any(),
+        #                                                                   torch.is_complex(se_background_comps_overB)
+        #                                                                   ))
+        se_background_comps_scaled = se_background_comps_overB * self.wind_layer.sht_scaler
+        se_background_comps = torch.sum(se_background_comps_scaled,(1,2))
         #if self.logger:
         #    self.logger.info('se_background_comps.shape min/max/nan/complex : {},{},{},{},{}'.format(se_background_comps.shape,
         #                                                                   torch.min(torch.real(se_background_comps)),
