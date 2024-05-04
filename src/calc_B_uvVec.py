@@ -24,8 +24,13 @@ def get_forecast_h5(idx,hour_diff=24):
 
 def norm(x_np,stormer_wrapper):
     x_torch = torch.from_numpy(x_np)
-    x_torch_denorm = stormer_wrapper.inp_transform(x_torch)
-    return x_torch_denorm
+    x_torch_norm = stormer_wrapper.inp_transform(x_torch)
+    return x_torch_norm
+
+def denorm(x_np,stormer_wrapper):
+    x_torch = torch.from_numpy(x_np)
+    x_torch_norm = stormer_wrapper.inp_transform(x_torch)
+    return x_torch_norm
 
 if __name__ == '__main__':
 
@@ -42,6 +47,13 @@ if __name__ == '__main__':
         net=None,
         base_lead_time=[6],
         )
+
+    uwind_stds = stormer_wrapper.normalize_std[uwind_idxs].reshape(-1,1,1)
+    vwind_stds = stormer_wrapper.normalize_std[vwind_idxs].reshape(-1,1,1)
+    print('uwind_stds.shape :',uwind_stds.shape)
+    print('vwind_stds.shape :',vwind_stds.shape)
+    print('uwind_stds :',uwind_stds)
+    print('vwind_stds :',vwind_stds)
 
     date_idx = 0
     forecast_dir = '/eagle/MDClimSim/mjp5595/data/stormer/stormer_forecasts_2017_norm/'
@@ -63,6 +75,8 @@ if __name__ == '__main__':
         sh_coeffs_norm_rev = []
         hf_diff_rev = []
 
+        sh_coeffs_m0_complex = []
+
         for i in range(0,len(files_norm)):
             if i % 4 != psi:
                 continue
@@ -76,39 +90,56 @@ if __name__ == '__main__':
             diff = torch.from_numpy(diff)
 
             diff_scalar = diff[nowind_idxs]
-            diff_uwind = diff[uwind_idxs]
-            diff_vwind = diff[vwind_idxs]
-
-            diff_vector = torch.stack((diff_uwind,diff_vwind),dim=1)
-            #print('diff_vector.shape :',diff_vector.shape)
-
             sh_diff_scalar = sht(diff_scalar.to(device))
-            sh_diff_vector = vec_sht(diff_vector.to(device))
+
+
+            diff_uwind_std = diff[uwind_idxs]
+            diff_vwind_std = diff[vwind_idxs]
+            diff_uwind_unstd = diff_uwind_std * uwind_stds
+            diff_vwind_unstd = diff_vwind_std * vwind_stds
+            #print(' diff_uwind_std min/max :',torch.min(diff_uwind_std),torch.max(diff_uwind_std))
+            #print(' diff_vwind_std min/max :',torch.min(diff_vwind_std),torch.max(diff_vwind_std))
+            #print(' diff_uwind_unstd min/max :',torch.min(diff_uwind_unstd),torch.max(diff_uwind_unstd))
+            #print(' diff_vwind_unstd min/max :',torch.min(diff_vwind_unstd),torch.max(diff_vwind_unstd))
+
+            #diff_vector = torch.stack((diff_uwind,diff_vwind),dim=1)
+            diff_vector_unstd = torch.stack((diff_uwind_unstd,diff_vwind_unstd),dim=1)
+            sh_diff_vector_unstd = vec_sht(diff_vector_unstd.to(device))
+            sh_diff_uwind_unstd = sh_diff_vector_unstd[:,0]
+            sh_diff_vwind_unstd = sh_diff_vector_unstd[:,1]
+            #sh_diff_uwind_std = sh_diff_uwind_unstd / torch.Tensor(uwind_stds).to(device)
+            #sh_diff_vwind_std = sh_diff_vwind_unstd / torch.Tensor(vwind_stds).to(device)
+            #print(' sh_diff_uwind_unstd min/max :',torch.min(torch.real(sh_diff_uwind_unstd)),torch.max(torch.real(sh_diff_uwind_unstd)))
+            #print(' sh_diff_vwind_unstd min/max :',torch.min(torch.real(sh_diff_vwind_unstd)),torch.max(torch.real(sh_diff_vwind_unstd)))
+            #print(' sh_diff_uwind_std min/max :',torch.min(torch.real(sh_diff_uwind_std)),torch.max(torch.real(sh_diff_uwind_std)))
+            #print(' sh_diff_vwind_std min/max :',torch.min(torch.real(sh_diff_vwind_std)),torch.max(torch.real(sh_diff_vwind_std)))
+            #print('diff_vector.shape :',diff_vector.shape)
             #print('sh_diff_scalar.shape :',sh_diff_scalar.shape)
             #print('sh_diff_vector.shape :',sh_diff_vector.shape)
 
-            sh_diff_uwind = sh_diff_vector[:,0]
-            #sh_diff_uwind = sh_diff_vector
-            sh_diff_vwind = sh_diff_vector[:,1]
             sh_diff = torch.concatenate((sh_diff_scalar,
-                                              sh_diff_uwind,
-                                              sh_diff_vwind
+                                              sh_diff_uwind_unstd,
+                                              sh_diff_vwind_unstd
                                               ),
                                               axis=0)
+            print(' sh_diff shape/min/max :',sh_diff.shape,torch.min(torch.real(sh_diff)),torch.max(torch.real(sh_diff)))
+            print(' sh_diff[:,:,0] :',sh_diff[:,:,0])
             #print('sh_diff.shape :',sh_diff.shape)
 
             inv_sh_diff_scalar = inv_sht(sh_diff_scalar)
-            inv_sh_diff_vector = inv_vec_sht(sh_diff_vector)
+
+            inv_sh_diff_vector_unstd = inv_vec_sht(sh_diff_vector_unstd)
+            inv_sh_diff_uwind_unstd = inv_sh_diff_vector_unstd[:,0]
+            inv_sh_diff_vwind_unstd = inv_sh_diff_vector_unstd[:,1]
+            inv_sh_diff_uwind_std = inv_sh_diff_uwind_unstd / torch.Tensor(uwind_stds).to(device)
+            inv_sh_diff_vwind_std = inv_sh_diff_vwind_unstd / torch.Tensor(vwind_stds).to(device)
             #print('inv_sh_diff_scalar.shape :',inv_sh_diff_scalar.shape)
             #print('inv_sh_diff_vector.shape :',inv_sh_diff_vector.shape)
-
-            inv_sh_diff_uwind = inv_sh_diff_vector[:,0]
-            inv_sh_diff_vwind = inv_sh_diff_vector[:,1]
             #print('inv_sh_diff_uwind.shape :',inv_sh_diff_uwind.shape)
             
             hf_diff_scalar = diff_scalar.to(device) - inv_sh_diff_scalar
-            hf_diff_uwind = diff_uwind.to(device) - inv_sh_diff_uwind
-            hf_diff_vwind = diff_vwind.to(device) - inv_sh_diff_vwind
+            hf_diff_uwind = diff_uwind_std.to(device) - inv_sh_diff_uwind_std
+            hf_diff_vwind = diff_vwind_std.to(device) - inv_sh_diff_vwind_std
 
             hf_diff_combined = torch.concatenate((hf_diff_scalar,
                                               hf_diff_uwind,
@@ -116,10 +147,20 @@ if __name__ == '__main__':
                                               ),
                                               axis=0)
 
+            sh_diff0 = sh_diff[:,:,0]
+            print(' sh_diff[:,:,0] shape/min/max :',sh_diff0.shape,torch.min(torch.real(sh_diff0)),torch.max(torch.real(sh_diff0)))
+            sh_coeffs_m0_complex.append(sh_diff0.cpu().numpy())
+
             sh_coeffs_norm.append( np.real(sh_diff[:, :, 0].cpu().numpy()) ) # (69,128,129)
             hf_diff.append( hf_diff_combined.cpu().numpy() )
 
+
+        np.save(os.path.join(save_dir,'sh_coeffs_m0_complex.npy'),np.array(sh_coeffs_m0_complex))
+        np.save(os.path.join(save_dir,'hf_diff.npy'),np.array(hf_diff))
+
         sh_var_norm = np.var(sh_coeffs_norm[:], axis = 0)
         hf_var_norm = np.var(hf_diff[:], axis = 0)
+        print('sh_var_norm shape/min/max :',sh_var_norm.shape,np.min(sh_var_norm),np.max(sh_var_norm))
+        print('hf_var_norm shape/min/max :',hf_var_norm.shape,np.min(hf_var_norm),np.max(hf_var_norm))
         np.save(os.path.join(save_dir,'sh_stormer_{}hrPred_{}hrNMC_{:0>2d}.npy'.format(12,hour_diff,6*psi)), sh_var_norm)
         np.save(os.path.join(save_dir,'hf_stormer_{}hrPred_{}hrNMC_{:0>2d}.npy'.format(12,hour_diff,6*psi)), hf_var_norm)
