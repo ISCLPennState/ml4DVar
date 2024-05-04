@@ -117,7 +117,7 @@ if __name__ == '__main__':
     try:
         wind_type = config['da']['wind_type']
         if wind_type == 'vector':
-            wind_layer = UVWwind(background_f, vars_stormer, device)
+            wind_layer = UVWwind(background_f, vars_stormer, stds, device)
         elif wind_type == 'scalar':
             wind_layer = DivergenceVorticity(background_f, vars_stormer, means, stds, dv_param_file, device)
     except:
