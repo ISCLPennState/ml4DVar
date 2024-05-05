@@ -7,7 +7,8 @@ import numpy as np
 from stormer.models.hub.vit_adaln import ViTAdaLN
 #from stormer.data.iterative_dataset import ERA5MultiLeadtimeDataset
 from iterative_dataset import ERA5MultiLeadtimeDataset
-from stormer_utils import StormerWrapper
+#from stormer_utils import StormerWrapper
+from stormer_utils_pangu import StormerWrapperPangu
 
 
 gpu_num = 0 
@@ -23,7 +24,7 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
 
-    save_dir_name = 'stormer_init_12hr_forecast'
+    save_dir_name = 'stormer_val_forecast_lt12_2017'
 
     save_dir = '/eagle/MDClimSim/mjp5595/data/stormer/{}/'.format(save_dir_name)
     if not os.path.exists(save_dir):
@@ -32,7 +33,8 @@ if __name__ == '__main__':
     from varsStormer import varsStormer
     vars_stormer = varsStormer().vars_stormer
 
-    ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
+    #ckpt_pth = '/eagle/MDClimSim/tungnd/stormer/models/6_12_24_climax_large_2_True_delta_8/checkpoints/epoch_015.ckpt'
+    ckpt_pth = '/eagle/MDClimSim/mjp5595/ml4dvar/stormer/checkpoints/epoch_015.ckpt'
     net = ViTAdaLN(
         in_img_size=(128, 256),
         list_variables=vars_stormer,
@@ -45,11 +47,18 @@ if __name__ == '__main__':
     )
     net.to(device)
     net.eval()
-    stormer_wrapper = StormerWrapper(
+    #stormer_wrapper = StormerWrapper(
+    #    root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
+    #    variables=vars_stormer,
+    #    net=net,
+    #    list_lead_time=[6],
+    #    ckpt=ckpt_pth,
+    #    device=device,
+    #)
+    stormer_wrapper = StormerWrapperPangu(
         root_dir='/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/',
         variables=vars_stormer,
         net=net,
-        list_lead_time=[6],
         ckpt=ckpt_pth,
         device=device,
     )
@@ -67,10 +76,15 @@ if __name__ == '__main__':
 
         if len(x.shape) < 4:
             x = x.unsqueeze(0)
-        norm_preds,raw_preds = stormer_wrapper.eval_multi_step(
+        #norm_preds,raw_preds = stormer_wrapper.eval_multi_step(
+        #    x.to(device),
+        #    vars_stormer,
+        #    steps=forecast_steps)
+        norm_preds,raw_preds,lead_time_combos = stormer_wrapper.eval_to_forecast_time_with_lead_time(
             x.to(device),
-            vars_stormer,
-            steps=forecast_steps)
+            forecast_time=240,
+            lead_time=12,
+            )
         
         #print('len(norm_preds), norm_preds[1][0].shape:',len(norm_preds),norm_preds[1].shape)
 
@@ -78,24 +92,26 @@ if __name__ == '__main__':
         hf_raw = h5py.File(os.path.join(save_dir, 'raw_{:0>4d}.h5'.format(idx)),'w')
         hf_norm.create_dataset(str(0), data=x[0,:,:,:])
         hf_raw.create_dataset(str(0), data=x_raw[0,:,:,:])
-        for i in range(len(norm_preds)):
+        curr_pred_time = 0
+        for i,lt in enumerate(lead_time_combos):
+            curr_pred_time += lt
             data_norm = norm_preds[i].detach().cpu().numpy()
             data_raw = raw_preds[i].detach().cpu().numpy()
             # data.shape : (1,vars,lat,lon) -> (1,63,128,256)
-            hf_norm.create_dataset(str((i+1)*stormer_wrapper.list_lead_time[0]), data=data_norm[0,:,:,:])
-            hf_raw.create_dataset(str((i+1)*stormer_wrapper.list_lead_time[0]), data=data_raw[0,:,:,:])
+            hf_norm.create_dataset(str(curr_pred_time), data=data_norm)
+            hf_raw.create_dataset(str(curr_pred_time), data=data_raw)
         return
     ########################################################################################################################
 
     data_test = ERA5MultiLeadtimeDataset(
-        #root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','train'),
-        root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','test'),
+        root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','train'),
+        #root_dir=os.path.join('/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/','test'),
         variables=vars_stormer,
         list_lead_times=[6],
         transform=stormer_wrapper.inp_transform,
         data_freq=6,
-        year_list=[2020]
-        #year_list=[2017]
+        #year_list=[2020]
+        year_list=[2017]
         #year_list=[2014]
         #year_list=[1979]
     )
@@ -105,17 +121,17 @@ if __name__ == '__main__':
         #print('input_raw shape,min/mean/max :',input_raw.shape,torch.min(input_raw),torch.mean(input_raw),torch.max(input_raw))
         #print('idx, device_set, gpu_num, device_count, mod :',idx,device_set,gpu_num,torch.cuda.device_count(),idx%torch.cuda.device_count())
 
-        # Generate init_background for DA
-        if idx < 2:
-            continue
+        ## Generate init_background for DA
+        #if idx < 2:
+        #    continue
         #if idx == 2:
         #    np.save('background_init_stormer_norm_hr12',input_norm)
         #    np.save('background_init_stormer_raw_hr12',input_raw)
         #    break
 
-        # Run forecast from init background for comparison w/ analysis
-        input_norm = torch.from_numpy(np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy'))
-        input_raw = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_raw_hr12.npy')
+        ## Run forecast from init background for comparison w/ analysis
+        #input_norm = torch.from_numpy(np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_norm_hr12.npy'))
+        #input_raw = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/stormer/background_init_stormer_raw_hr12.npy')
 
         if (device_set == True):
             if (int(idx % torch.cuda.device_count()) != int(gpu_num)):
