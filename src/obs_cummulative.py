@@ -39,7 +39,7 @@ class ObsError(torch.nn.Module):
 def observe_linear(x, H_idxs, H_vals, logger=None):
     # TODO maybe this should be mean, but I don't think it really matters
     output = torch.sum(H_vals * torch.concat((x[H_idxs[0]], x[H_idxs[1]], x[H_idxs[2]], x[H_idxs[3]]), axis = 1),
-                       axis = 1).to(x.device)
+                       axis = 1)
     if logger:
         logger.info('\tx.shape : {}'.format(x.shape))
         logger.info('\tH_idxs : {}'.format(H_idxs))

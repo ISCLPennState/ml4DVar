@@ -26,16 +26,18 @@ class FourDVar():
         self.stormer_wrapper = stormer_wrapper
         self.obs_dataloader = obs_dataloader
 
-        self.background = background
+        self.device = device
+        self.background = background.to(self.device)
         self.background_err_dict = background_err_dict
         self.background_err_hf_dict = background_err_hf_dict
         self.obs_err = obs_err 
-        self.wind_layer = wind_layer
+        self.wind_layer = wind_layer.to(self.device)
         self.wind_type = wind_type
 
         for hr_key in self.background_err_dict.keys():
             self.background_err_dict[hr_key] = self.background_err_dict[hr_key] * b_inflation
             self.background_err_hf_dict[hr_key] = self.background_err_hf_dict[hr_key] * b_hf_inflation
+        self.se_obs = torch.zeros(1).to(self.device)
 
         self.model_step = model_step
         self.da_window = da_window
@@ -46,13 +48,9 @@ class FourDVar():
         if self.da_type not in ['var3d','var4d']:
             print('da_type must be in ["var3d","var4d"]')
 
-        self.device = device
         self.save_idx = save_idx 
         self.logger = logger
 
-        #self.sht = th.RealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(device).float()
-        #self.inv_sht = th.InverseRealSHT(background.shape[-2], background.shape[-1], grid="equiangular").to(device).float()
-        #self.sht_scaler = torch.from_numpy(np.append(1., np.ones(self.sht.mmax - 1)*2)).reshape(1, 1, -1).to(device)
         self.save_dir = savedir
         if not self.save_dir:
             self.save_dir = os.path.join(os.getcwd(), 'data')
@@ -74,7 +72,6 @@ class FourDVar():
                 return out
         else:
             out = self.fourDresidual(print_loss, save_loss_comps)
-            #out = self.fourDresidual(True, save_loss_comps)
             if save_loss_comps:
                 filename = os.path.join(self.save_dir, 'loss_comps_cycle%d_step%d_%s.npy' % (itr, self.step, self.savestr))
                 np.save(filename, out[1])
@@ -97,7 +94,7 @@ class FourDVar():
             #print('mem_info :',torch.cuda.mem_get_info())
 
             if self.logger:
-                self.logger.info('(cost_J) step: {}\tloss: {}'.format(itr+self.step,loss.item()))
+                self.logger.info('(cost_J) step: {}\tloss: {}'.format(self.step,loss.item()))
             self.step += 1
             loss.backward(retain_graph=False)
 
@@ -131,11 +128,11 @@ class FourDVar():
 
         # This brings x_analysis to the end of the DA window
         if self.da_type == 'var4d':    
-            self.x_analysis,_,_ = self.run_forecast(self.x_analysis,
+            x_analysis_list,_,_ = self.run_forecast(self.x_analysis,
                                                     forecast_time=self.da_window-self.model_step,
                                                     lead_time=self.model_step,
                                                     inference=True)
-            self.x_analysis = self.x_analysis[-1].unsqueeze(0)
+            self.x_analysis = x_analysis_list[-1].unsqueeze(0)
 
         if self.save_analysis:
             save_analysis = self.x_analysis.detach().cpu().numpy()
@@ -159,12 +156,12 @@ class FourDVar():
         print('Running forecast for next background (forecast_time : {})'.format(forecast_time))
         if self.logger:
             self.logger.info('Running forecast for next background (forecast_time : {} hrs)'.format(forecast_time))
-        self.background,_,_ = self.run_forecast(self.x_analysis,
+        bg_list,_,_ = self.run_forecast(self.x_analysis,
                                                 forecast_time=forecast_time,
                                                 lead_time=None,
                                                 #lead_time=self.model_step,
                                                 inference=True)
-        self.background = self.background[-1].unsqueeze(0)
+        self.background = bg_list[-1].unsqueeze(0)
         # Background is the forecast of previous analysis
 
         # x_analysis becomes forecast of previous analysis
@@ -180,7 +177,7 @@ class FourDVar():
     def fourDresidual(self, print_loss, save_loss_comps):
         # x_analysis is forecast (1step) from prev x_analysis / curr_background
         # x_analysis == background @ t_0/6hrs
-        x = self.x_analysis[0].to(self.device)
+        x = self.x_analysis[0]
 
         # t_0 -> 6hrs
         # t_1 -> 12hrs
@@ -200,7 +197,7 @@ class FourDVar():
                                                lead_time=self.model_step,
                                                print_steps=False,)
             else:
-                x_temp,_,_ = self.run_forecast(x_temp,
+                x_temp,_,_ = self.run_forecast(x_temp[0].unsqueeze(0),
                                                forecast_time=self.model_step,
                                                lead_time=self.model_step,
                                                print_steps=False,)
@@ -221,50 +218,22 @@ class FourDVar():
         if inference:
             with torch.inference_mode():
                 norm_preds, raw_preds, lead_time_combos = self.stormer_wrapper.eval_to_forecast_time_with_lead_time(
-                    x.to(self.device),
+                    x,
                     forecast_time=forecast_time,
                     lead_time=lead_time,
                     print_steps=print_steps,
                     )
         else:
             norm_preds, raw_preds, lead_time_combos = self.stormer_wrapper.eval_to_forecast_time_with_lead_time(
-                x.to(self.device),
+                x,
                 forecast_time=forecast_time,
                 lead_time=lead_time,
                 print_steps=print_steps,
                 )
         return norm_preds, raw_preds, lead_time_combos
 
-    #def save_forecasts(self, itr):
-    #    #temp = torch.clone(self.x_analysis).detach()
-    #    #temp = temp.to(self.device)
-    #    #norm_forecasts,raw_forecasts,lead_time_combo = self.run_forecast(temp,
-    #    #                                                                  forecast_time=self.forecast_steps*self.model_step,
-    #    #                                                                  lead_time=self.model_step)
-
-    #    hf_norm = h5py.File(os.path.join(self.save_dir, 'forecasts_%d_%s.h5' % (itr+self.save_idx, self.savestr)),'w')
-    #    hf_raw = h5py.File(os.path.join(self.save_dir, 'raw_forecasts_%d_%s.h5' % (itr+self.save_idx, self.savestr)),'w')
-
-    #    norm_forecast = torch.clone(self.x_analysis).detach()
-    #    norm_forecast = norm_forecast.to(self.device)
-    #    print('mem_info 3:',torch.cuda.mem_get_info())
-    #    for i in range(self.forecast_steps):
-    #        print('mem_info 4:',torch.cuda.mem_get_info())
-    #        norm_forecasts,raw_forecasts,lead_time_combo = self.run_forecast(norm_forecast,
-    #                                                                        forecast_time=self.model_step,
-    #                                                                        lead_time=self.model_step,
-    #                                                                        inference=True)
-    #        norm_forecast = norm_forecasts[-1]
-    #        raw_forecast = raw_forecasts[-1]
-    #        hf_norm.create_dataset(str((i+1)*self.model_step), data=norm_forecast.detach().cpu().numpy())
-    #        hf_raw.create_dataset(str((i+1)*self.model_step), data=raw_forecast.detach().cpu().numpy())
-    #        print('norm_forecast.shape :',norm_forecast.shape)
-    #        norm_forecast = norm_forecast.unsqueeze(0)
-    #    return
-
     def save_forecasts(self, itr):
         temp = torch.clone(self.x_analysis).detach()
-        temp = temp.to(self.device)
         norm_forecasts,raw_forecasts,lead_time_combo = self.run_forecast(temp,
                                                                           forecast_time=self.forecast_steps*self.model_step,
                                                                           lead_time=self.model_step,
@@ -297,18 +266,18 @@ class FourDVar():
             self.optim = self.configure_optimizer()
             _, cycle_loss = self.cycle(itr, forecast)
             self.optim.zero_grad()
-            print('Cycle loss %d: %0.2f' % (itr, cycle_loss))
-            print('{} / {}'.format(itr,self.obs_dataloader.dataset.num_cycles))
+            print('Cycle loss %d: %0.2f' % (itr+self.save_idx, cycle_loss))
+            print('{} / {}'.format(itr+self.save_idx,self.obs_dataloader.dataset.num_cycles))
             #print('{} / {}'.format(itr,len(self.obs_dataloader)))
             if self.logger:
-                self.logger.info('Cycle loss {:d}: {:0.2f}'.format(itr, cycle_loss.item()))
+                self.logger.info('Cycle loss {:d}: {:0.2f}'.format(itr+self.save_idx, cycle_loss.item()))
                 self.logger.info('{} / {}'.format(itr+self.save_idx,self.obs_dataloader.dataset.num_cycles))
                 #self.logger.info('{} / {}'.format(itr,len(self.obs_dataloader)))
 
     def calc_background_err(self, x, print_loss, save_loss_comps):
         # Compute background error  
-        dvx = self.wind_layer(x).to(self.device)
-        dvb = self.wind_layer(self.background[0].to(self.device)).to(self.device)
+        dvx = self.wind_layer(x)
+        dvb = self.wind_layer(self.background[0])
         diff = dvx - dvb
         sht_diff = self.wind_layer.diffSHT(diff)
         #if self.logger:
@@ -328,7 +297,8 @@ class FourDVar():
         #                                                                   ))
 
         #se_background_comps_unscaled = torch.abs(sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device)))
-        se_background_comps_unscaled = sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device))
+        #se_background_comps_unscaled = sht_diff.to(self.device) * torch.conj(sht_diff.to(self.device))
+        se_background_comps_unscaled = sht_diff * torch.conj(sht_diff)
         #se_background_comps_unscaled = torch.real(se_background_comps_unscaled)
         se_background_comps_unscaled = torch.real(torch.abs(se_background_comps_unscaled))
         #if self.logger:
@@ -348,7 +318,7 @@ class FourDVar():
 
         # TODO check sht_scaler
         #se_background_comps = torch.sum(se_background_comps_unscaled / torch.unsqueeze(self.background_err.to(self.device), 2) * self.wind_layer.sht_scaler, (1,2))
-        divisor = torch.unsqueeze(self.background_err.to(self.device), 2)
+        divisor = torch.unsqueeze(self.background_err, 2)
         divisor_nonzero = divisor.clone()
         divisor_nonzero[divisor_nonzero==0] = 1
         se_background_comps_overB = se_background_comps_unscaled / divisor_nonzero
@@ -399,7 +369,8 @@ class FourDVar():
     def calc_hf_err(self, diff, sht_diff, print_loss, save_array):
         inv_sht = self.wind_layer.diffInvSHT(sht_diff)
         hf_diff = diff - inv_sht
-        se_background_hf_comps = torch.sum(torch.abs(hf_diff)**2.0 / self.background_err_hf.to(self.device), (1,2))
+        #se_background_hf_comps = torch.sum(torch.abs(hf_diff)**2.0 / self.background_err_hf.to(self.device), (1,2))
+        se_background_hf_comps = torch.sum(torch.abs(hf_diff)**2.0 / self.background_err_hf, (1,2))
         se_background_hf = torch.sum(se_background_hf_comps)
 
         #if self.logger:
@@ -427,7 +398,8 @@ class FourDVar():
         #
         # Obs are (b, time_step, vars, num_obs)
 
-        se_obs = torch.zeros(1).to(self.device)
+        #se_obs = torch.zeros(1).to(self.device)
+        self.se_obs = 0
         for var in range(len(self.vars)):
             # x[var] - (128, 256)
             # H_idx - (1, obs_steps, num_vars, 4*num_obs)
@@ -450,17 +422,17 @@ class FourDVar():
 
             if len(save_array) > 1:
                 save_array[var+(2*len(self.vars))] = var_err.detach().cpu().numpy()
-            se_obs += var_err
+            self.se_obs += var_err
         if print_loss:
-            print('\tOBS (step{}): {}'.format(obs_step,se_obs.item()))
+            print('\tOBS (step{}): {}'.format(obs_step,self.se_obs.item()))
             if self.logger:
-                self.logger.info('\tOBS (step{}): {}'.format(obs_step,se_obs.item()))
+                self.logger.info('\tOBS (step{}): {}'.format(obs_step,self.se_obs.item()))
 
-        return se_obs, save_array
+        return self.se_obs, save_array
 
     def threeDresidual(self, print_loss, save_loss_comps):
 
-        x = self.x_analysis[0].to(self.device)
+        x = self.x_analysis[0]
 
         se_background, diff, sht_diff, save_array = self.calc_background_err(x, print_loss, save_loss_comps)
         se_background_hf, save_array = self.calc_hf_err(diff, sht_diff, print_loss, save_array)
