@@ -174,3 +174,10 @@ nohup.out
 plotting/launch_plotting_da[0-9].sh
 plotting/plotting_thUtils.ipynb
 plotting/plotting_thUtils.py
+plotting/cum_increment.ipynb
+plotting/testPlot.ipynb
+process-obs/launch_era5_dense_obs1.sh
+stormer/launch_stormer_forecast1.sh
+
+*.sh.e[0-9]*
+*.sh.o[0-9]*
