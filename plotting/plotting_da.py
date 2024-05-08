@@ -16,7 +16,8 @@ stds = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/normalize_std.npz')
 #obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_grid_2014.h5"
 
 #obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_dense_grid_2014.h5"
-obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_sparse.h5"
+#obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_obs_sparse.h5"
+obs_file = "/eagle/MDClimSim/mjp5595/ml4dvar/obs/era5_4cell_grid_2014.h5"
 
 lat = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/lat.npy')
 lon = np.load('/eagle/MDClimSim/mjp5595/ml4dvar/data/lon.npy')
@@ -187,6 +188,9 @@ _ = plot_background_vs_analysis(era5,
 #                             return_error = False,
 #                             plot_obs = True)
 
+innovation_dir = os.path.join(plot_dir,'innovation')
+if not os.path.exists(innovation_dir):
+    os.makedirs(innovation_dir)
 _ = plot_analysis_innovation(era5,
                              analysis,
                              obs,

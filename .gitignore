@@ -170,3 +170,6 @@ process-obs/*.png
 calc_B_orig.py
 nohup.out
 */checkpoints/*
+
+plotting/plotting_da[0-9].sh
+plotting/plotting_thUtils.ipynb

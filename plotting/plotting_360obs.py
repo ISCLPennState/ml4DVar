@@ -672,7 +672,7 @@ def plot_analysis_innovation(era5,
                                                 #cmap='seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
                                                 #cmap='seismic',
                                                 #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
-                                                edgecolor='k', s=35, linewidth=0.25)
+                                                edgecolor='k', s=30, linewidth=0.25)
                     plt.colorbar(ra_obs, ax = axs, label=units[var_idx], location='left')
                 plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
                 axs.set_title('Analysis Increment - Cycle {}'.format(itr))
@@ -1108,7 +1108,7 @@ def plot_analysis(era5,
                                           #vmin=era5_vmin, vmax=era5_vmax, cmap='viridis',
                                           vmin=vmin, vmax=vmax, cmap='viridis',
                                           #edgecolor = 'k', s= 35, linewidth=0.25)
-                                          edgecolor = 'k', s= 35, linewidth=0)
+                                          edgecolor = 'k', s= 30, linewidth=0)
                 plt.colorbar(sp_obs, ax = axs[1,0], label=units[var_idx])
                 axs[1, 0].set_title('Observations')
                 axs[1, 0].set_ylim(-90,90)
@@ -1116,7 +1116,7 @@ def plot_analysis(era5,
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
                                               #edgecolor='k', s=35, linewidth=0.25)
-                                              edgecolor='k', s=35, linewidth=0)
+                                              edgecolor='k', s=30, linewidth=0)
                 era_err_obs = axs[1,1].bar(scaled_bins[:-1],scaled_era5_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
@@ -1127,7 +1127,7 @@ def plot_analysis(era5,
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-all_obs_max_error, vmax=all_obs_max_error, cmap='PuOr_r',
                                                     #edgecolor='k', s=35, linewidth=0.25)
-                                                    edgecolor='k', s=35, linewidth=0)
+                                                    edgecolor='k', s=30, linewidth=0)
                 analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
@@ -1357,15 +1357,15 @@ def plot_background_vs_analysis(era5,
                                                #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max)
                                                )
 
-                ra_obs = axs[0,3].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
-                                          #cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
-                                          cmap = 'PuOr_r', vmin=-abs_obs_err_max, vmax=abs_obs_err_max,
-                                          #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
-                                          #cmap='seismic', 
-                                          #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
-                                          #edgecolor='k', s=20, linewidth=0.25,
-                                          s=15,
-                                          )
+                #ra_obs = axs[0,3].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
+                #                          #cmap = 'seismic', vmin=-np.max(np.abs(era5_minus_analysis[itr,var_idx])), vmax=np.max(np.abs(era5_minus_analysis[itr,var_idx])),
+                #                          cmap = 'PuOr_r', vmin=-abs_obs_err_max, vmax=abs_obs_err_max,
+                #                          #cmap = 'seismic', vmin=-increment_limit_max, vmax=increment_limit_max,
+                #                          #cmap='seismic', 
+                #                          #norm=colors.SymLogNorm(linthresh=1,vmin=-increment_limit_max,vmax=increment_limit_max),
+                #                          #edgecolor='k', s=20, linewidth=0.25,
+                #                          s=15,
+                #                          )
                 plt.colorbar(ana_inc, ax = axs[0, 3], label=units[var_idx])
                 axs[0, 3].set_xticks(np.linspace(0,360,9))
                 axs[0, 3].set_ylim(-90,90)
@@ -1376,7 +1376,7 @@ def plot_background_vs_analysis(era5,
                 sp_era_obs = axs[1,0].scatter(obs_lon_plot, obs_lat_plot, c = era5_obs_error[itr, var_idx],
                                               vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
                                               #edgecolor='k', s=35, linewidth=0.25)
-                                              edgecolor='k', s=35, linewidth=0)
+                                              edgecolor='k', s=30, linewidth=0)
                 era5_err_obs = axs[1,0].bar(scaled_bins[:-1],scaled_era5_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 0].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(era5_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,0], label=units[var_idx])
@@ -1388,7 +1388,7 @@ def plot_background_vs_analysis(era5,
                 sp_era_obs = axs[1,1].scatter(obs_lon_plot, obs_lat_plot, c = background_obs_error[itr, var_idx],
                                               vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
                                               #edgecolor='k', s=35, linewidth=0.25)
-                                              edgecolor='k', s=35, linewidth=0)
+                                              edgecolor='k', s=30, linewidth=0)
                 bg_err_obs = axs[1,1].bar(scaled_bins[:-1],scaled_background_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 1].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(background_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_era_obs, ax=axs[1,1], label=units[var_idx])
@@ -1401,7 +1401,7 @@ def plot_background_vs_analysis(era5,
                 sp_analysis_obs = axs[1, 2].scatter(obs_lon_plot, obs_lat_plot, c=analysis_obs_error[itr, var_idx],
                                                     vmin=-abs_obs_err_max, vmax=abs_obs_err_max, cmap='PuOr_r',
                                                     #edgecolor='k', s=35, linewidth=0.25)
-                                                    edgecolor='k', s=35, linewidth=0)
+                                                    edgecolor='k', s=30, linewidth=0)
                 analysis_err_obs = axs[1,2].bar(scaled_bins[:-1],scaled_analysis_counts,color=bar_CM,width=scaled_bins[1]-scaled_bins[0],bottom=lat_min,linewidth=0.25,edgecolor='k',align='edge')
                 axs[1, 2].text(2,-85,'|{:.2f}|'.format(np.max(np.abs(analysis_obs_error[itr,var_idx]))))
                 plt.colorbar(sp_analysis_obs, ax=axs[1, 2], label=units[var_idx])
@@ -1504,7 +1504,8 @@ def plot_cummulative_increment(analysis,
                              window_idxs = None,
                              save = False,
                              show = True,
-                             figsize = (15, 7),
+                             #figsize = (15, 7),
+                             figsize = (15, 10),
                              err_var_lim = None,
                              save_dir = None,
                              zero_center_error = True,
@@ -1565,22 +1566,14 @@ def plot_cummulative_increment(analysis,
                 title_str = 'Cummulative Absolute Increment - Cycle {} - ({})'.format(itr,analysis.vars[var_idx])
                 print(title_str)
 
-                fig, axs = plt.subplots(1, 1, figsize = figsize)
+                #fig, axs = plt.subplots(1, 1, figsize = figsize)
+                fig, axs = plt.subplots(2, 1, figsize = figsize, gridspec_kw={'height_ratios':[10/3,10/7]})
 
-                pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, cum_inc[itr+1],
+                pc_era5 = axs[0].pcolormesh(analysis.lon, analysis.lat, cum_inc[itr+1],
                                          cmap='hot_r', #vmin=0, vmax=np.max(cum_inc[itr+1]),
                                          norm=colors.SymLogNorm(linthresh=1,vmin=0,vmax=np.max(cum_inc[itr+1])),
                                          )
 
-                analysis_err_obs = axs.bar(scaled_bins[:-1],
-                                           scaled_counts,color=bar_CM,
-                                           width=scaled_bins[1]-scaled_bins[0],
-                                           bottom=lat_min,
-                                           linewidth=0.25,
-                                           edgecolor='k',
-                                           align='edge',
-                                           alpha=0.6,
-                                           )
                 if plot_obs:
                     obs_latlon = obs.obs_latlon[itr][var_idx, :obs.n_obs[itr][var_idx]].detach().cpu().numpy()
                     try:
@@ -1589,18 +1582,30 @@ def plot_cummulative_increment(analysis,
                     except:
                         total_obs_locs = obs_latlon
 
-                    ra_obs = axs.scatter(total_obs_locs[:,1], total_obs_locs[:,0],
+                    ra_obs = axs[0].scatter(total_obs_locs[:,1], total_obs_locs[:,0],
+                                         s=15,
                                          color='b')
                                          #color='k', edgecolor='k', s=35, linewidth=0.25)
-                plt.colorbar(pc_era5, ax = axs, label=units[var_idx])
-                axs.set_title(title_str)
-                axs.set_xlim(0,360)
-                x_tick_labels = ['{:.3f}'.format((x+360/50)*cum_incs_max/360) for x in np.linspace(0,(360-360/50),11)]
-                axs.set_xticks(np.linspace(360/50,360,11))
-                axs.set_xticklabels(x_tick_labels)
-                axs.set_yticks([])
-                axs.set_xlabel(units[var_idx])
+                axs[0].set_title(title_str)
+                axs[0].set_xlim(0,360)
+                axs[0].set_yticks([])
 
+                analysis_err_obs = axs[1].bar(scaled_bins[:-1],
+                                           scaled_counts,color=bar_CM,
+                                           width=scaled_bins[1]-scaled_bins[0],
+                                           bottom=lat_min,
+                                           linewidth=0.25,
+                                           edgecolor='k',
+                                           align='edge',
+                                           )
+                plt.colorbar(pc_era5, ax=axs, label=units[var_idx])
+
+                x_tick_labels = ['{:.3f}'.format((x+360/50)*cum_incs_max/360) for x in np.linspace(0,(360-360/50),11)]
+                axs[1].set_xlim(0,360)
+                axs[1].set_xticks(np.linspace(360/50,360,11))
+                axs[1].set_xticklabels(x_tick_labels)
+                axs[1].set_xlabel(units[var_idx])
+                axs[1].set_yticks([])
                 #axs_mses_inc = axs.twinx()
                 #axs_mses_inc.tick_params(axis='y',colors='green')
                 #axs_mses_inc.set_ylim(0,np.min(cum_inc[-1]))
@@ -1613,7 +1618,7 @@ def plot_cummulative_increment(analysis,
 
                 plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
                 #fig.suptitle(title_str)
-                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+                #plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
                 #plt.tight_layout()
 
                 save_name = analysis.dir.split('/')[-2]
@@ -1623,10 +1628,12 @@ def plot_cummulative_increment(analysis,
                     if plot_obs:
                         plt.savefig(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}.png'), dpi = 200,
                                 bbox_inches = 'tight')
+                        #plt.savefig(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}.png'), dpi = 200)
                         gif_files.append(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}.png'))
                     else:
                         plt.savefig(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'), dpi = 200,
                                 bbox_inches = 'tight')
+                        #plt.savefig(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'), dpi = 200)
                         gif_files.append(os.path.join(save_dir, f'{save_name}_{analysis.vars[var_idx]}_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'))
                 if show:
                     plt.show()
@@ -1719,35 +1726,38 @@ def plot_cummulative_increment(analysis,
             title_str = 'Cummulative Absolute Increment - Cycle {} - (Overall)'.format(itr)
             print(title_str)
 
-            fig, axs = plt.subplots(1, 1, figsize = figsize)
+            #fig, axs = plt.subplots(1, 1, figsize = figsize)
+            fig, axs = plt.subplots(2, 1, figsize = figsize, gridspec_kw={'height_ratios':[10/3,10/7]})
 
             #combined_inc_std = np.sum(cum_inc_allVars[itr+1] / analysis.stds.reshape(-1,1,1), axis=0)
-            pc_era5 = axs.pcolormesh(analysis.lon, analysis.lat, combined_inc_std,
+            pc_era5 = axs[0].pcolormesh(analysis.lon, analysis.lat, combined_inc_std,
                                         cmap='hot_r', #vmin=0, vmax=np.max(cum_inc[itr+1]),
                                         norm=colors.SymLogNorm(linthresh=1,vmin=0,vmax=np.max(combined_inc_std)),
                                         )
 
-            analysis_err_obs = axs.bar(scaled_bins[:-1],
+            if plot_obs:
+                ra_obs = axs[0].scatter(total_obs_locs[:,1], total_obs_locs[:,0],
+                                        s=15,
+                                        color='b')
+                                        #color='b', edgecolor='k', s=35, linewidth=0.25)
+
+            axs[0].set_title(title_str)
+            axs[0].set_xlim(0,360)
+            axs[0].set_yticks([])
+
+            analysis_err_obs = axs[1].bar(scaled_bins[:-1],
                                         scaled_counts,color=bar_CM,
                                         width=scaled_bins[1]-scaled_bins[0],
                                         bottom=lat_min,
                                         linewidth=0.25,
                                         edgecolor='k',
                                         align='edge',
-                                        alpha=0.6,
                                         )
-            if plot_obs:
-                ra_obs = axs.scatter(total_obs_locs[:,1], total_obs_locs[:,0],
-                                        color='b')
-                                        #color='b', edgecolor='k', s=35, linewidth=0.25)
-
             plt.colorbar(pc_era5, ax = axs)
-            axs.set_title(title_str)
-            axs.set_xlim(0,360)
             x_tick_labels = ['{:.3f}'.format((x+360/50)*cum_incs_max/360) for x in np.linspace(0,(360-360/50),11)]
-            axs.set_xticks(np.linspace(360/50,360,11))
-            axs.set_xticklabels(x_tick_labels)
-            axs.set_yticks([])
+            axs[1].set_xticks(np.linspace(360/50,360,11))
+            axs[1].set_xticklabels(x_tick_labels)
+            axs[1].set_yticks([])
 
             #axs_mses_inc = axs.twinx()
             #axs_mses_inc.tick_params(axis='y',colors='green')
@@ -1761,7 +1771,7 @@ def plot_cummulative_increment(analysis,
 
             plot_date = analysis.start_date + timedelta(hours = int(itr * analysis.time_step))
             #fig.suptitle(title_str)
-            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+            #plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
             #plt.tight_layout()
 
             save_name = analysis.dir.split('/')[-2]
@@ -1771,10 +1781,12 @@ def plot_cummulative_increment(analysis,
                 if plot_obs:
                     plt.savefig(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}.png'), dpi = 200,
                             bbox_inches = 'tight')
+                    #plt.savefig(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}.png'), dpi = 200)
                     gif_files.append(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}.png'))
                 else:
                     plt.savefig(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'), dpi = 200,
                             bbox_inches = 'tight')
+                    #plt.savefig(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'), dpi = 200)
                     gif_files.append(os.path.join(save_dir, f'{save_name}_overall_{itr:04}_cum_inc_{analysis.runstr}_noObs.png'))
             if show:
                 plt.show()
