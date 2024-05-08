@@ -171,5 +171,6 @@ calc_B_orig.py
 nohup.out
 */checkpoints/*
 
-plotting/plotting_da[0-9].sh
+plotting/launch_plotting_da[0-9].sh
 plotting/plotting_thUtils.ipynb
+plotting/plotting_thUtils.py

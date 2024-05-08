@@ -50,6 +50,32 @@ if __name__ == '__main__':
     #obs_freq = config['obs']['obs_freq']
 
     da_root_dir = config['da']['da_root_dir']
+    obs_filepath = config['obs']['obs_filepath']
+
+    means_file = config['data']['means_file']
+    stds_file = config['data']['stds_file']
+    means = np.load(means_file)
+    stds = np.load(stds_file)
+    dv_param_file = config['data']['dv_param_file']
+
+    b_inflation = config['da']['b_inflation'] 
+    b_hf_inflation = config['da']['b_hf_inflation'] 
+    
+    replace_uvwinds = False
+    try:
+        replace_uvwinds = config['da']['replace_uvwinds']
+    except:
+        pass
+
+    background_err_file_dict = {}
+    background_err_hf_file_dict = {}
+    for hr_key in config['error_covariance']['background_err_file'].keys():
+        background_err_file_dict[int(hr_key)] = config['error_covariance']['background_err_file'][hr_key]
+        background_err_hf_file_dict[int(hr_key)] = config['error_covariance']['background_err_hf_file'][hr_key]
+
+    ckpt_pth = config['model']['ckpt_pth']
+    max_iter = config['da']['max_iter']
+
     model_name = config['model']['model_name']
 
     exp_dir = os.path.join(da_root_dir,'data',model_name,'{}'.format(save_dir_name))
@@ -61,27 +87,6 @@ if __name__ == '__main__':
     save_dir = os.path.join(exp_dir,'data')
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-
-    obs_filepath = config['obs']['obs_filepath']
-
-    means_file = config['data']['means_file']
-    stds_file = config['data']['stds_file']
-    means = np.load(means_file)
-    stds = np.load(stds_file)
-    dv_param_file = config['data']['dv_param_file']
-
-    b_inflation = config['da']['b_inflation'] 
-    b_hf_inflation = config['da']['b_hf_inflation'] 
-
-    background_err_file_dict = {}
-    background_err_hf_file_dict = {}
-    for hr_key in config['error_covariance']['background_err_file'].keys():
-        background_err_file_dict[int(hr_key)] = config['error_covariance']['background_err_file'][hr_key]
-        background_err_hf_file_dict[int(hr_key)] = config['error_covariance']['background_err_hf_file'][hr_key]
-
-    ckpt_pth = config['model']['ckpt_pth']
-    max_iter = config['da']['max_iter']
-
 
     ####################################################################################################################################
     # Get start_idx for observations/analysis/background to start from
@@ -120,6 +125,9 @@ if __name__ == '__main__':
             wind_layer = UVWwind(background_f, vars_stormer, stds, device)
         elif wind_type == 'scalar':
             wind_layer = DivergenceVorticity(background_f, vars_stormer, means, stds, dv_param_file, device)
+        elif wind_type == 'uv_scalar':
+            wind_layer = UVScalar(background_f, vars_stormer, stds, device)
+            wind_type = 'scalar'
     except:
         pass
     if wind_type is None:
@@ -138,6 +146,7 @@ if __name__ == '__main__':
 
     logger.info('')
     logger.info('')
+    logger.info('Using device : {}'.format(device))
     logger.info('da_type : {}'.format(da_type))
     logger.info('save_dir_name : {}'.format(save_dir_name))
     logger.info('')
@@ -150,6 +159,7 @@ if __name__ == '__main__':
     logger.info('')
     logger.info('using wind type : {}'.format(wind_type))
     logger.info('dv_param file : {}'.format(dv_param_file))
+    logger.info('replace uvwinds : {}'.format(replace_uvwinds))
     logger.info('')
     logger.info('Using background_err_file_dict : {}'.format(background_err_file_dict))
     logger.info('Using background_err_hf_file_dict : {}'.format(background_err_hf_file_dict))
