@@ -66,6 +66,7 @@ if __name__ == '__main__':
         replace_uvwinds = config['da']['replace_uvwinds']
     except:
         pass
+    era5_dir = '/eagle/MDClimSim/tungnd/data/wb2/1.40625deg_from_full_res_1_step_6hr_h5df/train/'
 
     background_err_file_dict = {}
     background_err_hf_file_dict = {}
@@ -272,4 +273,8 @@ if __name__ == '__main__':
                         save_idx=start_idx,
                         logger=logger,
                         )
-    fourd_da.cycleDataAssimilation(forecast=True)
+    if replace_uvwinds:
+        #fourd_da.cycleDataAssimilation(forecast=True,era5_dir=era5_dir,stds=stds)
+        fourd_da.cycleDataAssimilation(forecast=False,era5_dir=era5_dir,stds=stds)
+    else:
+        fourd_da.cycleDataAssimilation(forecast=True)

@@ -7,7 +7,7 @@
 #PBS -m bae
 
 #jobs_to_plot=("var3d_4cellGrid_windVec" "var3d_4cellGrid_windVec2" "var3d_4cellGrid_12lt_windVec" "var3d_4cellGrid_12lt_windVec2")
-jobs_to_plot=("var3d_4cellgrid_modelvsGT_uvScalar_bhf1e6" "var3d_4cellgrid_modelvsGT_uvScalar_bhf1e12" "var3d_4cellgrid_modelvsGT_uvVector_bhf1e6" "var3d_4cellgrid_modelvsGT_uvVector_bhf1e12")
+jobs_to_plot=("var3d_4cellgrid_GTuv_modelvsGT_bhf1" "var3d_4cellgrid_GTuv_modelvsGT_bhf1e6" "var3d_4cellgrid_GTuv_modelvsGT_bhf1e12" "var3d_4cellgrid_GTuv_GTNMC_bhf1e6")
 
 . /etc/profile
 

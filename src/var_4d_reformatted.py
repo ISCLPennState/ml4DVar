@@ -256,7 +256,47 @@ class FourDVar():
         #return torch.optim.LBFGS([self.x_analysis], lr = self.lr, max_iter = 200, history_size=300, tolerance_grad = 1e-5)
         #return torch.optim.LBFGS([self.x_analysis], lr = self.lr, max_iter = 10, history_size=300, tolerance_grad = 1e-5)
 
-    def cycleDataAssimilation(self, forecast = False):
+    #def load_era5(era5_dir,idx,vars_stormer):
+    #    mode = 'r'
+    #    file_num = idx + (hour_diff // 6)
+    #    file = os.path.join(era5_dir,'{}_{:0>4d}.h5'.format(year,file_num))
+    #    print('era5 file :',file)
+    #    f = h5py.File(file, mode)
+
+    #data_np = np.zeros((len(vars_stormer),128,256))
+    #for i,var in enumerate(vars_stormer):
+    #    data_np[i] = f['input/{}'.format(var)][:]
+    #return data_np
+
+    def replace_uvwind(self, itr, era5_dir, stds):
+        file_num = itr + 4 # we start da at Jan01,12hrs
+        year = self.obs_dataloader.dataset.curr_datetime.strftime("%Y")
+        era5_file = os.path.join(era5_dir,'{}_{:0>4d}.h5'.format(year,file_num))
+
+        print('Replacing UVwind with data from {}'.format(os.path.basename(era5_file)))
+        if self.logger:
+            self.logger.info('Replacing UVwind with data from {}'.format(era5_file))
+
+        era5_f = h5py.File(era5_file,'r')
+        data_np = np.zeros((len(self.vars),128,256))
+        for i,var in enumerate(self.vars):
+            data_np[i] = era5_f['input/{}'.format(var)][:]/stds[var]
+        era5_tensor = torch.Tensor(data_np).to(self.background.device)
+        
+        uwind_idxs = self.wind_layer.uwind_idxs
+        vwind_idxs = self.wind_layer.vwind_idxs
+        background_clone = self.background.clone().detach()
+        x_analysis_clone = self.x_analysis.clone().detach()
+        background_clone[0][uwind_idxs] = era5_tensor[uwind_idxs]
+        background_clone[0][vwind_idxs] = era5_tensor[vwind_idxs]
+        x_analysis_clone[0][uwind_idxs] = era5_tensor[uwind_idxs]
+        x_analysis_clone[0][vwind_idxs] = era5_tensor[vwind_idxs]
+        x_analysis_clone.requires_grad_(True)
+
+        self.background = background_clone
+        self.x_analysis = x_analysis_clone
+
+    def cycleDataAssimilation(self, forecast=False, era5_dir=None, stds=None):
         
         self.x_analysis = torch.clone(self.background)
         self.x_analysis.requires_grad_(True)
@@ -268,11 +308,13 @@ class FourDVar():
             self.optim.zero_grad()
             print('Cycle loss %d: %0.2f' % (itr+self.save_idx, cycle_loss))
             print('{} / {}'.format(itr+self.save_idx,self.obs_dataloader.dataset.num_cycles))
-            #print('{} / {}'.format(itr,len(self.obs_dataloader)))
             if self.logger:
                 self.logger.info('Cycle loss {:d}: {:0.2f}'.format(itr+self.save_idx, cycle_loss.item()))
                 self.logger.info('{} / {}'.format(itr+self.save_idx,self.obs_dataloader.dataset.num_cycles))
-                #self.logger.info('{} / {}'.format(itr,len(self.obs_dataloader)))
+
+            # replaces the uvwind_idxs with data from era5
+            if era5_dir is not None:
+                self.replace_uvwind(itr+self.save_idx, era5_dir, stds)
 
     def calc_background_err(self, x, print_loss, save_loss_comps):
         # Compute background error  
